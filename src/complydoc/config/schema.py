@@ -160,11 +160,7 @@ class Threshold(_Base):
 
     @model_validator(mode="after")
     def _exactly_one(self) -> Threshold:
-        set_ops = [
-            op
-            for op in (self.gte, self.gt, self.lte, self.lt, self.eq)
-            if op is not None
-        ]
+        set_ops = [op for op in (self.gte, self.gt, self.lte, self.lt, self.eq) if op is not None]
         if len(set_ops) != 1:
             raise ValueError("a threshold must set exactly one of gte/gt/lte/lt/eq")
         return self

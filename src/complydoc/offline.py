@@ -18,7 +18,7 @@ from __future__ import annotations
 import socket
 from typing import Any, Final
 
-__all__ = ["NetworkAccessError", "arm", "is_armed", "guard_status"]
+__all__ = ["NetworkAccessError", "arm", "guard_status", "is_armed"]
 
 _ORIGINAL_CONNECT: Final = socket.socket.connect
 _ORIGINAL_CONNECT_EX: Final = socket.socket.connect_ex

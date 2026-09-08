@@ -18,11 +18,11 @@ from complydoc.config.schema import (
 )
 
 __all__ = [
+    "DEFAULT_CONFIG_DIR",
     "ConfigError",
     "StalenessWarning",
-    "DEFAULT_CONFIG_DIR",
-    "load_config",
     "check_staleness",
+    "load_config",
 ]
 
 DEFAULT_CONFIG_DIR: Final = Path(__file__).parent
@@ -99,9 +99,7 @@ def load_config(config_dir: Path | None = None) -> Config:
         raise ConfigError(f"configuration in {directory} is invalid:\n{exc}") from exc
 
 
-def check_staleness(
-    pricing: PricingConfig, today: dt.date | None = None
-) -> list[StalenessWarning]:
+def check_staleness(pricing: PricingConfig, today: dt.date | None = None) -> list[StalenessWarning]:
     """Every priced entry whose verification date is absent or older than the threshold.
 
     Disabled models are skipped: an unpriced template nobody is using is not a

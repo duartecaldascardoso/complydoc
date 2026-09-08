@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1000 600" role="img" aria-labelledby="complydoc-architecture-dark-title complydoc-architecture-dark-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="complydoc-architecture-dark-title">complydoc pipeline architecture</title>
+  <desc id="complydoc-architecture-dark-desc">A folder of documents passes through discovery and a format-specific ingest layer into three independent analysis components — cost, difficulty and sensitive data — which are driven by YAML config and emit a diffable JSON report and a self-contained HTML report. The whole pipeline sits inside a network guard boundary, so no document content can leave the machine.</desc>
+  <defs>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+  
+    <marker id="complydoc-architecture-dark-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#bfc0c0"/>
+    </marker>
+    <marker id="complydoc-architecture-dark-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2fa96a"/>
+    </marker>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#22272e"/>
+
+  <!-- Network guard boundary: drawn first, behind everything -->
+  <rect x="24" y="72" width="940" height="440" rx="8" fill="rgba(47,169,106,0.05)" stroke="rgba(47,169,106,0.60)" stroke-width="1" stroke-dasharray="4,4"/>
+  <rect x="44" y="64" width="96" height="16" rx="2" fill="#22272e"/>
+  <text x="52" y="76" fill="#2fa96a" font-size="8" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" letter-spacing="0.14em">NETWORK GUARD</text>
+
+  <!-- Analysis zone -->
+  <rect x="560" y="112" width="208" height="296" rx="8" fill="rgba(245,245,245,0.03)" stroke="rgba(245,245,245,0.12)" stroke-width="0.8"/>
+  <rect x="596" y="104" width="136" height="16" rx="2" fill="#22272e"/>
+  <text x="664" y="116" fill="rgba(245,245,245,0.45)" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.14em">ANALYSIS · INDEPENDENT</text>
+
+  <!-- Arrows, drawn before boxes -->
+  <line x1="184" y1="272" x2="216" y2="272" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#complydoc-architecture-dark-arrow)"/>
+  <line x1="352" y1="272" x2="384" y2="272" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#complydoc-architecture-dark-arrow)"/>
+
+  <path d="M 528,252 H 544 Q 552,252 552,244 V 184 Q 552,176 560,176 H 576" fill="none" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#complydoc-architecture-dark-arrow)"/>
+  <line x1="528" y1="272" x2="576" y2="272" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#complydoc-architecture-dark-arrow)"/>
+  <path d="M 528,292 H 544 Q 552,292 552,300 V 360 Q 552,368 560,368 H 576" fill="none" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#complydoc-architecture-dark-arrow)"/>
+
+  <line x1="664" y1="448" x2="664" y2="408" stroke="#bfc0c0" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#complydoc-architecture-dark-arrow)"/>
+  <rect x="676" y="420" width="84" height="12" rx="2" fill="#22272e"/>
+  <text x="680" y="429" fill="#8e98ac" font-size="8" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" letter-spacing="0.06em">THRESHOLDS</text>
+
+  <line x1="768" y1="240" x2="804" y2="240" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#complydoc-architecture-dark-arrow)"/>
+  <path d="M 768,300 H 778 Q 786,300 786,308 V 328 Q 786,336 794,336 H 804" fill="none" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#complydoc-architecture-dark-arrow)"/>
+
+  <!-- Nodes -->
+
+  <rect x="48" y="240" width="136" height="64" rx="6" fill="#22272e"/>
+  <rect x="48" y="240" width="136" height="64" rx="6" fill="rgba(191,192,192,0.10)" stroke="#8e98ac" stroke-width="1"/>
+  <rect x="60" y="250" width="36" height="12" rx="2" fill="none" stroke="#8e98ac" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="78.0" y="259" fill="#8e98ac" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">INPUT</text>
+  <text x="116.0" y="280.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">documents/</text>
+  <text x="116.0" y="296.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">pdf · img · docx · xlsx</text>
+
+  <rect x="216" y="240" width="136" height="64" rx="6" fill="#22272e"/>
+  <rect x="216" y="240" width="136" height="64" rx="6" fill="#2c323b" stroke="#f5f5f5" stroke-width="1"/>
+  <rect x="228" y="250" width="32" height="12" rx="2" fill="none" stroke="#f5f5f5" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="244.0" y="259" fill="#f5f5f5" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">WALK</text>
+  <text x="284.0" y="280.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Discovery</text>
+  <text x="284.0" y="296.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">skips unopenable</text>
+
+  <rect x="384" y="240" width="144" height="64" rx="6" fill="#22272e"/>
+  <rect x="384" y="240" width="144" height="64" rx="6" fill="#2c323b" stroke="#f5f5f5" stroke-width="1"/>
+  <rect x="396" y="250" width="32" height="12" rx="2" fill="none" stroke="#f5f5f5" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="412.0" y="259" fill="#f5f5f5" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">LOAD</text>
+  <text x="456.0" y="280.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Ingest</text>
+  <text x="456.0" y="296.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">per-format loaders</text>
+
+  <rect x="576" y="144" width="176" height="64" rx="6" fill="#22272e"/>
+  <rect x="576" y="144" width="176" height="64" rx="6" fill="#2c323b" stroke="#f5f5f5" stroke-width="1"/>
+  <rect x="588" y="154" width="20" height="12" rx="2" fill="none" stroke="#f5f5f5" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="598.0" y="163" fill="#f5f5f5" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">01</text>
+  <text x="664.0" y="184.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Cost</text>
+  <text x="664.0" y="200.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">tokens, pages, price</text>
+
+  <rect x="576" y="240" width="176" height="64" rx="6" fill="#22272e"/>
+  <rect x="576" y="240" width="176" height="64" rx="6" fill="#2c323b" stroke="#f5f5f5" stroke-width="1"/>
+  <rect x="588" y="250" width="20" height="12" rx="2" fill="none" stroke="#f5f5f5" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="598.0" y="259" fill="#f5f5f5" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">02</text>
+  <text x="664.0" y="280.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Difficulty</text>
+  <text x="664.0" y="296.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">18 measured signals</text>
+
+  <rect x="576" y="336" width="176" height="64" rx="6" fill="#22272e"/>
+  <rect x="576" y="336" width="176" height="64" rx="6" fill="rgba(47,169,106,0.14)" stroke="#2fa96a" stroke-width="1"/>
+  <rect x="588" y="346" width="20" height="12" rx="2" fill="none" stroke="#2fa96a" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="598.0" y="355" fill="#2fa96a" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">03</text>
+  <text x="664.0" y="376.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Sensitive</text>
+  <text x="664.0" y="392.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">masked by default</text>
+
+  <rect x="576" y="448" width="176" height="52" rx="6" fill="#22272e"/>
+  <rect x="576" y="448" width="176" height="52" rx="6" fill="rgba(245,245,245,0.06)" stroke="#bfc0c0" stroke-width="1"/>
+  <rect x="588" y="458" width="32" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="604.0" y="467" fill="#bfc0c0" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">YAML</text>
+  <text x="664.0" y="482.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">Config</text>
+  <text x="664.0" y="498.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">prices · weights · patterns</text>
+
+  <rect x="804" y="208" width="136" height="64" rx="6" fill="#22272e"/>
+  <rect x="804" y="208" width="136" height="64" rx="6" fill="rgba(245,245,245,0.06)" stroke="#bfc0c0" stroke-width="1"/>
+  <rect x="816" y="218" width="32" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="832.0" y="227" fill="#bfc0c0" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">JSON</text>
+  <text x="872.0" y="248.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">report.json</text>
+  <text x="872.0" y="264.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">machine readable</text>
+
+  <rect x="804" y="304" width="136" height="64" rx="6" fill="#22272e"/>
+  <rect x="804" y="304" width="136" height="64" rx="6" fill="rgba(245,245,245,0.06)" stroke="#bfc0c0" stroke-width="1"/>
+  <rect x="816" y="314" width="32" height="12" rx="2" fill="none" stroke="#bfc0c0" stroke-opacity="0.40" stroke-width="0.8"/>
+  <text x="832.0" y="323" fill="#bfc0c0" fill-opacity="0.85" font-size="7" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle" letter-spacing="0.08em">HTML</text>
+  <text x="872.0" y="344.0" fill="#f5f5f5" font-size="12" font-weight="600" font-family="'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif" text-anchor="middle">report.html</text>
+  <text x="872.0" y="360.0" fill="#8e98ac" font-size="9" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" text-anchor="middle">self-contained</text>
+
+  <!-- Legend -->
+  <line x1="24" y1="544" x2="976" y2="544" stroke="rgba(245,245,245,0.14)" stroke-width="0.8"/>
+  <text x="24" y="566" fill="#bfc0c0" font-size="8" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" letter-spacing="0.14em">LEGEND</text>
+
+  <rect x="112" y="556" width="14" height="12" rx="2" fill="rgba(47,169,106,0.14)" stroke="#2fa96a" stroke-width="1"/>
+  <text x="134" y="566" fill="#8e98ac" font-size="8" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace">MASKED VALUES</text>
+
+  <rect x="356" y="556" width="14" height="12" rx="2" fill="rgba(47,169,106,0.05)" stroke="rgba(47,169,106,0.60)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="378" y="566" fill="#8e98ac" font-size="8" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace">NO OUTBOUND SOCKET</text>
+
+  <rect x="592" y="556" width="14" height="12" rx="2" fill="#2c323b" stroke="#f5f5f5" stroke-width="1"/>
+  <text x="614" y="566" fill="#8e98ac" font-size="8" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace">PIPELINE STAGE</text>
+
+  <rect x="792" y="556" width="14" height="12" rx="2" fill="rgba(245,245,245,0.06)" stroke="#bfc0c0" stroke-width="1"/>
+  <text x="814" y="566" fill="#8e98ac" font-size="8" font-family="'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace">CONFIG AND OUTPUT</text>
+</svg>

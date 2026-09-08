@@ -1,84 +1,49 @@
-# complydoc
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/images/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/images/logo-light.svg">
+    <img alt="complydoc" src=".github/images/logo-light.svg" width="42%">
+  </picture>
+</div>
 
-An offline command-line tool that audits a folder of business documents and reports
-three things:
+<div align="center">
+  <h3>Offline document audit for LLM cost, extraction difficulty, and UK GDPR identifiers.</h3>
+</div>
 
-1. **Cost** — what the documents would cost to process with an LLM.
-2. **Difficulty** — how hard they are to extract structured data from.
-3. **Sensitive information** — what UK GDPR relevant identifiers they contain.
+<div align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
+  <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
+  <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
+  <img src="https://img.shields.io/badge/tests-166-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/mypy-strict-4f5d75" alt="mypy strict">
+</div>
 
-It is a **pre-purchase diagnostic**, not a production pipeline. It is intended to be
-run by a consultant, or by a UK finance or operations team on their own machine,
-while deciding whether document automation is worth buying.
+<br>
 
-## Trust proposition
+complydoc reads a folder of business documents and reports three things: what they would cost to process with an LLM, how hard they are to extract structured data from, and which UK GDPR relevant identifiers they contain. It is a diagnostic you run before buying a document automation system, not a pipeline you run in production.
 
-**complydoc runs fully offline. No document content leaves the machine, ever.**
+It makes no network calls at runtime. `complydoc/offline.py` replaces the standard library's outbound socket and DNS entry points before any file is opened, so a stray call raises instead of succeeding. `tests/test_offline_guard.py` runs a full audit with the guard armed. Every report records whether it was active.
 
-There is no hosted API call at runtime, and there is deliberately no opt-in flag to
-add one. Tokenisation, layout analysis, OCR and named entity recognition all run
-against local libraries and local models.
+<br>
 
-This is enforced rather than promised. `complydoc.offline` replaces the standard
-library's outbound socket entry points before any document is opened, so a stray
-network call raises instead of succeeding quietly — and the test suite runs a full
-audit with the guard armed to prove the tool still works with the network cut off.
-Every report records whether the guard was active.
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/images/complydoc-architecture-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/images/complydoc-architecture.svg">
+    <img alt="complydoc pipeline: documents pass through discovery and per-format loaders into three independent analysis components, which emit a JSON report and a self-contained HTML report, all inside a network guard boundary" src=".github/images/complydoc-architecture.svg" width="100%">
+  </picture>
+</div>
 
-Tokenizer vocabularies are vendored into the package for the same reason: tiktoken
-would otherwise fetch them on first use, which would fail on an air-gapped machine.
-
-## Sensitive values are masked by default
-
-The scan reports **counts and locations**, not values. A tool that flags a leaked
-bank account number by printing it in a report that then gets forwarded by email has
-made the problem worse.
-
-- Masked output shows at most the last four characters (`••••5678`).
-- `--reveal` exists for when someone genuinely needs the values, and any report
-  produced with it is stamped prominently.
-- Categories under `masking.never_reveal` in `sensitive.yaml` — card numbers and
-  National Insurance numbers by default — stay masked **even with `--reveal`**.
-
-Structurally, detectors return character *spans*, never strings. The only function
-that turns a span back into readable text is `sensitive.masking.render`, so a report
-cannot leak a value by accident.
-
-## Install
-
-Requires Python 3.11–3.13 and [uv](https://docs.astral.sh/uv/).
+## Quickstart
 
 ```bash
 uv sync
-```
-
-That gives you a working cost and difficulty tool immediately. Two optional extras
-add the heavier paths:
-
-```bash
-uv sync --extra ocr                          # read scanned pages
-uv sync --extra ner                          # detect person and organisation names
-uv run python -m spacy download en_core_web_sm
-```
-
-Both extras download their models **once, at install time**, exactly like any other
-dependency. Nothing is fetched at scan time. When an extra is missing, complydoc
-degrades loudly: affected pages and categories are named individually in the report's
-limitations rather than being counted as clean.
-
-Check what you have:
-
-```bash
-uv run complydoc doctor
-```
-
-## Use
-
-```bash
 uv run complydoc audit ./invoices --monthly-volume 2500 --out reports
 ```
 
-Each component also runs on its own, so you can have only the part you want:
+That writes `reports/complydoc.json` and `reports/complydoc.html`.
+
+Each component also runs on its own:
 
 ```bash
 uv run complydoc cost ./invoices --monthly-volume 2500
@@ -86,126 +51,117 @@ uv run complydoc difficulty ./invoices
 uv run complydoc sensitive ./invoices
 ```
 
-Useful flags: `--ocr` to read scanned pages, `--reveal` to unmask values,
-`--vision-resolution low|medium|high`, `--config-dir` to point at your own config,
-`--no-recurse`, `--quiet`.
+`uv run complydoc doctor` prints what is installed and what is missing.
 
-Supported inputs: PDF (native text and scanned), PNG, JPG, TIFF, BMP, DOCX, XLSX.
-Folders are recursed. Anything that cannot be opened is skipped and reported, never
-fatal.
+Inputs: PDF (native text and scanned), PNG, JPG, TIFF, BMP, DOCX, XLSX. Folders are recursed. Files that cannot be opened are skipped and listed in the report.
 
-## Output
+## Optional extras
 
-Every run writes both formats:
+The base install covers cost and difficulty. Two extras add the heavier paths:
 
-- **JSON** — machine readable and stable under `diff`, so runs can be compared over
-  time. Carries a schema version and a digest of the config that produced it.
-- **HTML** — self-contained, no external assets, openable from a USB stick and
-  forwardable by email. Has a per-document section and an aggregate section for the
-  decision maker.
+```bash
+uv sync --extra ocr                          # read scanned pages (RapidOCR, no system binary)
+uv sync --extra ner                          # person and organisation names
+uv run python -m spacy download en_core_web_sm
+```
 
-Both carry a **limitations section generated from the run itself** — which pages
-could not be read, which detectors were unavailable, which signals did not apply,
-which prices are unverified. It describes that run rather than the tool in general.
+Both download their models once at install time. Nothing is fetched during a scan. When an extra is absent, the affected pages and categories are listed individually in the report's limitations rather than counted as clean.
 
-## The three components
+Tokenizer vocabularies are vendored into the package, because tiktoken otherwise fetches them on first use and the guard blocks that.
+
+## What it measures
 
 ### Cost
 
-Per document: page count, page dimensions, DPI, whether a text layer exists and what
-fraction of the page it covers, text token count from a real tokenizer, and vision
-token counts at each resolution preset.
+Per document: page count, page dimensions, DPI, whether a text layer exists and what fraction of the page it covers, text tokens from a real tokenizer, and vision tokens at each resolution preset.
 
-Vision token formulas differ by provider — some tile the image, some use a width by
-height formula, some charge a flat count per image — so all three shapes live in
-`pricing.yaml`, not in code.
+Vision token formulas differ by provider — some tile the image, some use a width by height formula, some charge a flat count per image — so all three shapes live in `pricing.yaml` rather than in code.
 
-Two paths are costed: text extraction and vision. Where a path does not exist (a
-scan has no text layer; a spreadsheet has no fixed page size) complydoc says **not
-applicable** rather than quoting a cost of zero.
+Two paths are costed separately: text extraction and vision. Where a path does not exist, complydoc reports it as not applicable rather than as zero. A scan has no text layer; a spreadsheet has no fixed page size.
 
-Only **input** cost is estimated. Output length depends on what you ask the model to
-produce, which this tool cannot know.
+Only input cost is estimated. Output length depends on the prompt, which this tool does not know.
 
-**Prices carry a `last_verified` date per entry.** The report prints it and warns
-past 90 days. An entry with no date is treated as never verified and warned about on
-every run. complydoc ships Anthropic prices with a sourcing date, and OpenAI and
-Google entries as templates with the formula shape filled in but **no price** —
-because those were not sourced when the config was written, and inventing one would
-be worse than leaving it blank.
+> [!NOTE]
+> Prices carry a `last_verified` date per entry. The report prints it and warns past 90 days; an entry with no date warns on every run. Anthropic prices ship with a sourcing date. OpenAI and Google entries ship as disabled templates with the formula filled in and the price left `null`, because those were not sourced when the config was written.
 
-### Difficulty
+### Extraction difficulty
 
-A table of individually measured signals — 18 of them — each with the measured
-value, a rating, and one plain sentence saying why it matters. Not a single opaque
-number. A reader must be able to disagree with any one line without rejecting the
-report.
+Eighteen signals, each reported as a row with the measured value, a rating, and one sentence on why it matters. The table is the primary output.
 
-Measured: text layer presence and coverage, image area proportion, garbled character
-rate (replacement characters, undecomposed ligatures, run-together words), table
-count, header depth and merged cells, column layout, page rotation and estimated
-skew, scan DPI, font count and embedding, date format consistency, page size
-variance, detected language, encryption, and AcroForm fields — which are scored as a
-**positive** signal.
+Measured: text layer presence and coverage, image area proportion, garbled character rate, table count, header depth and merged cells, column layout, page rotation, estimated skew, scan DPI, font count and embedding, date format consistency, page size variance, detected language, encryption, and AcroForm fields, which are rated as a positive signal.
 
-A weighted score is included, but only because every weight is visible in
-`difficulty.yaml` and printed next to its row. The config schema refuses to load a
-configuration that enables scoring while hiding the weights. Signals that cannot be
-measured are excluded from the score rather than counted as failures, and a score
-resting on too few signals is flagged as low confidence.
+A weighted score is also produced. Every weight lives in `difficulty.yaml` and is printed next to its row; the config schema rejects a configuration that enables scoring with `print_weights_in_report: false`. Signals that cannot be measured are excluded from the score rather than counted as failures, and a score resting on fewer than half the signals is marked low confidence.
 
 ### Sensitive information
 
-UK GDPR relevant identifiers: National Insurance numbers, sort codes, bank account
-numbers, IBANs, payment cards, postcodes, street addresses, emails, phone numbers,
-dates of birth, VAT numbers, UTRs, and person and organisation names via a local NER
-model.
+National Insurance numbers, sort codes, bank account numbers, IBANs, payment cards, postcodes, street addresses, emails, phone numbers, dates of birth, VAT numbers, UTRs, and person and organisation names from a local NER model.
 
-Checksums do the heavy lifting against false positives: Luhn for cards, ISO 13616
-mod-97 for IBANs, mod-97 for VAT numbers, prefix rules for NI numbers. Patterns too
-generic to stand alone — a bare eight-digit account number — are only reported when a
-label such as "account number" appears nearby, and the report says which label
-justified each one.
+Checksums filter false positives: Luhn for cards, ISO 13616 mod-97 for IBANs, mod-97 for VAT numbers, prefix rules for NI numbers. Patterns too generic to stand alone, such as a bare eight-digit account number, are only reported when a label appears within a configurable window, and the report names the label that justified each one.
 
-Pages with no readable text are listed by number. **Zero findings on a page nobody
-could read is not an all-clear**, and the report never implies otherwise.
+Pages with no readable text are listed by page number and excluded from the counts, so a page that was never read is distinguishable from a page with nothing on it.
+
+> [!IMPORTANT]
+> Values are masked by default. The report gives counts and locations, and shows at most the last four characters of any identifier. `--reveal` unmasks them and stamps the report; categories listed under `masking.never_reveal` in `sensitive.yaml` — card numbers and NI numbers by default — stay masked even then.
+>
+> Detectors return character spans, not strings. `sensitive/masking.py` holds the only function that turns a span into readable text.
+
+## Output
+
+Every run writes both formats.
+
+`complydoc.json` is sorted and stable, so two runs can be compared with `diff`. It carries a schema version and a digest of the config that produced it, so a changed number is attributable to either the documents or the config.
+
+`complydoc.html` is a single file with no external assets. It has a per-document section and an aggregate section.
+
+Both carry a limitations section built from the run itself — which pages could not be read, which detectors were unavailable, which signals did not apply, which prices are unverified. It is generated, not a fixed disclaimer, so it changes when the run changes. Enabling `--ocr` removes the unread-pages entry because those pages were then read.
 
 ## Configuration
 
-Three files under `src/complydoc/config/`, overridable wholesale with `--config-dir`:
+Three files under `src/complydoc/config/`, overridable together with `--config-dir`:
 
-| File | Holds |
+| File | Contents |
 | --- | --- |
 | `pricing.yaml` | Model prices, vision token formulas, resolution presets, `last_verified` dates |
 | `difficulty.yaml` | Signal weights, rating thresholds, scoring rules |
 | `sensitive.yaml` | Detection patterns, validators, severities, masking rules |
 
-Every number a reader might want to argue with lives in YAML. None is hardcoded.
+Every number that appears in a report comes from these files.
 
-## Extending it
+## Adding a signal or a detector
 
-Adding a difficulty signal means adding **one file** under
-`src/complydoc/difficulty/signals/` with an `@signal` decorated class, and a weight
-block in `difficulty.yaml`. The package is walked at import time; there is no central
-switch statement to edit. Sensitive data detectors work the same way via `@detector`,
-and file format loaders via `register`.
+Add one file under `src/complydoc/difficulty/signals/` with an `@signal` decorated class, and a weight block in `difficulty.yaml`. The package is walked at import time, so there is no central list to update. Detectors work the same way with `@detector`, and file format loaders with `register`.
+
+```python
+@signal
+class ScanDpiSignal:
+    id = "scan_dpi"
+    name = "Scan resolution"
+    unit = "DPI"
+    why = (
+        "Below roughly 200 DPI the strokes that separate similar characters start to "
+        "disappear, so OCR begins confusing digits in exactly the fields — amounts, "
+        "account numbers, dates — where a single wrong character matters most."
+    )
+    applies_to = frozenset({DocumentFormat.PDF, DocumentFormat.IMAGE})
+
+    def measure(self, document: Document) -> Measurement: ...
+```
+
+A signal that cannot measure its property returns `Measurement.na(reason)`. The reason is carried into the report's limitations.
 
 ## Development
 
 ```bash
 uv sync --group dev
-uv run pytest                              # 166 tests
-uv run pytest --cov=complydoc              # ~91% coverage
+uv run pytest
+uv run pytest --cov=complydoc
 uv run ruff check src tests && uv run mypy src/complydoc
-uv run python tests/generate_fixtures.py   # rebuild the committed fixtures
+uv run python tests/generate_fixtures.py
 ```
 
-Fixtures are committed and include deliberately awkward documents: a scanned page, a
-three-row merged header table, a two-column layout, a scan that is both skewed and
-rotated 90 degrees, an encrypted PDF, one with a deliberately corrupted ToUnicode
-map, one with mixed page sizes, a fillable form, and a corrupt file. Every value in
-the synthetic PII fixture is fake — a published test card number, the IBAN from the
-ISO specification, an Ofcom fiction-range phone number and invented names.
+Fixtures are committed and include a scanned page, a three-row merged header table, a two-column layout, a scan that is both skewed and rotated 90 degrees, an encrypted PDF, one with a deliberately corrupted ToUnicode map, one with mixed page sizes, a fillable form, and a file that is not a valid PDF.
+
+Every identifier in the synthetic PII fixture is fake: a published test card number, the IBAN from the ISO 13616 specification, an Ofcom fiction-range phone number, and invented names.
 
 ## Licence
 

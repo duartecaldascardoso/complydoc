@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 296 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logo-light-title">
+  <title id="logo-light-title">complydoc</title>
+  <!-- Network guard boundary -->
+  <rect x="8" y="12" width="40" height="40" rx="8" fill="none" stroke="#1a7f4b" stroke-width="1.5" stroke-dasharray="3,3"/>
+  <!-- Document inside it -->
+  <rect x="20" y="21" width="16" height="22" rx="2" fill="none" stroke="#22272e" stroke-width="1.5"/>
+  <line x1="23" y1="27" x2="33" y2="27" stroke="#22272e" stroke-width="1.5"/>
+  <line x1="23" y1="32" x2="33" y2="32" stroke="#22272e" stroke-width="1.5"/>
+  <!-- The masked line -->
+  <line x1="23" y1="37" x2="29" y2="37" stroke="#1a7f4b" stroke-width="1.5"/>
+  <text x="62" y="41" fill="#22272e" font-size="27" font-weight="600" font-family="'Geist','Helvetica Neue',Helvetica,Arial,sans-serif" letter-spacing="-0.02em">complydoc</text>
+</svg>

@@ -283,6 +283,8 @@ class PdfLoader:
 
     @staticmethod
     def _needs_raster(page: Page, options: IngestOptions) -> bool:
+        if options.render_all_pages:
+            return True
         thin_text = len(page.text.strip()) < options.ocr_min_chars
         image_heavy = page.image_area_pt > 0.4 * page.area_pt if page.area_pt else False
         return thin_text or image_heavy

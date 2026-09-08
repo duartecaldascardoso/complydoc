@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from markupsafe import escape
 
 from complydoc.config.schema import Config
 from complydoc.difficulty.registry import signal_by_id
@@ -37,7 +38,7 @@ _LOGO_SVG = (
     "</svg>"
 )
 
-_PREVIEW_WIDTH = 140
+_PREVIEW_WIDTH = 240
 _MAX_PREVIEW_PAGES = 12
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -75,14 +76,14 @@ def page_preview_svg(preview: PagePreview, width: int = _PREVIEW_WIDTH) -> str:
 
     parts.append(f'<rect x="0" y="0" width="{width}" height="{height}" fill="#fff" stroke="#bbb"/>')
     for box in preview.gutters:
-        parts.append(rect(box, fill="#f6f6f6"))
+        parts.append(rect(box, fill="#f4f4f2"))
     for box in preview.image_blocks:
-        parts.append(rect(box, fill="#c8c8c8"))
+        parts.append(rect(box, fill="#f4dfae"))
     for box in preview.text_blocks:
         parts.append(rect(box, fill="#dcdcdc"))
     for box in preview.sensitive:
-        weight = "#111" if box.label == "high" else "#777"
-        parts.append(rect(box, fill="none", stroke=weight, stroke_width="1.2"))
+        stroke = "#b3261e" if box.label == "high" else "#8a5a00"
+        parts.append(rect(box, fill="none", stroke=stroke, stroke_width="1.2"))
 
     if preview.unreadable:
         parts.append(
@@ -120,6 +121,17 @@ def render_html(report: AuditReport, config: Config) -> str:
     def severity_class(severity: str) -> str:
         return {"high": "r-poor", "medium": "r-fair", "low": "r-na"}.get(severity, "r-na")
 
+    def severity_badge(severity: str) -> str:
+        return f'<span class="r {severity_class(severity)}">{escape(severity)}</span>'
+
+    def score_band(value: float) -> str:
+        """Match the score bands the difficulty module labels with."""
+        if value >= 75:
+            return "good"
+        if value >= 50:
+            return "fair"
+        return "poor"
+
     def score_class(value: float) -> str:
         if value >= 75:
             return "r-good"
@@ -137,6 +149,8 @@ def render_html(report: AuditReport, config: Config) -> str:
         category_meta=category_meta,
         signal_name=signal_name,
         severity_class=severity_class,
+        severity_badge=severity_badge,
+        score_band=score_band,
         score_class=score_class,
     )
 

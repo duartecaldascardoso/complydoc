@@ -68,6 +68,7 @@ def run_audit(
     select_models: Sequence[str] | None = None,
     recurse: bool = True,
     previews: bool = True,
+    page_images: bool = False,
     render_dpi: int = 150,
     progress: Callable[[int, int, Path], None] | None = None,
 ) -> AuditReport:
@@ -80,12 +81,13 @@ def run_audit(
 
     # Rasterising is only worth the memory when something will actually look at
     # the pixels — OCR, or the skew signal.
-    wants_raster = ocr or "difficulty" in requested
+    wants_raster = ocr or page_images or "difficulty" in requested
     options = IngestOptions(
         ocr=ocr,
         render_dpi=render_dpi,
         extract_tables="difficulty" in requested,
-        max_render_pages=50 if wants_raster else 0,
+        render_all_pages=page_images,
+        max_render_pages=50 if (wants_raster or page_images) else 0,
     )
 
     documents: list[DocumentReport] = []
@@ -124,7 +126,7 @@ def run_audit(
         if "sensitive" in requested:
             entry.sensitive = scan(document, config.sensitive, reveal=reveal)
         if previews:
-            entry.previews = build_previews(document, entry.sensitive)
+            entry.previews = build_previews(document, entry.sensitive, page_images=page_images)
         documents.append(entry)
 
     folder_cost = None
@@ -152,6 +154,7 @@ def run_audit(
         config_digest=config.digest,
         offline_guard=offline.guard_status(),
         reveal_used=reveal,
+        page_images_used=page_images,
         ocr_requested=ocr,
         ocr_available=ocr_module.available(),
         ner_available=_ner_available(config) if "sensitive" in requested else False,

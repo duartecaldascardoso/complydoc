@@ -14,7 +14,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-205-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-220-4f5d75" alt="Tests">
   <img src="https://img.shields.io/badge/mypy-strict-4f5d75" alt="mypy strict">
 </div>
 
@@ -116,14 +116,18 @@ A weighted score is also produced. Every weight lives in `difficulty.yaml` and i
 
 ### Page layout preview
 
-Each page is drawn in the HTML report as a wireframe: light blocks where the words are,
-darker blocks where images are, and an outline around every sensitive value that could be
-placed. It answers which pages are expensive and where the risk sits, at a glance.
+Each page is drawn in the HTML report as a wireframe: grey blocks where the words are,
+amber where images are, and a red or amber outline around every sensitive value that could
+be placed. It answers which pages are expensive and where the risk sits, at a glance.
 
-It is geometry only. No pixel of the page and no character of its text is reproduced — a
-thumbnail would undo the masking, and the report is meant to be forwardable. Matches that
-cannot be tied back to a position are counted and reported as unplaced rather than dropped;
-DOCX and XLSX carry no word geometry, so everything in them is unplaced.
+By default it is geometry only — no pixel of the page and no character of its text is
+reproduced, because a thumbnail would undo the masking and the report is meant to be
+forwardable. `--page-images` puts the rendered page beside the wireframe so you can compare
+the document against what was extracted from it; that report carries the document content
+itself and says so at the top.
+
+Matches that cannot be tied back to a position are counted and reported as unplaced rather
+than dropped; DOCX and XLSX carry no word geometry, so everything in them is unplaced.
 
 A run of words spanning most of the page width, or several line heights, is rejected as a
 placement. On a two-column page the extraction order crosses the gutter, and a box drawn
@@ -188,12 +192,22 @@ A signal that cannot measure its property returns `Measurement.na(reason)`. The 
 
 ## Development
 
+There is a Makefile; `make` on its own lists the targets.
+
+```bash
+make install-all      # base, plus OCR and the local NER model
+make check            # lint, types, tests — what CI runs
+make audit DOCS=~/invoices OUT=~/audit VOLUME=2500
+make fixtures         # rebuild the committed test fixtures
+make diagrams         # re-export the README diagrams
+```
+
+Or directly:
+
 ```bash
 uv sync --group dev
 uv run pytest
-uv run pytest --cov=complydoc
 uv run ruff check src tests && uv run mypy src/complydoc
-uv run python tests/generate_fixtures.py
 ```
 
 Fixtures are committed and include a scanned page, a three-row merged header table, a two-column layout, a scan that is both skewed and rotated 90 degrees, an encrypted PDF, one with a deliberately corrupted ToUnicode map, one with mixed page sizes, a fillable form, and a file that is not a valid PDF.

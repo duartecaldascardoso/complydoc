@@ -194,6 +194,13 @@ class IngestOptions:
     max_render_pages: int = 50
     """Cap on how many pages of one document are rasterised, to bound memory."""
     extract_tables: bool = True
+    render_all_pages: bool = False
+    """Rasterise every page, not only the ones a signal needs to look at.
+
+    Set when the report is going to show the page next to what was extracted
+    from it. Off by default: rasterising costs time and memory, and the default
+    report deliberately carries no page images.
+    """
 
 
 @runtime_checkable

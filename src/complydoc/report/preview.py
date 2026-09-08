@@ -20,6 +20,10 @@ from complydoc.sensitive.scanner import ScanResult
 
 __all__ = ["Box", "PagePreview", "build_previews"]
 
+_IMAGE_WIDTH_PX = 560
+"""Rendered width of an embedded page image. Twice the display width, for sharpness."""
+_IMAGE_QUALITY = 72
+
 _MIN_WORDS_FOR_COLUMNS = 25
 _MAX_MATCH_WIDTH_FRACTION = 0.6
 """An identifier never spans most of a page. A wider hit crossed a column."""
@@ -61,6 +65,12 @@ class PagePreview:
     text_coverage_pct: float = 0.0
     image_coverage_pct: float = 0.0
     sensitive_count: int = 0
+    image_data_uri: str | None = None
+    """The page itself, as a JPEG data URI. Only set when --page-images is used.
+
+    This is real document content. Everything else in a preview is geometry, and
+    the default report contains no page images at all.
+    """
     unlocated_sensitive: int = 0
     """Matches the scan found but could not be placed on the page."""
     unreadable: bool = False
@@ -180,8 +190,35 @@ def _gutters(page: Page) -> list[Box]:
     return found
 
 
-def build_previews(document: Document, scan: ScanResult | None) -> list[PagePreview]:
-    """One wireframe per page. Emits geometry only."""
+def _encode_page(raster: object) -> str | None:
+    """A page raster as a JPEG data URI, downscaled to preview size."""
+    import base64
+    import io
+
+    from PIL import Image as PILImage
+
+    if not isinstance(raster, PILImage.Image):
+        return None
+    image = raster.convert("L")
+    if image.width > _IMAGE_WIDTH_PX:
+        ratio = _IMAGE_WIDTH_PX / image.width
+        image = image.resize(
+            (_IMAGE_WIDTH_PX, max(1, round(image.height * ratio))), PILImage.Resampling.LANCZOS
+        )
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG", quality=_IMAGE_QUALITY, optimize=True)
+    return "data:image/jpeg;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+def build_previews(
+    document: Document, scan: ScanResult | None, page_images: bool = False
+) -> list[PagePreview]:
+    """One wireframe per page.
+
+    Geometry only, unless `page_images` is set, in which case each page is also
+    embedded as an image. That is opt-in because it puts real document content
+    into a file the report is otherwise safe to forward.
+    """
     by_page: dict[int, list[tuple[int, int, int, str]]] = {}
     if scan is not None:
         for match in scan.matches:
@@ -200,6 +237,8 @@ def build_previews(document: Document, scan: ScanResult | None) -> list[PagePrev
             unreadable=not page.text.strip() and not page.image_blocks,
         )
         if width <= 0 or height <= 0:
+            if page_images and page.raster is not None:
+                preview.image_data_uri = _encode_page(page.raster)
             previews.append(preview)
             continue
 
@@ -228,6 +267,9 @@ def build_previews(document: Document, scan: ScanResult | None) -> list[PagePrev
         preview.image_coverage_pct = round(
             coverage_fraction([b.bbox for b in page.image_blocks], width, height) * 100, 1
         )
+        if page_images and page.raster is not None:
+            preview.image_data_uri = _encode_page(page.raster)
+
         previews.append(preview)
 
     return previews

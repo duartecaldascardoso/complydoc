@@ -47,6 +47,14 @@ RecurseOpt = Annotated[
     bool, typer.Option("--recurse/--no-recurse", help="Descend into subfolders.")
 ]
 NameOpt = Annotated[str, typer.Option("--name", help="Base filename for the reports.")]
+PageImagesOpt = Annotated[
+    bool,
+    typer.Option(
+        "--page-images",
+        help="Embed a picture of each page beside what was extracted from it. "
+        "Off by default: it puts real document content into the report.",
+    ),
+]
 QuietOpt = Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output.")]
 ModelOpt = Annotated[
     list[str] | None,
@@ -129,6 +137,7 @@ def _run(
     monthly_volume: int | None = None,
     resolution: str = "medium",
     select_models: list[str] | None = None,
+    page_images: bool = False,
 ) -> None:
     offline.arm()
     config = _load(config_dir)
@@ -141,6 +150,11 @@ def _run(
         errors.print(
             "[bold yellow]--reveal is set.[/] The reports will contain unmasked sensitive "
             "values. Treat them as sensitive documents in their own right."
+        )
+    if page_images:
+        errors.print(
+            "[bold yellow]--page-images is set.[/] The HTML report will contain a picture "
+            "of every page, so it carries the document content itself."
         )
 
     def progress(index: int, total: int, path: Path) -> None:
@@ -157,6 +171,7 @@ def _run(
             monthly_volume=monthly_volume,
             resolution=resolution,
             select_models=select_models,
+            page_images=page_images,
             recurse=recurse,
             progress=progress if not quiet else None,
         )
@@ -188,6 +203,7 @@ def audit(
         ),
     ] = False,
     model: ModelOpt = None,
+    page_images: PageImagesOpt = False,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
@@ -207,6 +223,7 @@ def audit(
         monthly_volume=monthly_volume,
         resolution=resolution,
         select_models=model,
+        page_images=page_images,
     )
 
 
@@ -270,6 +287,7 @@ def sensitive(
             help="Print sensitive values in full. Off by default, and the report says so.",
         ),
     ] = False,
+    page_images: PageImagesOpt = False,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,

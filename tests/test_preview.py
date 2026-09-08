@@ -133,3 +133,34 @@ def test_one_preview_per_page(loader, config):
     document, previews = previews_for(loader, config, "mixed_page_sizes.pdf")
     assert len(previews) == document.page_count == 3
     assert [p.number for p in previews] == [1, 2, 3]
+
+
+# --- page images are opt-in ------------------------------------------------
+
+
+def test_no_page_image_by_default(loader, config):
+    """The default report is forwardable, so it carries no picture of the page."""
+    document = loader("sensitive_sample.pdf")
+    previews = build_previews(document, scan(document, config.sensitive))
+    assert all(p.image_data_uri is None for p in previews)
+
+
+def test_page_images_are_embedded_when_asked_for():
+    from complydoc.ingest.base import IngestOptions
+    from complydoc.ingest.registry import load_document
+    from tests.helpers import FIXTURES
+
+    document = load_document(
+        FIXTURES / "sensitive_sample.pdf",
+        IngestOptions(render_all_pages=True, max_render_pages=10),
+    )
+    previews = build_previews(document, None, page_images=True)
+    assert previews[0].image_data_uri is not None
+    assert previews[0].image_data_uri.startswith("data:image/jpeg;base64,")
+
+
+def test_a_format_with_no_raster_gets_no_image(loader, config):
+    """DOCX is never rasterised, so there is nothing to show beside the extraction."""
+    document = loader("sample.docx")
+    previews = build_previews(document, scan(document, config.sensitive), page_images=True)
+    assert previews[0].image_data_uri is None

@@ -28,6 +28,10 @@ class TableCountSignal:
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:
+        if not document.pages:
+            return Measurement.na(
+                "the document could not be opened, so it has no pages to look for tables in"
+            )
         tables = _tables(document)
         return Measurement(
             value=len(tables),

@@ -123,8 +123,11 @@ def build_limitations(
         )
 
     # --- Signals that did not apply ---------------------------------------
-    na_signals: dict[str, tuple[str, list[str]]] = {}
-    error_signals: dict[str, tuple[str, list[str]]] = {}
+    # Keyed by (signal, reason). Grouping on the signal alone would attach one
+    # document's reason to every other document in the group, which produced
+    # entries telling the reader a PNG was skipped because "this is a docx file".
+    na_signals: dict[tuple[str, str], list[str]] = {}
+    error_signals: dict[tuple[str, str], list[str]] = {}
     for document in documents:
         if not document.difficulty:
             continue
@@ -135,12 +138,10 @@ def build_limitations(
                 bucket = error_signals
             else:
                 continue
-            _reason, affected = bucket.setdefault(
-                signal.name, (signal.reason or "no reason recorded", [])
-            )
-            affected.append(document.relative_path)
+            key = (signal.name, signal.reason or "no reason recorded")
+            bucket.setdefault(key, []).append(document.relative_path)
 
-    for name, (reason, affected) in sorted(na_signals.items()):
+    for (name, reason), affected in sorted(na_signals.items()):
         limitations.append(
             Limitation(
                 area="Signals not measured",
@@ -152,7 +153,7 @@ def build_limitations(
                 affected=sorted(set(affected)),
             )
         )
-    for name, (reason, affected) in sorted(error_signals.items()):
+    for (name, reason), affected in sorted(error_signals.items()):
         limitations.append(
             Limitation(
                 area="Signals that failed",

@@ -6,7 +6,13 @@
 <title>complydoc — {{ report.run.target }}</title>
 <style>
   html { -webkit-text-size-adjust: 100%; }
-  :root { --accent: #1a7f4b; --paper: #fbfbfa; --line: #e8e8e6; }
+  :root {
+    --accent: #1a7f4b; --paper: #fbfbfa; --line: #e8e8e6;
+    --good: #1a7f4b; --good-bg: #e8f3ec;
+    --fair: #8a5a00; --fair-bg: #fbf1de;
+    --poor: #b3261e; --poor-bg: #fbeae8;
+    --na:   #6b7280; --na-bg:   #f0f1f3;
+  }
   body {
     margin: 0 auto; padding: 2.5rem 1.5rem 6rem; max-width: 60rem;
     background: var(--paper); color: #111;
@@ -31,7 +37,17 @@
   th { font-weight: 600; border-bottom: 1px solid #111; white-space: nowrap; }
   td.n, th.n { text-align: right; white-space: nowrap; padding-right: 1.25rem; }
   .scroll { overflow-x: auto; }
-  .poor { font-weight: 600; }
+  /* Ratings and severities are the two things a reader scans for, so they get
+     the colour. Everything else stays monochrome. */
+  .r { display: inline-block; padding: 0.0625rem 0.375rem; border-radius: 2px;
+       font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+  .r-good { background: var(--good-bg); color: var(--good); }
+  .r-fair { background: var(--fair-bg); color: var(--fair); }
+  .r-poor { background: var(--poor-bg); color: var(--poor); }
+  .r-na   { background: var(--na-bg);   color: var(--na); font-weight: 400; }
+  .poor { color: var(--poor); font-weight: 600; }
+  .fair { color: var(--fair); }
+  td.n .poor { font-weight: 600; }
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
   .why { color: #666; font-size: 0.8125rem; }
 
@@ -47,20 +63,39 @@
 
   ul { margin: 0.25rem 0 0.75rem; padding-left: 1.125rem; }
   li { margin-bottom: 0.25rem; }
-  .lim { margin: 0 0 1.125rem; max-width: 46rem; }
+  .lim { margin: 0 0 1.125rem; max-width: 46rem; padding-left: 0.75rem;
+         border-left: 3px solid var(--line); }
+  .lim.important { border-left-color: var(--fair); }
   .lim .h { font-weight: 600; font-size: 0.8125rem; }
   .ok { color: var(--accent); }
   .lim .files { color: #666; font-size: 0.75rem; margin-top: 0.25rem;
                 font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
                 word-break: break-all; }
-  .pages { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.5rem 0 0.75rem; }
-  .page { text-align: center; }
-  .pv { display: block; }
-  .page .cap { font-size: 0.6875rem; color: #666; margin-top: 0.25rem; line-height: 1.3; }
+  .pages { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 0.75rem 0 1rem; }
+  .page { }
+  .pair { display: flex; gap: 0.5rem; }
+  .half { }
+  .half > .lbl { font-size: 0.625rem; color: #999; text-transform: uppercase;
+                 letter-spacing: 0.06em; margin-bottom: 0.1875rem; }
+  .pv, .pg { display: block; width: 240px; height: auto; background: #fff;
+             border: 1px solid #ccc; }
+  .page .cap { font-size: 0.6875rem; color: #666; margin-top: 0.375rem; line-height: 1.3; }
   .key { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: #666;
          margin: 0 0 1rem; align-items: center; }
   .key span { display: inline-flex; align-items: center; gap: 0.3125rem; }
   .sw { width: 11px; height: 11px; display: inline-block; border: 1px solid #bbb; }
+  .filter { display: flex; gap: 0.5rem; align-items: baseline; margin: 0 0 0.75rem; }
+  .filter input { font: inherit; font-size: 0.875rem; padding: 0.3125rem 0.5rem;
+                  border: 1px solid #ccc; background: #fff; color: inherit;
+                  border-radius: 0; min-width: 18rem; }
+  .filter input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .filter .count { font-size: 0.8125rem; color: #666; }
+  .pager { display: flex; gap: 0.5rem; align-items: baseline; margin: -0.5rem 0 1rem;
+           font-size: 0.8125rem; color: #666; }
+  .pager button { font: inherit; padding: 0.125rem 0.5rem; border: 1px solid #ccc;
+                  background: #fff; color: inherit; cursor: pointer; }
+  .pager button:disabled { color: #bbb; cursor: default; }
+  @media print { .filter, .pager { display: none; } }
   footer { margin-top: 3rem; padding-top: 0.75rem; border-top: 1px solid var(--line);
            color: #888; font-size: 0.75rem; }
   @media print {
@@ -86,6 +121,15 @@
   <strong>This report contains unmasked sensitive values.</strong>
   <p>Generated with <code>--reveal</code>. Handle it with the same care as the documents it
   describes.</p>
+</div>
+{% endif %}
+
+{% if report.run.page_images_used %}
+<div class="box">
+  <strong>This report contains pictures of the documents.</strong>
+  <p>Generated with <code>--page-images</code>, so it carries the page content itself,
+  not just measurements of it. Masking still applies to the values in the tables, but the
+  pages beside them are readable.</p>
 </div>
 {% endif %}
 
@@ -158,7 +202,7 @@
   {% for cat, count in agg.sensitive_by_category | dictsort(by='value', reverse=true) %}
     {% set m = category_meta(cat) %}
     <tr><td>{{ m.label }}</td>
-        <td>{% if m.severity == "high" %}<span class="poor">high</span>{% else %}{{ m.severity }}{% endif %}</td>
+        <td>{{ severity_badge(m.severity) | safe }}</td>
         <td class="n">{{ count }}</td>
         <td class="why">{{ m.note }}</td></tr>
   {% endfor %}
@@ -182,9 +226,10 @@ before reading that as an all-clear.</p>
   {% for sid, d in agg.signal_distribution | dictsort %}
     <tr><td>{{ signal_name(sid) }}</td>
       {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(report.signal_weights.get(sid, 0)) }}</td>{% endif %}
-      <td class="n">{{ d.good or "" }}</td><td class="n">{{ d.fair or "" }}</td>
+      <td class="n">{% if d.good %}<span style="color:var(--good)">{{ d.good }}</span>{% endif %}</td>
+      <td class="n">{% if d.fair %}<span style="color:var(--fair)">{{ d.fair }}</span>{% endif %}</td>
       <td class="n">{% if d.poor %}<span class="poor">{{ d.poor }}</span>{% endif %}</td>
-      <td class="n">{{ d.not_applicable or "" }}</td></tr>
+      <td class="n">{% if d.not_applicable %}<span style="color:var(--na)">{{ d.not_applicable }}</span>{% endif %}</td></tr>
   {% endfor %}
   </tbody>
 </table></div>
@@ -196,10 +241,11 @@ every weight behind it is shown.</p>
 
 {# -------------------------------------------------------------- DOCUMENTS #}
 <h2>Documents</h2>
+<div id="docs">
 {% for doc in report.documents %}
 <details{% if report.documents | length <= 3 %} open{% endif %}>
   <summary>{{ doc.relative_path }}
-    <span>— {{ doc.format }}, {{ doc.page_count }} page(s){% if not doc.page_count_known %} (not fixed){% endif %}{% if doc.difficulty and doc.difficulty.score %}, difficulty {{ doc.difficulty.score.value }}/100{% endif %}{% if doc.sensitive and doc.sensitive.total %}, {{ doc.sensitive.total }} sensitive item(s){% endif %}</span>
+    <span>— {{ doc.format }}, {{ doc.page_count }} page(s){% if not doc.page_count_known %} (not fixed){% endif %}{% if doc.difficulty and doc.difficulty.score %}, difficulty <span class="r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.value }}/100</span>{% endif %}{% if doc.sensitive and doc.sensitive.total %}, {{ doc.sensitive.total }} sensitive item(s){% endif %}</span>
   </summary>
   <div>
 
@@ -213,14 +259,25 @@ every weight behind it is shown.</p>
     <div class="key">
       <span><i class="sw" style="background:#dcdcdc;border-color:#dcdcdc"></i> text</span>
       <span><i class="sw" style="background:#c8c8c8;border-color:#c8c8c8"></i> image, needs OCR or vision</span>
-      <span><i class="sw" style="background:#fff;border-color:#111"></i> sensitive value, high severity</span>
-      <span><i class="sw" style="background:#fff;border-color:#777"></i> sensitive value, other</span>
+      <span><i class="sw" style="background:#fff;border-color:var(--poor)"></i> sensitive, high severity</span>
+      <span><i class="sw" style="background:#fff;border-color:var(--fair)"></i> sensitive, other</span>
     </div>
     <div class="pages">
     {% for pv in doc.previews[:max_preview_pages] %}
       <div class="page">
-        {{ page_preview_svg(pv) | safe }}
-        <div class="cap">p{{ pv.number }}{% if pv.rotation %} · {{ pv.rotation }}°{% endif %}<br>
+        <div class="pair">
+          {% if pv.image_data_uri %}
+          <div class="half">
+            <div class="lbl">document</div>
+            <img class="pg" src="{{ pv.image_data_uri }}" alt="Page {{ pv.number }}" loading="lazy">
+          </div>
+          {% endif %}
+          <div class="half">
+            <div class="lbl">{{ "extracted" if pv.image_data_uri else "layout" }}</div>
+            {{ page_preview_svg(pv) | safe }}
+          </div>
+        </div>
+        <div class="cap">p{{ pv.number }}{% if pv.rotation %} · {{ pv.rotation }}°{% endif %} ·
           {{ pv.image_coverage_pct | round | int }}% img{% if pv.sensitive_count %} · {{ pv.sensitive_count }} pii{% endif %}</div>
       </div>
     {% endfor %}
@@ -234,12 +291,17 @@ every weight behind it is shown.</p>
       they were found in the text but their words could not be tied back to a position.
       They are still counted in the table below.</p>
     {% endif %}
-    <p class="note">Layout only. No text or image from the document is reproduced here.</p>
+    {% if doc.previews[0].image_data_uri %}
+    <p class="note">Left is the page as it renders; right is what complydoc extracted from it.</p>
+    {% else %}
+    <p class="note">Layout only. No text or image from the document is reproduced here.
+    Run with <code>--page-images</code> to show the pages themselves alongside.</p>
+    {% endif %}
   {% endif %}
 
   {% if doc.cost %}
     <h4>Pages</h4>
-    <div class="scroll"><table>
+    <div class="scroll"><table data-paginate="15">
       <thead><tr><th class="n">Page</th><th>Size</th><th class="n">Scan DPI</th><th>Text</th><th class="n">Text coverage</th></tr></thead>
       <tbody>
       {% for p in doc.cost.pages %}
@@ -263,7 +325,7 @@ every weight behind it is shown.</p>
           <td class="n">{% if m.text_path_input_usd is not none %}{{ money(m.text_path_input_usd) }}{% else %}n/a{% endif %}</td>
           <td class="n">{% if m.vision_tokens_by_resolution.get(res) is not none %}{{ "{:,}".format(m.vision_tokens_by_resolution[res]) }}{% else %}—{% endif %}</td>
           <td class="n">{% if m.vision_input_usd_by_resolution.get(res) is not none %}{{ money(m.vision_input_usd_by_resolution[res]) }}{% else %}n/a{% endif %}</td>
-          <td>{% if m.last_verified %}{% if m.is_stale %}<span class="poor">{{ m.last_verified }}</span>{% else %}{{ m.last_verified }}{% endif %}{% else %}<span class="poor">never</span>{% endif %}</td>
+          <td>{% if m.last_verified %}{% if m.is_stale %}<span class="r r-poor">{{ m.last_verified }}</span>{% else %}<span class="r r-good">{{ m.last_verified }}</span>{% endif %}{% else %}<span class="r r-poor">never</span>{% endif %}</td>
         </tr>
         {% if m.text_path_unavailable_reason or m.vision_path_unavailable_reason %}
         <tr><td colspan="6" class="why">
@@ -286,7 +348,7 @@ every weight behind it is shown.</p>
         <tr>
           <td>{{ s.name }}</td>
           <td>{{ s.display }}{% if s.reason %}<div class="why">{{ s.reason }}</div>{% endif %}</td>
-          <td>{% if s.rating == "poor" %}<span class="poor">poor</span>{% elif s.rating %}{{ s.rating }}{% else %}{{ s.status }}{% endif %}</td>
+          <td>{% if s.rating %}<span class="r r-{{ s.rating }}">{{ s.rating }}</span>{% else %}<span class="r r-na">{{ s.status.replace("_", " ") }}</span>{% endif %}</td>
           {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(s.weight) }}</td>{% endif %}
           <td class="why">{{ s.why }}</td>
         </tr>
@@ -303,14 +365,14 @@ every weight behind it is shown.</p>
   {% if doc.sensitive %}
     <h4>Sensitive information</h4>
     {% if doc.sensitive.matches %}
-    <div class="scroll"><table>
-      <thead><tr><th class="n">Page</th><th class="n">Line</th><th class="n">Col</th>
+    <div class="scroll"><table data-paginate="12">
+      <thead data-marker="matches"><tr><th class="n">Page</th><th class="n">Line</th><th class="n">Col</th>
         <th>Category</th><th>Severity</th><th>Value</th>{% if report.run.reveal_used %}<th>Revealed</th>{% endif %}<th>Matched because</th></tr></thead>
       <tbody>
       {% for m in doc.sensitive.matches %}
         <tr><td class="n">{{ m.page }}</td><td class="n">{{ m.line }}</td><td class="n">{{ m.column }}</td>
           <td>{{ m.label }}</td>
-          <td>{% if m.severity == "high" %}<span class="poor">high</span>{% else %}{{ m.severity }}{% endif %}</td>
+          <td>{{ severity_badge(m.severity) | safe }}</td>
           <td class="mono">{{ m.masked }}</td>
           {% if report.run.reveal_used %}<td class="mono">{{ m.revealed if m.revealed else "—" }}</td>{% endif %}
           <td class="why">
@@ -336,10 +398,11 @@ every weight behind it is shown.</p>
 {% else %}
 <p class="note">No documents were audited.</p>
 {% endfor %}
+</div>
 
 {% if report.skipped %}
 <h3>Files skipped</h3>
-<div class="scroll"><table>
+<div class="scroll"><table data-paginate="15">
   <thead><tr><th>File</th><th>Reason</th><th>Detail</th></tr></thead>
   <tbody>{% for s in report.skipped %}
     <tr><td class="mono">{{ s.path.name }}</td><td>{{ s.reason }}</td><td class="why">{{ s.detail or "—" }}</td></tr>
@@ -351,7 +414,7 @@ every weight behind it is shown.</p>
 <h2>Limitations of this run</h2>
 <p class="note">Generated from what happened during this run, not a standard disclaimer.</p>
 {% for lim in report.limitations %}
-  <div class="lim">
+  <div class="lim{% if lim.severity == 'important' %} important{% endif %}">
     <div class="h">{{ lim.area }}{% if lim.severity == "important" %} — important{% endif %}</div>
     <div class="why">{{ lim.statement }}</div>
     {% if lim.affected %}<div class="files">{{ lim.affected | join(" · ") }}</div>{% endif %}
@@ -367,6 +430,95 @@ config {{ report.run.config_digest }} · Python {{ report.run.python_version }} 
 OCR {{ "on" if report.run.ocr_available and report.run.ocr_requested else "off" }} ·
 name detection {{ "on" if report.run.ner_available else "off" }}
 </footer>
+
+<script>
+/* Progressive enhancement only: with scripting off, every document and every
+   table row is already on the page. This adds a filter and pagination for runs
+   large enough that scrolling stops working. */
+(function () {
+  "use strict";
+
+  function makeFilter(container) {
+    var items = Array.prototype.slice.call(container.children).filter(function (el) {
+      return el.tagName === "DETAILS";
+    });
+    if (items.length < 5) return;
+
+    var bar = document.createElement("div");
+    bar.className = "filter";
+    var input = document.createElement("input");
+    input.type = "search";
+    input.placeholder = "Filter documents — filename, category, any text";
+    input.setAttribute("aria-label", "Filter documents");
+    var count = document.createElement("span");
+    count.className = "count";
+    bar.appendChild(input);
+    bar.appendChild(count);
+    container.parentNode.insertBefore(bar, container);
+
+    var haystacks = items.map(function (el) { return el.textContent.toLowerCase(); });
+
+    function apply() {
+      var q = input.value.trim().toLowerCase();
+      var shown = 0;
+      items.forEach(function (el, i) {
+        var hit = !q || haystacks[i].indexOf(q) !== -1;
+        el.hidden = !hit;
+        if (hit) shown++;
+      });
+      count.textContent = q
+        ? shown + " of " + items.length + " document(s)"
+        : items.length + " document(s)";
+    }
+    input.addEventListener("input", apply);
+    apply();
+  }
+
+  function paginate(table) {
+    var size = parseInt(table.getAttribute("data-paginate"), 10);
+    var body = table.tBodies[0];
+    if (!body || !size) return;
+    var rows = Array.prototype.slice.call(body.rows);
+    if (rows.length <= size) return;
+
+    var page = 0;
+    var pages = Math.ceil(rows.length / size);
+
+    var bar = document.createElement("div");
+    bar.className = "pager";
+    var prev = document.createElement("button");
+    prev.type = "button";
+    prev.textContent = "Previous";
+    var next = document.createElement("button");
+    next.type = "button";
+    next.textContent = "Next";
+    var label = document.createElement("span");
+    bar.appendChild(prev);
+    bar.appendChild(next);
+    bar.appendChild(label);
+    var host = table.parentNode;
+    host.parentNode.insertBefore(bar, host.nextSibling);
+
+    function draw() {
+      var first = page * size;
+      var last = Math.min(first + size, rows.length);
+      rows.forEach(function (row, i) { row.hidden = i < first || i >= last; });
+      label.textContent = "Showing " + (first + 1) + "\u2013" + last + " of " + rows.length;
+      prev.disabled = page === 0;
+      next.disabled = page >= pages - 1;
+    }
+    prev.addEventListener("click", function () { if (page > 0) { page--; draw(); } });
+    next.addEventListener("click", function () { if (page < pages - 1) { page++; draw(); } });
+    draw();
+  }
+
+  var docs = document.getElementById("docs");
+  if (docs) makeFilter(docs);
+  Array.prototype.forEach.call(
+    document.querySelectorAll("table[data-paginate]"), paginate
+  );
+})();
+</script>
 
 </body>
 </html>

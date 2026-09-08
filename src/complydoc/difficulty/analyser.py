@@ -35,6 +35,11 @@ class DifficultyReport:
         return [s for s in self.signals if s.rating == rating]
 
 
+def _article(word: str) -> str:
+    """ "a" or "an", so the generated reasons read like English."""
+    return "an" if word[:1].lower() in "aeiou" else "a"
+
+
 def _result(
     signal: Signal,
     settings: SignalConfig | None,
@@ -79,7 +84,8 @@ def analyse(document: Document, config: DifficultyConfig) -> DifficultyReport:
                     Measurement.na(
                         f"this signal is only meaningful for "
                         f"{', '.join(sorted(f.value for f in signal.applies_to))} files, "
-                        f"and this is a {document.format.value} file"
+                        f"and this is {_article(document.format.value)} "
+                        f"{document.format.value} file"
                     ),
                 )
             )

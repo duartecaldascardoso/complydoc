@@ -56,6 +56,7 @@ class RunMetadata:
     config_digest: str
     offline_guard: str
     reveal_used: bool
+    page_images_used: bool
     ocr_requested: bool
     ocr_available: bool
     ner_available: bool

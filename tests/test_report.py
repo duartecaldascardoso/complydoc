@@ -161,3 +161,40 @@ def test_config_digest_is_recorded_so_runs_are_comparable(report, config):
 
 def test_offline_status_is_recorded(report):
     assert report.run.offline_guard in {"armed", "not_armed"}
+
+
+# --- opt-in page images ----------------------------------------------------
+
+
+def test_default_report_embeds_no_page_images(html, report):
+    assert report.run.page_images_used is False
+    assert "data:image/jpeg" not in html
+
+
+def test_page_images_are_stamped_when_used(config):
+    from complydoc.report.html_writer import render_html
+
+    with_images = run_audit(FIXTURES, config, COMPONENTS, page_images=True)
+    assert with_images.run.page_images_used is True
+    page = render_html(with_images, config)
+    assert "data:image/jpeg" in page
+    assert "contains pictures of the documents" in page
+
+
+# --- filter and pagination -------------------------------------------------
+
+
+def test_report_ships_its_own_filter_and_pagination(html):
+    assert 'id="docs"' in html
+    assert "data-paginate" in html
+    assert "<script>" in html
+
+
+def test_the_script_is_inline_not_fetched(html):
+    assert "<script src=" not in html
+
+
+def test_content_is_present_without_scripting(html, report):
+    """Filtering is an enhancement; every document must be in the markup already."""
+    for document in report.documents:
+        assert document.relative_path in html

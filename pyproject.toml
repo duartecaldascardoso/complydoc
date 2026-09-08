@@ -59,6 +59,10 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# The diagram generator emits SVG markup; long lines are inherent to it.
+"scripts/build_diagram.py" = ["E501"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["complydoc", "tests"]
 

@@ -95,7 +95,9 @@ models:
       fidelity: approximate
       approximate_ratio: 1.0
       approximation_note: >
-        Approximated with o200k_base; Anthropic does not publish an offline tokenizer.
+        Anthropic does not publish an offline tokenizer, so text token counts are
+        approximated with the o200k_base encoding. Treat the figure as indicative
+        rather than exact.
     last_verified: 2026-06-24
     source_url: https://docs.anthropic.com/en/docs/about-claude/pricing
 
@@ -112,7 +114,9 @@ models:
       fidelity: approximate
       approximate_ratio: 1.0
       approximation_note: >
-        Approximated with o200k_base; Anthropic does not publish an offline tokenizer.
+        Anthropic does not publish an offline tokenizer, so text token counts are
+        approximated with the o200k_base encoding. Treat the figure as indicative
+        rather than exact.
     last_verified: 2026-06-24
     source_url: https://docs.anthropic.com/en/docs/about-claude/pricing
 

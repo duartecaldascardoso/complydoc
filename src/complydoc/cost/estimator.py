@@ -13,6 +13,7 @@ guessed at.
 from __future__ import annotations
 
 import datetime as dt
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -27,9 +28,11 @@ __all__ = [
     "FolderCostEstimate",
     "ModelCostEstimate",
     "PageFacts",
+    "UnknownModelError",
     "VolumeExtrapolation",
     "estimate_document",
     "estimate_folder",
+    "resolve_models",
 ]
 
 
@@ -224,8 +227,41 @@ def _model_estimate(
     )
 
 
+class UnknownModelError(ValueError):
+    """A model was asked for by name and is not in the pricing config."""
+
+
+def resolve_models(pricing: PricingConfig, wanted: Sequence[str] | None) -> list[ModelPricing]:
+    """The models to compare. Everything priced and enabled, unless names are given."""
+    if not wanted:
+        return pricing.usable_models
+    by_id = {m.id: m for m in pricing.models}
+    chosen: list[ModelPricing] = []
+    unknown: list[str] = []
+    unpriced: list[str] = []
+    for name in wanted:
+        model = by_id.get(name)
+        if model is None:
+            unknown.append(name)
+        elif not model.is_priced:
+            unpriced.append(name)
+        else:
+            chosen.append(model)
+    problems = []
+    if unknown:
+        problems.append("not in pricing.yaml: " + ", ".join(unknown))
+    if unpriced:
+        problems.append("present but carries no price: " + ", ".join(unpriced))
+    if problems:
+        raise UnknownModelError("; ".join(problems))
+    return chosen
+
+
 def estimate_document(
-    document: Document, pricing: PricingConfig, today: dt.date | None = None
+    document: Document,
+    pricing: PricingConfig,
+    today: dt.date | None = None,
+    models: Sequence[ModelPricing] | None = None,
 ) -> DocumentCostEstimate:
     now = today or dt.date.today()
     facts = _page_facts(document, pricing)
@@ -239,7 +275,8 @@ def estimate_document(
         mean_text_coverage_pct=round(sum(coverages) / len(coverages), 2) if coverages else 0.0,
         pages=facts,
         models=[
-            _model_estimate(document, facts, model, pricing, now) for model in pricing.usable_models
+            _model_estimate(document, facts, model, pricing, now)
+            for model in (models if models is not None else pricing.usable_models)
         ],
     )
 
@@ -279,7 +316,9 @@ def estimate_folder(
     headline_resolution: str = "medium",
     monthly_volume: int | None = None,
     today: dt.date | None = None,
+    select_models: Sequence[str] | None = None,
 ) -> FolderCostEstimate:
+    chosen = resolve_models(pricing, select_models)
     resolutions = list(pricing.resolution_presets)
     if headline_resolution not in resolutions and resolutions:
         headline_resolution = resolutions[0]
@@ -292,7 +331,7 @@ def estimate_folder(
         usd_to_report_rate=fx.rate if use_fx else None,
         headline_resolution=headline_resolution,
         resolutions=resolutions,
-        documents=[estimate_document(d, pricing, today) for d in documents],
+        documents=[estimate_document(d, pricing, today, chosen) for d in documents],
     )
     if monthly_volume:
         estimate.volume = _extrapolate(estimate.documents, monthly_volume, headline_resolution)

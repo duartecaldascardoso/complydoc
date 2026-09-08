@@ -17,6 +17,7 @@ from complydoc.cost.estimator import DocumentCostEstimate, FolderCostEstimate
 from complydoc.difficulty.analyser import DifficultyReport
 from complydoc.difficulty.base import SignalStatus
 from complydoc.ingest.base import DocumentFormat, SkipRecord
+from complydoc.report.preview import PagePreview
 from complydoc.sensitive.scanner import ScanResult
 
 __all__ = [
@@ -74,6 +75,8 @@ class DocumentReport:
     cost: DocumentCostEstimate | None = None
     difficulty: DifficultyReport | None = None
     sensitive: ScanResult | None = None
+    previews: list[PagePreview] = field(default_factory=list)
+    """Per-page wireframes. Geometry only — never document content."""
 
 
 @dataclass(slots=True)

@@ -30,6 +30,7 @@ from complydoc.report.models import (
     RunMetadata,
     build_aggregate,
 )
+from complydoc.report.preview import build_previews
 from complydoc.sensitive.scanner import scan
 
 __all__ = ["COMPONENTS", "run_audit"]
@@ -64,7 +65,9 @@ def run_audit(
     reveal: bool = False,
     monthly_volume: int | None = None,
     resolution: str = "medium",
+    select_models: Sequence[str] | None = None,
     recurse: bool = True,
+    previews: bool = True,
     render_dpi: int = 150,
     progress: Callable[[int, int, Path], None] | None = None,
 ) -> AuditReport:
@@ -120,6 +123,8 @@ def run_audit(
             entry.difficulty = analyse(document, config.difficulty)
         if "sensitive" in requested:
             entry.sensitive = scan(document, config.sensitive, reveal=reveal)
+        if previews:
+            entry.previews = build_previews(document, entry.sensitive)
         documents.append(entry)
 
     folder_cost = None
@@ -129,6 +134,7 @@ def run_audit(
             config.pricing,
             headline_resolution=resolution,
             monthly_volume=monthly_volume,
+            select_models=select_models,
         )
         for entry, estimate in zip(documents, folder_cost.documents, strict=True):
             entry.cost = estimate

@@ -14,7 +14,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-166-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-205-4f5d75" alt="Tests">
   <img src="https://img.shields.io/badge/mypy-strict-4f5d75" alt="mypy strict">
 </div>
 
@@ -51,6 +51,14 @@ uv run complydoc difficulty ./invoices
 uv run complydoc sensitive ./invoices
 ```
 
+By default every priced model in the config is compared. Narrow it with `--model`,
+repeated for each one you want:
+
+```bash
+uv run complydoc cost ./invoices -m claude-opus-5 -m claude-haiku-4-5
+```
+
+`uv run complydoc models` lists what is configured and how current each price is.
 `uv run complydoc doctor` prints what is installed and what is missing.
 
 Inputs: PDF (native text and scanned), PNG, JPG, TIFF, BMP, DOCX, XLSX. Folders are recursed. Files that cannot be opened are skipped and listed in the report.
@@ -84,6 +92,20 @@ Only input cost is estimated. Output length depends on the prompt, which this to
 > [!NOTE]
 > Prices carry a `last_verified` date per entry. The report prints it and warns past 90 days; an entry with no date warns on every run. Anthropic prices ship with a sourcing date. OpenAI and Google entries ship as disabled templates with the formula filled in and the price left `null`, because those were not sourced when the config was written.
 
+Prices for other providers can be generated from litellm's model price table, which
+covers a few thousand models:
+
+```bash
+uv run complydoc pricing-import --provider openai --limit 5
+uv run complydoc pricing-import -m gpt-4o -m gemini/gemini-2.0-flash
+```
+
+That prints YAML to paste under `models:`, with `last_verified` set to the date you ran it
+and `source_url` pointing at litellm. litellm is not a runtime dependency and is never
+imported during an audit — only its data file is read, from an installed copy or a path you
+give with `--from`. It carries token prices but not vision formulas, so the importer maps
+each provider onto one of the three shapes in `vision_formulas`.
+
 ### Extraction difficulty
 
 Eighteen signals, each reported as a row with the measured value, a rating, and one sentence on why it matters. The table is the primary output.
@@ -91,6 +113,21 @@ Eighteen signals, each reported as a row with the measured value, a rating, and 
 Measured: text layer presence and coverage, image area proportion, garbled character rate, table count, header depth and merged cells, column layout, page rotation, estimated skew, scan DPI, font count and embedding, date format consistency, page size variance, detected language, encryption, and AcroForm fields, which are rated as a positive signal.
 
 A weighted score is also produced. Every weight lives in `difficulty.yaml` and is printed next to its row; the config schema rejects a configuration that enables scoring with `print_weights_in_report: false`. Signals that cannot be measured are excluded from the score rather than counted as failures, and a score resting on fewer than half the signals is marked low confidence.
+
+### Page layout preview
+
+Each page is drawn in the HTML report as a wireframe: light blocks where the words are,
+darker blocks where images are, and an outline around every sensitive value that could be
+placed. It answers which pages are expensive and where the risk sits, at a glance.
+
+It is geometry only. No pixel of the page and no character of its text is reproduced — a
+thumbnail would undo the masking, and the report is meant to be forwardable. Matches that
+cannot be tied back to a position are counted and reported as unplaced rather than dropped;
+DOCX and XLSX carry no word geometry, so everything in them is unplaced.
+
+A run of words spanning most of the page width, or several line heights, is rejected as a
+placement. On a two-column page the extraction order crosses the gutter, and a box drawn
+from that would point at the wrong place.
 
 ### Sensitive information
 

@@ -146,3 +146,113 @@ def test_the_run_never_crashes_on_the_awkward_folder(tmp_path):
     data = json.loads((tmp_path / "r.json").read_text())
     assert data["aggregate"]["documents_skipped"] >= 2
     assert data["aggregate"]["documents_audited"] >= 10
+
+
+def test_models_command_lists_configured_models():
+    result = runner.invoke(app, ["models"])
+    assert result.exit_code == 0
+    assert "claude-opus-5" in result.output
+    assert "width_height_area" in result.output
+
+
+def test_model_selection_narrows_the_report(tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "cost",
+            str(FIXTURES),
+            "--model",
+            "claude-haiku-4-5",
+            "--out",
+            str(tmp_path),
+            "--name",
+            "one",
+            "--quiet",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    data = json.loads((tmp_path / "one.json").read_text())
+    for document in data["documents"]:
+        assert [m["model_id"] for m in document["cost"]["models"]] == ["claude-haiku-4-5"]
+
+
+def test_repeating_the_flag_compares_several(tmp_path):
+    result = runner.invoke(
+        app,
+        [
+            "cost",
+            str(FIXTURES / "native_text.pdf"),
+            "-m",
+            "claude-opus-5",
+            "-m",
+            "claude-haiku-4-5",
+            "--out",
+            str(tmp_path),
+            "--name",
+            "two",
+            "--quiet",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    data = json.loads((tmp_path / "two.json").read_text())
+    assert [m["model_id"] for m in data["documents"][0]["cost"]["models"]] == [
+        "claude-opus-5",
+        "claude-haiku-4-5",
+    ]
+
+
+def test_unknown_model_exits_cleanly(tmp_path):
+    result = runner.invoke(
+        app, ["cost", str(FIXTURES), "--model", "nope", "--out", str(tmp_path), "--quiet"]
+    )
+    assert result.exit_code == 2
+    assert "Unknown model" in result.output
+
+
+def test_pricing_import_needs_a_selection():
+    result = runner.invoke(app, ["pricing-import"])
+    assert result.exit_code == 2
+    assert "Nothing selected" in result.output
+
+
+def test_pricing_import_emits_valid_yaml(tmp_path):
+    import yaml
+
+    table = tmp_path / "prices.json"
+    table.write_text(
+        json.dumps(
+            {
+                "gpt-4o": {
+                    "litellm_provider": "openai",
+                    "mode": "chat",
+                    "supports_vision": True,
+                    "input_cost_per_token": 2.5e-06,
+                    "output_cost_per_token": 1e-05,
+                },
+            }
+        )
+    )
+    result = runner.invoke(app, ["pricing-import", "--from", str(table), "-m", "gpt-4o"])
+    assert result.exit_code == 0, result.output
+    parsed = yaml.safe_load("models:\n" + result.stdout)["models"]
+    assert parsed[0]["id"] == "gpt-4o"
+    assert parsed[0]["input_per_mtok_usd"] == 2.5
+
+
+def test_page_previews_reach_the_html(tmp_path):
+    runner.invoke(
+        app,
+        [
+            "audit",
+            str(FIXTURES / "sensitive_sample.pdf"),
+            "--out",
+            str(tmp_path),
+            "--name",
+            "pv",
+            "--quiet",
+        ],
+    )
+    html = (tmp_path / "pv.html").read_text()
+    assert 'class="pv"' in html
+    assert "Page layout" in html
+    assert "<text" not in html.split('class="pv"')[1].split("</svg>")[0]

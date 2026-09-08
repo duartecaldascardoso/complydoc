@@ -20,6 +20,7 @@ from rich.table import Table
 from complydoc import __version__, offline
 from complydoc.audit import COMPONENTS, run_audit
 from complydoc.config.loader import ConfigError, load_config
+from complydoc.cost.estimator import UnknownModelError
 from complydoc.report.html_writer import write_html
 from complydoc.report.json_writer import write_json
 from complydoc.report.models import AuditReport
@@ -47,6 +48,15 @@ RecurseOpt = Annotated[
 ]
 NameOpt = Annotated[str, typer.Option("--name", help="Base filename for the reports.")]
 QuietOpt = Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output.")]
+ModelOpt = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--model",
+        "-m",
+        help="Model id to price, repeatable. Defaults to every priced model. "
+        "See: complydoc models.",
+    ),
+]
 
 
 def _load(config_dir: Path | None) -> object:
@@ -118,6 +128,7 @@ def _run(
     reveal: bool = False,
     monthly_volume: int | None = None,
     resolution: str = "medium",
+    select_models: list[str] | None = None,
 ) -> None:
     offline.arm()
     config = _load(config_dir)
@@ -136,17 +147,22 @@ def _run(
         if not quiet:
             console.print(f"[dim]({index}/{total})[/] {path.name}")
 
-    report = run_audit(
-        target,
-        config,  # type: ignore[arg-type]
-        components,
-        ocr=ocr,
-        reveal=reveal,
-        monthly_volume=monthly_volume,
-        resolution=resolution,
-        recurse=recurse,
-        progress=progress if not quiet else None,
-    )
+    try:
+        report = run_audit(
+            target,
+            config,  # type: ignore[arg-type]
+            components,
+            ocr=ocr,
+            reveal=reveal,
+            monthly_volume=monthly_volume,
+            resolution=resolution,
+            select_models=select_models,
+            recurse=recurse,
+            progress=progress if not quiet else None,
+        )
+    except UnknownModelError as exc:
+        errors.print(f"[bold red]Unknown model[/] — {exc}\n\nRun 'complydoc models' to list them.")
+        raise typer.Exit(code=2) from exc
     if not quiet:
         _summary(report)
     _emit(report, config, out, name, quiet)
@@ -171,6 +187,7 @@ def audit(
             help="Print sensitive values in full. Off by default, and the report says so.",
         ),
     ] = False,
+    model: ModelOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
@@ -189,6 +206,7 @@ def audit(
         reveal=reveal,
         monthly_volume=monthly_volume,
         resolution=resolution,
+        select_models=model,
     )
 
 
@@ -204,6 +222,7 @@ def cost(
     resolution: Annotated[
         str, typer.Option("--vision-resolution", help="Headline vision resolution preset.")
     ] = "medium",
+    model: ModelOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
@@ -221,6 +240,7 @@ def cost(
         quiet,
         monthly_volume=monthly_volume,
         resolution=resolution,
+        select_models=model,
     )
 
 
@@ -299,6 +319,105 @@ def doctor(config_dir: ConfigOpt = None) -> None:
             console.print(f"[yellow]Price provenance:[/] {warning.message}")
     else:
         console.print("Price provenance: [green]all enabled models verified recently[/]")
+
+
+@app.command()
+def models(config_dir: ConfigOpt = None) -> None:
+    """List the models available to price against, and how current each price is."""
+    import datetime as dt
+
+    config = _load(config_dir)
+    pricing = config.pricing  # type: ignore[attr-defined]
+    today = dt.date.today()
+
+    table = Table(box=None, pad_edge=False)
+    table.add_column("Model id")
+    table.add_column("Provider")
+    table.add_column("Input $/Mtok", justify="right")
+    table.add_column("Vision formula")
+    table.add_column("Verified")
+
+    for entry in pricing.models:
+        if not entry.enabled:
+            state = "[dim]disabled, no price[/]"
+        elif not entry.is_priced:
+            state = "[yellow]no price[/]"
+        else:
+            age = entry.days_since_verified(today)
+            if age is None:
+                state = "[red]never[/]"
+            elif age > pricing.staleness_warn_days:
+                state = f"[red]{entry.last_verified} ({age}d)[/]"
+            else:
+                state = f"{entry.last_verified}"
+        table.add_row(
+            entry.id if entry.enabled else f"[dim]{entry.id}[/]",
+            entry.provider,
+            f"{entry.input_per_mtok_usd:g}" if entry.is_priced else "—",
+            entry.vision_formula or "—",
+            state,
+        )
+    console.print(table)
+    console.print(
+        "\nPrice one model with [bold]--model <id>[/], repeat the flag for several. "
+        "Add more with [bold]complydoc pricing-import[/]."
+    )
+
+
+@app.command("pricing-import")
+def pricing_import(
+    source: Annotated[
+        Path | None,
+        typer.Option("--from", help="Path to litellm's model_prices_and_context_window JSON."),
+    ] = None,
+    model: Annotated[
+        list[str] | None,
+        typer.Option("--model", "-m", help="Model id to import, repeatable."),
+    ] = None,
+    provider: Annotated[
+        str | None, typer.Option("--provider", help="Import every vision model from one provider.")
+    ] = None,
+    limit: Annotated[int, typer.Option("--limit", help="Cap how many are printed.")] = 20,
+) -> None:
+    """Print pricing.yaml entries generated from litellm's price table.
+
+    complydoc will not invent a price, so the shipped config leaves non-Anthropic
+    models as empty templates. This fills them in from a maintained source and
+    stamps each with the date you ran the import.
+
+    litellm is not a runtime dependency and is never imported during an audit —
+    only its data file is read, and only when you run this.
+    """
+    from complydoc.cost.pricing_import import (
+        PricingImportError,
+        load_table,
+        select,
+        to_yaml,
+    )
+
+    if not model and not provider:
+        errors.print(
+            "[bold red]Nothing selected.[/] Pass --model <id> (repeatable) or "
+            "--provider <name>. Run with --provider anthropic to see the shape."
+        )
+        raise typer.Exit(code=2)
+
+    try:
+        table = load_table(source)
+        chosen = select(table, ids=model, provider=provider, limit=limit)
+    except PricingImportError as exc:
+        errors.print(f"[bold red]Import failed[/] — {exc}")
+        raise typer.Exit(code=2) from exc
+
+    if not chosen:
+        errors.print("[yellow]Nothing matched.[/] Try a different --provider or --model.")
+        raise typer.Exit(code=1)
+
+    errors.print(
+        f"[dim]# {len(chosen)} model(s) from {len(table)} in the table. "
+        f"Paste under `models:` in pricing.yaml.[/]"
+    )
+    print(to_yaml(chosen))
 
 
 if __name__ == "__main__":  # pragma: no cover

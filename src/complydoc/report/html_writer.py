@@ -15,8 +15,30 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from complydoc.config.schema import Config
 from complydoc.difficulty.registry import signal_by_id
 from complydoc.report.models import AuditReport
+from complydoc.report.preview import PagePreview
 
-__all__ = ["render_html", "write_html"]
+__all__ = ["page_preview_svg", "render_html", "write_html"]
+
+# The mark, inlined so the report stays a single file: a document inside the
+# network guard boundary, with one line redacted.
+_LOGO_SVG = (
+    '<svg class="logo" viewBox="0 0 296 64" width="148" height="32" role="img" '
+    'aria-label="complydoc">'
+    '<rect x="8" y="12" width="40" height="40" rx="8" fill="none" stroke="#1a7f4b" '
+    'stroke-width="1.5" stroke-dasharray="3,3"/>'
+    '<rect x="20" y="21" width="16" height="22" rx="2" fill="none" stroke="#111" '
+    'stroke-width="1.5"/>'
+    '<line x1="23" y1="27" x2="33" y2="27" stroke="#111" stroke-width="1.5"/>'
+    '<line x1="23" y1="32" x2="33" y2="32" stroke="#111" stroke-width="1.5"/>'
+    '<line x1="23" y1="37" x2="29" y2="37" stroke="#1a7f4b" stroke-width="1.5"/>'
+    '<text x="62" y="41" fill="#111" font-size="27" font-weight="600" '
+    "font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\" "
+    'letter-spacing="-0.02em">complydoc</text>'
+    "</svg>"
+)
+
+_PREVIEW_WIDTH = 140
+_MAX_PREVIEW_PAGES = 12
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -28,6 +50,47 @@ def _money(value: float | None, currency: str = "USD") -> str:
     if value and abs(value) < 0.01:
         return f"{symbol}{value:.5f}"
     return f"{symbol}{value:,.2f}"
+
+
+def page_preview_svg(preview: PagePreview, width: int = _PREVIEW_WIDTH) -> str:
+    """One page drawn as geometry: words, images, sensitive marks. No content.
+
+    Deliberately monochrome and unlabelled — it is a thumbnail, and the numbers
+    that go with it are in the table underneath.
+    """
+    height = max(24, round(width * preview.aspect))
+    parts: list[str] = [
+        f'<svg class="pv" viewBox="0 0 {width} {height}" width="{width}" height="{height}" '
+        f'role="img" aria-label="Page {preview.number} layout: '
+        f"{preview.text_coverage_pct}% text, {preview.image_coverage_pct}% image, "
+        f'{preview.sensitive_count} sensitive item(s)">'
+    ]
+
+    def rect(box: object, **attrs: object) -> str:
+        b = box
+        x, y = b.x * width, b.y * height  # type: ignore[attr-defined]
+        w, h = max(0.6, b.w * width), max(0.6, b.h * height)  # type: ignore[attr-defined]
+        extra = " ".join(f'{k.replace("_", "-")}="{v}"' for k, v in attrs.items())
+        return f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" {extra}/>'
+
+    parts.append(f'<rect x="0" y="0" width="{width}" height="{height}" fill="#fff" stroke="#bbb"/>')
+    for box in preview.gutters:
+        parts.append(rect(box, fill="#f6f6f6"))
+    for box in preview.image_blocks:
+        parts.append(rect(box, fill="#c8c8c8"))
+    for box in preview.text_blocks:
+        parts.append(rect(box, fill="#dcdcdc"))
+    for box in preview.sensitive:
+        weight = "#111" if box.label == "high" else "#777"
+        parts.append(rect(box, fill="none", stroke=weight, stroke_width="1.2"))
+
+    if preview.unreadable:
+        parts.append(
+            f'<line x1="0" y1="0" x2="{width}" y2="{height}" stroke="#ddd"/>'
+            f'<line x1="{width}" y1="0" x2="0" y2="{height}" stroke="#ddd"/>'
+        )
+    parts.append("</svg>")
+    return "".join(parts)
 
 
 def render_html(report: AuditReport, config: Config) -> str:
@@ -67,6 +130,9 @@ def render_html(report: AuditReport, config: Config) -> str:
     template = environment.get_template("report.html.j2")
     return template.render(
         report=report,
+        page_preview_svg=page_preview_svg,
+        logo_svg=_LOGO_SVG,
+        max_preview_pages=_MAX_PREVIEW_PAGES,
         money=lambda v: _money(v, currency),
         category_meta=category_meta,
         signal_name=signal_name,

@@ -298,6 +298,7 @@ dependencies = [
     { name = "openpyxl" },
     { name = "pdfplumber" },
     { name = "pillow" },
+    { name = "py3langid" },
     { name = "pydantic" },
     { name = "pypdf" },
     { name = "pypdfium2" },
@@ -333,6 +334,7 @@ requires-dist = [
     { name = "openpyxl", specifier = ">=3.1" },
     { name = "pdfplumber", specifier = ">=0.11" },
     { name = "pillow", specifier = ">=10.3" },
+    { name = "py3langid", specifier = ">=0.4.0" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pypdf", specifier = ">=4.2" },
     { name = "pypdfium2", specifier = ">=4.30" },
@@ -1170,6 +1172,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3d/33/d4724ec5d86d496fe4108e220618aa0837ad3423a7af7ccdd9684ccc77c8/protobuf-7.36.1-cp310-abi3-win32.whl", hash = "sha256:0b53ce95272aad50ad25d7ff03373743209822e8ba42ea7fad27d2bee1547d00", size = 443002, upload-time = "2026-08-31T22:40:01.32Z" },
     { url = "https://files.pythonhosted.org/packages/db/37/155788a0d8daded960375af604202805308169f9b859419ea0aa370946e2/protobuf-7.36.1-cp310-abi3-win_amd64.whl", hash = "sha256:51139351435d9b43d88a55eaa49fb6f737fbb478fb0cbf2cf694d1a04a9d3363", size = 456518, upload-time = "2026-08-31T22:40:02.494Z" },
     { url = "https://files.pythonhosted.org/packages/39/ca/c47f91d3cab175b01fd8c4f0d80fdf8613be876cc616e66ad281a59c5ddf/protobuf-7.36.1-py3-none-any.whl", hash = "sha256:7d951e46b3f963d6c264c367c437921de9d5aedd9c3f9612b9077736b4e3ad5c", size = 179813, upload-time = "2026-08-31T22:40:03.54Z" },
+]
+
+[[package]]
+name = "py3langid"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/fc/51c88e5ef8346878ae6c09e1f7c86c6e6308c57794723bf423a72ddba4dd/py3langid-0.4.0.tar.gz", hash = "sha256:5924159039b5cc282c2edc10a7ea9363b2099834a0e99ed8d5bea3cc435d7871", size = 4604185, upload-time = "2026-09-02T09:10:53.983Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/2d/0eeff2727c970b1d553be70d15ba2d84e3830696c09a79d954c5ae3d5212/py3langid-0.4.0-py3-none-any.whl", hash = "sha256:c25bd038147951ba3a89efe9ec12cc7d2116cb6f311ff8af84ade398a8bc0616", size = 4600605, upload-time = "2026-09-02T09:10:49.54Z" },
 ]
 
 [[package]]

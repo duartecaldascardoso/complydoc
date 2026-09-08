@@ -48,7 +48,9 @@ def _table_info(table: Any) -> TableInfo:
             counting_header = False
 
     merged = max(0, rows * cols - len(unique_cells))
-    return TableInfo(rows=rows, cols=cols, header_depth=max(1, header_depth), merged_cells=merged)
+    # The row of leaf labels under the spanning rows counts as header as well.
+    depth = header_depth + 1 if header_depth else 1
+    return TableInfo(rows=rows, cols=cols, header_depth=depth, merged_cells=merged)
 
 
 class DocxLoader:

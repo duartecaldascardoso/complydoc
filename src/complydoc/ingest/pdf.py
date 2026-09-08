@@ -165,13 +165,15 @@ def _table_shape(table: Any) -> TableInfo | None:
 
     merged = sum(1 for cell in all_cells if spans(cell) > 1)
 
-    header_depth = 0
+    spanning_rows = 0
     for row_cells in cell_rows:
         if any(spans(cell) > 1 for cell in row_cells):
-            header_depth += 1
+            spanning_rows += 1
         else:
             break
-    header_depth = max(1, header_depth)
+    # The row of leaf labels sitting under the spanning rows is part of the
+    # header too, so a header of two merged rows plus its labels is three deep.
+    header_depth = spanning_rows + 1 if spanning_rows else 1
 
     return TableInfo(
         rows=len(cell_rows),

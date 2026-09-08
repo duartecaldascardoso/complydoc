@@ -48,13 +48,18 @@ signals:
       poor: { eq: false }
 
   text_layer_coverage_pct:
+    # Calibrated against real business documents, where word bounding boxes cover
+    # far less of a page than people expect. A dense page of prose reaches roughly
+    # 20-35%; a normal invoice sits nearer 5-10%; below about 3% the page is
+    # effectively a picture with a caption on it. Earlier drafts of this file used
+    # 60/25 here and rated every clean invoice as poor, which was simply wrong.
     enabled: true
     weight: 0.10
     direction: higher_is_easier
     thresholds:
-      good: { gte: 60 }
-      fair: { gte: 25 }
-      poor: { lt: 25 }
+      good: { gte: 10 }
+      fair: { gte: 3 }
+      poor: { lt: 3 }
 
   image_area_ratio_pct:
     enabled: true

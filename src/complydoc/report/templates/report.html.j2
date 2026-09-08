@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>complydoc report — {{ report.run.target }}</title>
+<style>
+  :root{
+    --ink:#16191d; --muted:#5c6570; --faint:#8b939c; --line:#e2e6ea; --bg:#ffffff;
+    --panel:#f7f9fa; --good:#1a7f4b; --good-bg:#e7f4ed; --fair:#9a6400; --fair-bg:#fdf3e0;
+    --poor:#b3261e; --poor-bg:#fdeceb; --na:#6b737c; --na-bg:#f0f2f4; --accent:#1f4e79;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
+  h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+  h2{font-size:19px;margin:40px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+  h3{font-size:15px;margin:22px 0 8px;color:var(--accent)}
+  h4{font-size:13px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  p{margin:0 0 10px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:2px}
+  .badges{margin:14px 0 6px}
+  .badge{display:inline-block;padding:3px 9px;border-radius:11px;font-size:12px;
+    font-weight:600;margin:0 6px 6px 0;background:var(--na-bg);color:var(--na)}
+  .badge.ok{background:var(--good-bg);color:var(--good)}
+  .badge.warn{background:var(--fair-bg);color:var(--fair)}
+  .badge.bad{background:var(--poor-bg);color:var(--poor)}
+  .callout{border-left:4px solid var(--accent);background:var(--panel);
+    padding:13px 16px;margin:16px 0;border-radius:0 5px 5px 0;font-size:14px}
+  .callout.bad{border-color:var(--poor);background:var(--poor-bg)}
+  .callout.warn{border-color:var(--fair);background:var(--fair-bg)}
+  .callout strong{display:block;margin-bottom:3px}
+  .grid{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}
+  .stat{flex:1 1 168px;background:var(--panel);border:1px solid var(--line);
+    border-radius:7px;padding:13px 15px}
+  .stat .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .stat .v{font-size:23px;font-weight:650;margin-top:3px;letter-spacing:-.02em}
+  .stat .n{font-size:12px;color:var(--faint);margin-top:2px}
+  .scroll{overflow-x:auto;margin:12px 0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    font-weight:650;white-space:nowrap}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tbody tr:hover{background:var(--panel)}
+  .pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11.5px;font-weight:650}
+  .r-good{background:var(--good-bg);color:var(--good)}
+  .r-fair{background:var(--fair-bg);color:var(--fair)}
+  .r-poor{background:var(--poor-bg);color:var(--poor)}
+  .r-na{background:var(--na-bg);color:var(--na)}
+  .why{color:var(--muted);font-size:12.5px;max-width:52ch}
+  .mask{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+  details{border:1px solid var(--line);border-radius:7px;margin:10px 0;background:var(--bg)}
+  details[open]{box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  summary{cursor:pointer;padding:12px 15px;font-weight:600;list-style:none;
+    display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸";color:var(--faint);font-size:12px}
+  details[open] summary::before{content:"▾"}
+  details .body{padding:0 15px 16px;border-top:1px solid var(--line)}
+  .fname{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}
+  ul.plain{margin:6px 0 0;padding-left:19px}
+  ul.plain li{margin-bottom:5px}
+  .lim{border:1px solid var(--line);border-radius:7px;padding:12px 15px;margin:9px 0}
+  .lim.important{border-left:4px solid var(--fair)}
+  .lim .area{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);font-weight:650;margin-bottom:4px}
+  .lim .aff{font-size:12px;color:var(--faint);margin-top:6px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--faint)}
+  .empty{color:var(--muted);font-style:italic;font-size:13.5px}
+  @media print{
+    body{font-size:11pt} .wrap{max-width:none;padding:0}
+    details{break-inside:avoid} details .body{display:block!important}
+    summary::before{content:""}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Document audit</h1>
+<div class="sub">{{ report.run.target }}</div>
+<div class="sub">Generated {{ report.run.finished_at }} · complydoc {{ report.run.tool_version }}</div>
+
+<div class="badges">
+  {% if report.run.offline_guard == "armed" %}
+    <span class="badge ok">Offline · network guard armed</span>
+  {% else %}
+    <span class="badge bad">Network guard NOT armed</span>
+  {% endif %}
+  <span class="badge">Components: {{ report.run.components_run | join(", ") }}</span>
+  <span class="badge {{ 'ok' if report.run.ocr_available and report.run.ocr_requested else '' }}">
+    OCR: {% if not report.run.ocr_requested %}not requested{% elif report.run.ocr_available %}on{% else %}unavailable{% endif %}
+  </span>
+  <span class="badge {{ 'ok' if report.run.ner_available else '' }}">
+    Name detection: {{ "on" if report.run.ner_available else "unavailable" }}
+  </span>
+  {% if report.run.reveal_used %}<span class="badge bad">UNMASKED VALUES</span>{% endif %}
+</div>
+
+{% if report.run.reveal_used %}
+<div class="callout bad">
+  <strong>This report contains unmasked sensitive values.</strong>
+  It was generated with <code>--reveal</code>. Handle this file with exactly the same
+  care as the documents it describes, and do not forward it casually.
+</div>
+{% endif %}
+
+<div class="callout">
+  <strong>No document content left this machine.</strong>
+  complydoc runs entirely offline. Every measurement here was produced by local
+  libraries and local models, with outbound network access blocked for the duration
+  of the run.
+</div>
+
+{% if report.staleness_warnings %}
+<div class="callout warn">
+  <strong>Some prices in this report have unverified provenance.</strong>
+  <ul class="plain">{% for w in report.staleness_warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{# ---------------------------------------------------------------- AGGREGATE #}
+<h2>Summary</h2>
+{% set agg = report.aggregate %}
+<div class="grid">
+  <div class="stat"><div class="k">Documents audited</div><div class="v">{{ agg.documents_audited }}</div>
+    <div class="n">{{ agg.pages_total }} page(s){% if agg.documents_skipped %} · {{ agg.documents_skipped }} skipped{% endif %}</div></div>
+  {% if agg.total_text_path_usd is not none %}
+  <div class="stat"><div class="k">Text path, this folder</div>
+    <div class="v">{{ money(agg.total_text_path_usd) }}</div>
+    <div class="n">input tokens only</div></div>
+  {% endif %}
+  {% if agg.total_vision_path_usd is not none %}
+  <div class="stat"><div class="k">Vision path, this folder</div>
+    <div class="v">{{ money(agg.total_vision_path_usd) }}</div>
+    <div class="n">at {{ report.cost.headline_resolution }} resolution</div></div>
+  {% endif %}
+  {% if agg.mean_difficulty_score is not none %}
+  <div class="stat"><div class="k">Mean difficulty score</div>
+    <div class="v">{{ agg.mean_difficulty_score }}<span style="font-size:14px;color:var(--faint)">/100</span></div>
+    <div class="n">higher is easier</div></div>
+  {% endif %}
+  <div class="stat"><div class="k">Sensitive items found</div>
+    <div class="v">{{ agg.sensitive_total }}</div>
+    <div class="n">in {{ agg.documents_with_sensitive_data }} of {{ agg.documents_audited }} document(s)</div></div>
+</div>
+
+{% if agg.annual_text_usd is not none or agg.annual_vision_usd is not none %}
+<h3>At {{ "{:,}".format(report.run.monthly_volume) }} documents a month</h3>
+<div class="scroll"><table>
+  <thead><tr><th>Path</th><th class="num">Mean per document</th><th class="num">Monthly</th><th class="num">Annual</th></tr></thead>
+  <tbody>
+    {% if agg.monthly_text_usd is not none %}
+    <tr><td>Text extraction</td>
+      <td class="num">{{ money(report.cost.volume.mean_text_path_usd) }}</td>
+      <td class="num">{{ money(agg.monthly_text_usd) }}</td>
+      <td class="num"><strong>{{ money(agg.annual_text_usd) }}</strong></td></tr>
+    {% endif %}
+    {% if agg.monthly_vision_usd is not none %}
+    <tr><td>Vision, {{ report.cost.headline_resolution }} resolution</td>
+      <td class="num">{{ money(report.cost.volume.mean_vision_path_usd) }}</td>
+      <td class="num">{{ money(agg.monthly_vision_usd) }}</td>
+      <td class="num"><strong>{{ money(agg.annual_vision_usd) }}</strong></td></tr>
+    {% endif %}
+  </tbody>
+</table></div>
+<p class="why">{{ report.cost.volume.basis }}</p>
+{% endif %}
+
+{% if agg.sensitive_by_category %}
+<h3>Sensitive information across the folder</h3>
+<div class="scroll"><table>
+  <thead><tr><th>Category</th><th>Severity</th><th class="num">Occurrences</th><th>Why it matters</th></tr></thead>
+  <tbody>
+  {% for cat, count in agg.sensitive_by_category | dictsort(by='value', reverse=true) %}
+    {% set meta = category_meta(cat) %}
+    <tr>
+      <td>{{ meta.label }}</td>
+      <td><span class="pill {{ severity_class(meta.severity) }}">{{ meta.severity }}</span></td>
+      <td class="num">{{ count }}</td>
+      <td class="why">{{ meta.note }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<p class="why">Values are masked. Only the last {{ report.config_masking.reveal_tail_chars }}
+characters of any identifier appear anywhere in this report{% if report.config_masking.never_reveal %},
+and {{ report.config_masking.never_reveal | join(", ") }} are never shown in full even with
+<code>--reveal</code>{% endif %}.</p>
+{% elif "sensitive" in report.run.components_run %}
+<p class="empty">No sensitive information was detected in the documents that could be read.
+Check the limitations below before reading that as an all-clear.</p>
+{% endif %}
+
+{% if agg.signal_distribution %}
+<h3>Difficulty signals across the folder</h3>
+<div class="scroll"><table>
+  <thead><tr>
+    <th>Signal</th>{% if report.signal_weights %}<th class="num">Weight</th>{% endif %}
+    <th class="num">Good</th><th class="num">Fair</th><th class="num">Poor</th><th class="num">Not applicable</th>
+  </tr></thead>
+  <tbody>
+  {% for sid, dist in agg.signal_distribution | dictsort %}
+    <tr>
+      <td>{{ signal_name(sid) }}</td>
+      {% if report.signal_weights %}<td class="num">{{ "%.2f"|format(report.signal_weights.get(sid, 0)) }}</td>{% endif %}
+      <td class="num">{{ dist.good }}</td><td class="num">{{ dist.fair }}</td>
+      <td class="num">{{ dist.poor }}</td><td class="num">{{ dist.not_applicable }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% if report.signal_weights %}
+<p class="why">Weights come from <code>difficulty.yaml</code> and are printed here in full.
+A weighted score is only shown when every weight behind it is visible, which is why this
+column exists.</p>
+{% endif %}
+{% endif %}
+
+{# ---------------------------------------------------------------- DOCUMENTS #}
+<h2>Documents</h2>
+{% for doc in report.documents %}
+<details{% if report.documents | length <= 3 %} open{% endif %}>
+  <summary>
+    <span class="fname">{{ doc.relative_path }}</span>
+    <span class="badge">{{ doc.format }}</span>
+    <span class="badge">{{ doc.page_count }} page(s){% if not doc.page_count_known %}, not fixed{% endif %}</span>
+    {% if doc.difficulty and doc.difficulty.score %}
+      <span class="pill {{ score_class(doc.difficulty.score.value) }}">{{ doc.difficulty.score.value }}/100 {{ doc.difficulty.score.label }}</span>
+    {% endif %}
+    {% if doc.sensitive and doc.sensitive.total %}
+      <span class="pill r-poor">{{ doc.sensitive.total }} sensitive item(s)</span>
+    {% endif %}
+  </summary>
+  <div class="body">
+
+  {% if doc.load_warnings %}
+    <div class="callout warn"><strong>Reading this document was incomplete.</strong>
+      <ul class="plain">{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  {% if doc.cost %}
+    <h4>Document facts</h4>
+    <div class="scroll"><table>
+      <thead><tr><th>Page</th><th>Size</th><th class="num">Scan DPI</th><th>Text source</th><th class="num">Text coverage</th></tr></thead>
+      <tbody>
+      {% for p in doc.cost.pages %}
+        <tr><td class="num">{{ p.number }}</td><td>{{ p.size_label }}</td>
+          <td class="num">{{ p.dpi if p.dpi else "—" }}</td>
+          <td>{{ p.text_source }}</td>
+          <td class="num">{{ "%.1f"|format(p.text_coverage_pct) }}%</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+
+    <h4>Estimated input cost</h4>
+    <div class="scroll"><table>
+      <thead><tr><th>Model</th><th class="num">Text tokens</th><th class="num">Text path</th>
+        <th class="num">Vision tokens</th><th class="num">Vision path</th><th>Price verified</th></tr></thead>
+      <tbody>
+      {% for m in doc.cost.models %}
+        {% set res = report.cost.headline_resolution %}
+        <tr>
+          <td>{{ m.display_name }}<div class="why">{{ m.provider }} · {{ m.text_token_fidelity }} token count</div></td>
+          <td class="num">{{ "{:,}".format(m.text_tokens) }}</td>
+          <td class="num">{% if m.text_path_input_usd is not none %}{{ money(m.text_path_input_usd) }}{% else %}<span class="pill r-na">n/a</span>{% endif %}</td>
+          <td class="num">{% if m.vision_tokens_by_resolution.get(res) is not none %}{{ "{:,}".format(m.vision_tokens_by_resolution[res]) }}{% else %}—{% endif %}</td>
+          <td class="num">{% if m.vision_input_usd_by_resolution.get(res) is not none %}{{ money(m.vision_input_usd_by_resolution[res]) }}{% else %}<span class="pill r-na">n/a</span>{% endif %}</td>
+          <td>{% if m.last_verified %}<span class="pill {{ 'r-poor' if m.is_stale else 'r-good' }}">{{ m.last_verified }}</span>{% else %}<span class="pill r-poor">never</span>{% endif %}</td>
+        </tr>
+        {% if m.text_path_unavailable_reason or m.vision_path_unavailable_reason %}
+        <tr><td colspan="6" class="why">
+          {% if m.text_path_unavailable_reason %}Text path not applicable: {{ m.text_path_unavailable_reason }}<br>{% endif %}
+          {% if m.vision_path_unavailable_reason %}Vision path not applicable: {{ m.vision_path_unavailable_reason }}{% endif %}
+        </td></tr>
+        {% endif %}
+      {% endfor %}
+      </tbody>
+    </table></div>
+  {% endif %}
+
+  {% if doc.difficulty %}
+    <h4>Extraction difficulty signals</h4>
+    <div class="scroll"><table>
+      <thead><tr><th>Signal</th><th>Measured</th><th>Rating</th>
+        {% if report.signal_weights %}<th class="num">Weight</th>{% endif %}
+        <th>Why it matters</th></tr></thead>
+      <tbody>
+      {% for s in doc.difficulty.signals %}
+        <tr>
+          <td>{{ s.name }}</td>
+          <td>{{ s.display }}{% if s.reason %}<div class="why">{{ s.reason }}</div>{% endif %}</td>
+          <td>{% if s.rating %}<span class="pill r-{{ s.rating }}">{{ s.rating }}</span>{% else %}<span class="pill r-na">{{ s.status }}</span>{% endif %}</td>
+          {% if report.signal_weights %}<td class="num">{{ "%.2f"|format(s.weight) }}</td>{% endif %}
+          <td class="why">{{ s.why }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% if doc.difficulty.score %}
+      <p class="why"><strong>Score {{ doc.difficulty.score.value }}/100 ({{ doc.difficulty.score.label }}).</strong>
+      {{ doc.difficulty.score.method }}
+      {% if doc.difficulty.score.confidence_note %}<br><strong>{{ doc.difficulty.score.confidence_note }}</strong>{% endif %}</p>
+    {% endif %}
+  {% endif %}
+
+  {% if doc.sensitive %}
+    <h4>Sensitive information</h4>
+    {% if doc.sensitive.matches %}
+    <div class="scroll"><table>
+      <thead><tr><th class="num">Page</th><th class="num">Line</th><th class="num">Col</th>
+        <th>Category</th><th>Severity</th><th>Value</th>{% if report.run.reveal_used %}<th>Revealed</th>{% endif %}<th>Matched because</th></tr></thead>
+      <tbody>
+      {% for m in doc.sensitive.matches %}
+        <tr>
+          <td class="num">{{ m.page }}</td><td class="num">{{ m.line }}</td><td class="num">{{ m.column }}</td>
+          <td>{{ m.label }}</td>
+          <td><span class="pill {{ severity_class(m.severity) }}">{{ m.severity }}</span></td>
+          <td class="mask">{{ m.masked }}</td>
+          {% if report.run.reveal_used %}<td class="mask">{{ m.revealed if m.revealed else "—" }}</td>{% endif %}
+          <td class="why">
+            {%- if m.validators_passed %}passed {{ m.validators_passed | join(", ") }}{% endif -%}
+            {%- if m.context_term %}{% if m.validators_passed %}; {% endif %}near "{{ m.context_term }}"{% endif -%}
+            {%- if not m.validators_passed and not m.context_term %}pattern match{% endif -%}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+      <p class="empty">Nothing detected in the text that could be read from this document.</p>
+    {% endif %}
+    {% if doc.sensitive.unreadable_pages %}
+      <p class="why"><strong>Page(s) {{ doc.sensitive.unreadable_pages | join(", ") }} carried no
+      readable text and were not searched.</strong> Zero findings on those pages means they were
+      not looked at, not that they are clean.</p>
+    {% endif %}
+  {% endif %}
+
+  <h4>Provenance</h4>
+  <p class="why">SHA-256 <code>{{ doc.sha256 }}</code></p>
+  </div>
+</details>
+{% else %}
+<p class="empty">No documents were audited.</p>
+{% endfor %}
+
+{% if report.skipped %}
+<h3>Files skipped</h3>
+<div class="scroll"><table>
+  <thead><tr><th>File</th><th>Reason</th><th>Detail</th></tr></thead>
+  <tbody>{% for s in report.skipped %}
+    <tr><td class="fname">{{ s.path }}</td><td>{{ s.reason }}</td><td class="why">{{ s.detail or "—" }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endif %}
+
+{# -------------------------------------------------------------- LIMITATIONS #}
+<h2>Limitations of this run</h2>
+<p class="why">Generated from what actually happened during this run, not a standard
+disclaimer. Every entry below describes something these specific documents did not tell us.</p>
+{% for lim in report.limitations %}
+  <div class="lim {{ 'important' if lim.severity == 'important' else '' }}">
+    <div class="area">{{ lim.area }}</div>
+    <div>{{ lim.statement }}</div>
+    {% if lim.affected %}<div class="aff">{{ lim.affected | join(" · ") }}</div>{% endif %}
+  </div>
+{% else %}
+  <p class="empty">Nothing was skipped and every configured check ran on every document.</p>
+{% endfor %}
+
+<footer>
+  complydoc {{ report.run.tool_version }} · report schema v{{ report.run.schema_version }} ·
+  config <code>{{ report.run.config_digest }}</code> from {{ report.run.config_dir }} ·
+  Python {{ report.run.python_version }} ·
+  run took {{ "%.1f"|format(report.run.duration_seconds) }}s ·
+  network guard {{ report.run.offline_guard }}
+</footer>
+
+</div>
+</body>
+</html>

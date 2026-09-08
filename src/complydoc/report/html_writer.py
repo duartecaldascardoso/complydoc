@@ -53,6 +53,19 @@ def _money(value: float | None, currency: str = "USD") -> str:
     return f"{symbol}{value:,.2f}"
 
 
+def _drivers(difficulty: object, rating: str, limit: int) -> list[object]:
+    """The signals that actually moved the verdict, heaviest first.
+
+    A document has eighteen signals but only a few explain its score. Ranking by
+    the weight behind each one answers "which parts make it easy or hard" without
+    making the reader diff two tables of eighteen rows.
+    """
+    signals = getattr(difficulty, "signals", None) or []
+    matching = [s for s in signals if getattr(s, "rating", None) == rating]
+    matching.sort(key=lambda s: (s.weight, s.id), reverse=True)
+    return matching[:limit]
+
+
 def page_preview_svg(preview: PagePreview, width: int = _PREVIEW_WIDTH) -> str:
     """One page drawn as geometry: words, images, sensitive marks. No content.
 
@@ -150,6 +163,8 @@ def render_html(report: AuditReport, config: Config) -> str:
         signal_name=signal_name,
         severity_class=severity_class,
         severity_badge=severity_badge,
+        hard_drivers=lambda d, n=3: _drivers(d, "poor", n),
+        easy_drivers=lambda d, n=3: _drivers(d, "good", n),
         score_band=score_band,
         score_class=score_class,
     )

@@ -13,6 +13,7 @@ system binary to install, and no network access at any point.
 
 from __future__ import annotations
 
+import atexit
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
@@ -37,6 +38,20 @@ def _engine() -> Any | None:
     except Exception as exc:  # pragma: no cover - engine init is environment-specific
         _IMPORT_ERROR = f"RapidOCR failed to initialise: {exc}"
         return None
+
+
+def _release() -> None:
+    """Drop the engine before the interpreter tears itself down.
+
+    RapidOCR holds native ONNX Runtime threads. Letting those be collected during
+    interpreter shutdown occasionally aborts the process with a mutex error after
+    the work has already finished, which turns a green test run into exit 134.
+    Releasing early avoids the race.
+    """
+    _engine.cache_clear()
+
+
+atexit.register(_release)
 
 
 def available() -> bool:

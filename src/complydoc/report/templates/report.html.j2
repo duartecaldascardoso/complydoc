@@ -96,6 +96,26 @@
                   background: #fff; color: inherit; cursor: pointer; }
   .pager button:disabled { color: #bbb; cursor: default; }
   @media print { .filter, .pager { display: none; } }
+  .drivers { display: flex; flex-wrap: wrap; gap: 2rem; margin: 0.25rem 0 1.25rem; }
+  .driver { flex: 1 1 22rem; min-width: 0; }
+  .driver > .lbl { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em;
+                   color: #888; margin-bottom: 0.375rem;
+                   border-bottom: 1px solid var(--line); padding-bottom: 0.25rem; }
+  table.bare { margin: 0; table-layout: fixed; }
+  table.bare td { border-bottom: none; padding: 0.25rem 0.5rem 0 0; }
+  table.bare tr.d-head td { font-weight: 600; font-size: 0.8125rem; padding-top: 0.5rem; }
+  table.bare tr.d-why td { padding: 0 0 0.5rem; border-bottom: 1px solid #f0f0ee; }
+  table.bare td.v { white-space: normal; font-weight: 400; color: #444;
+                    font-size: 0.8125rem; text-align: right; width: 42%; }
+  table.bare td.n { width: 3rem; }
+  .wt { font-size: 0.6875rem; color: #999; }
+  .warn { border: 1px solid var(--fair); border-left-width: 3px; background: var(--fair-bg);
+          padding: 0.625rem 0.875rem; margin: 0.75rem 0; font-size: 0.8125rem; }
+  .warn ul { margin: 0.25rem 0 0; }
+  details.more { border: none; margin: 0.5rem 0 0; }
+  details.more > summary { font-weight: 400; font-size: 0.8125rem; color: #666;
+                           padding: 0.375rem 0; }
+  details.more > summary::marker { color: #bbb; }
   footer { margin-top: 3rem; padding-top: 0.75rem; border-top: 1px solid var(--line);
            color: #888; font-size: 0.75rem; }
   @media print {
@@ -250,18 +270,13 @@ every weight behind it is shown.</p>
   <div>
 
   {% if doc.load_warnings %}
-    <h4>Reading was incomplete</h4>
-    <ul>{% for w in doc.load_warnings %}<li class="why">{{ w }}</li>{% endfor %}</ul>
+    <div class="warn">
+      <strong>Reading this document was incomplete.</strong>
+      <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+    </div>
   {% endif %}
 
   {% if doc.previews %}
-    <h4>Page layout</h4>
-    <div class="key">
-      <span><i class="sw" style="background:#dcdcdc;border-color:#dcdcdc"></i> text</span>
-      <span><i class="sw" style="background:#c8c8c8;border-color:#c8c8c8"></i> image, needs OCR or vision</span>
-      <span><i class="sw" style="background:#fff;border-color:var(--poor)"></i> sensitive, high severity</span>
-      <span><i class="sw" style="background:#fff;border-color:var(--fair)"></i> sensitive, other</span>
-    </div>
     <div class="pages">
     {% for pv in doc.previews[:max_preview_pages] %}
       <div class="page">
@@ -278,40 +293,58 @@ every weight behind it is shown.</p>
           </div>
         </div>
         <div class="cap">p{{ pv.number }}{% if pv.rotation %} · {{ pv.rotation }}°{% endif %} ·
-          {{ pv.image_coverage_pct | round | int }}% img{% if pv.sensitive_count %} · {{ pv.sensitive_count }} pii{% endif %}</div>
+          {{ pv.image_coverage_pct | round | int }}% img{% if pv.sensitive_count %} ·
+          {{ pv.sensitive_count }} sensitive{% endif %}</div>
       </div>
     {% endfor %}
     </div>
     {% if doc.previews | length > max_preview_pages %}
       <p class="note">Showing the first {{ max_preview_pages }} of {{ doc.previews | length }} pages.</p>
     {% endif %}
-    {% set unlocated = doc.previews | sum(attribute='unlocated_sensitive') %}
-    {% if unlocated %}
-      <p class="note">{{ unlocated }} sensitive match(es) could not be placed on the page —
-      they were found in the text but their words could not be tied back to a position.
-      They are still counted in the table below.</p>
-    {% endif %}
-    {% if doc.previews[0].image_data_uri %}
-    <p class="note">Left is the page as it renders; right is what complydoc extracted from it.</p>
-    {% else %}
-    <p class="note">Layout only. No text or image from the document is reproduced here.
-    Run with <code>--page-images</code> to show the pages themselves alongside.</p>
+  {% endif %}
+
+  {# ---------------------------------------------------- 1. HOW HARD, AND WHY #}
+  {% if doc.difficulty %}
+    {% set hard = hard_drivers(doc.difficulty) %}
+    {% set easy = easy_drivers(doc.difficulty) %}
+    <h4>How hard it is to extract{% if doc.difficulty.score %} —
+      <span class="r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.label }},
+      {{ doc.difficulty.score.value }}/100</span>{% endif %}</h4>
+    <div class="drivers">
+      <div class="driver">
+        <div class="lbl">makes it harder</div>
+        {% if hard %}
+        <table class="bare"><tbody>
+        {% for s in hard %}
+          <tr class="d-head"><td>{{ s.name }}</td>
+              <td class="v">{{ s.display }}</td>
+              <td class="n"><span class="wt">{{ "%.2f"|format(s.weight) }}</span></td></tr>
+          <tr class="d-why"><td colspan="3" class="why">{{ s.why }}</td></tr>
+        {% endfor %}
+        </tbody></table>
+        {% else %}<p class="note">Nothing rated poor.</p>{% endif %}
+      </div>
+      <div class="driver">
+        <div class="lbl">makes it easier</div>
+        {% if easy %}
+        <table class="bare"><tbody>
+        {% for s in easy %}
+          <tr class="d-head"><td>{{ s.name }}</td>
+              <td class="v">{{ s.display }}</td>
+              <td class="n"><span class="wt">{{ "%.2f"|format(s.weight) }}</span></td></tr>
+          <tr class="d-why"><td colspan="3" class="why">{{ s.why }}</td></tr>
+        {% endfor %}
+        </tbody></table>
+        {% else %}<p class="note">Nothing rated good.</p>{% endif %}
+      </div>
+    </div>
+    {% if doc.difficulty.score and doc.difficulty.score.confidence_note %}
+      <p class="note">{{ doc.difficulty.score.confidence_note }}</p>
     {% endif %}
   {% endif %}
 
+  {# ------------------------------------------------------------- 2. COST #}
   {% if doc.cost %}
-    <h4>Pages</h4>
-    <div class="scroll"><table data-paginate="15">
-      <thead><tr><th class="n">Page</th><th>Size</th><th class="n">Scan DPI</th><th>Text</th><th class="n">Text coverage</th></tr></thead>
-      <tbody>
-      {% for p in doc.cost.pages %}
-        <tr><td class="n">{{ p.number }}</td><td>{{ p.size_label }}</td>
-          <td class="n">{{ p.dpi if p.dpi else "—" }}</td><td>{{ p.text_source }}</td>
-          <td class="n">{{ "%.1f"|format(p.text_coverage_pct) }}%</td></tr>
-      {% endfor %}
-      </tbody>
-    </table></div>
-
     <h4>Estimated input cost</h4>
     <div class="scroll"><table>
       <thead><tr><th>Model</th><th class="n">Text tokens</th><th class="n">Text path</th>
@@ -327,46 +360,25 @@ every weight behind it is shown.</p>
           <td class="n">{% if m.vision_input_usd_by_resolution.get(res) is not none %}{{ money(m.vision_input_usd_by_resolution[res]) }}{% else %}n/a{% endif %}</td>
           <td>{% if m.last_verified %}{% if m.is_stale %}<span class="r r-poor">{{ m.last_verified }}</span>{% else %}<span class="r r-good">{{ m.last_verified }}</span>{% endif %}{% else %}<span class="r r-poor">never</span>{% endif %}</td>
         </tr>
-        {% if m.text_path_unavailable_reason or m.vision_path_unavailable_reason %}
-        <tr><td colspan="6" class="why">
-          {% if m.text_path_unavailable_reason %}Text path not applicable: {{ m.text_path_unavailable_reason }}{% endif %}
-          {% if m.vision_path_unavailable_reason %}{% if m.text_path_unavailable_reason %}<br>{% endif %}Vision path not applicable: {{ m.vision_path_unavailable_reason }}{% endif %}
-        </td></tr>
-        {% endif %}
       {% endfor %}
       </tbody>
     </table></div>
-  {% endif %}
-
-  {% if doc.difficulty %}
-    <h4>Extraction difficulty</h4>
-    <div class="scroll"><table>
-      <thead><tr><th>Signal</th><th>Measured</th><th>Rating</th>
-        {% if report.signal_weights %}<th class="n">Weight</th>{% endif %}<th>Why it matters</th></tr></thead>
-      <tbody>
-      {% for s in doc.difficulty.signals %}
-        <tr>
-          <td>{{ s.name }}</td>
-          <td>{{ s.display }}{% if s.reason %}<div class="why">{{ s.reason }}</div>{% endif %}</td>
-          <td>{% if s.rating %}<span class="r r-{{ s.rating }}">{{ s.rating }}</span>{% else %}<span class="r r-na">{{ s.status.replace("_", " ") }}</span>{% endif %}</td>
-          {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(s.weight) }}</td>{% endif %}
-          <td class="why">{{ s.why }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table></div>
-    {% if doc.difficulty.score %}
-      <p class="note"><strong>Score {{ doc.difficulty.score.value }} / 100 ({{ doc.difficulty.score.label }}).</strong>
-      {{ doc.difficulty.score.method }}
-      {% if doc.difficulty.score.confidence_note %} {{ doc.difficulty.score.confidence_note }}{% endif %}</p>
+    {% set unavailable = doc.cost.models | selectattr("text_path_unavailable_reason") | list %}
+    {% if unavailable %}
+      <p class="note">Text path not applicable: {{ unavailable[0].text_path_unavailable_reason }}</p>
+    {% endif %}
+    {% set novision = doc.cost.models | selectattr("vision_path_unavailable_reason") | list %}
+    {% if novision %}
+      <p class="note">Vision path not applicable: {{ novision[0].vision_path_unavailable_reason }}</p>
     {% endif %}
   {% endif %}
 
+  {# -------------------------------------------------------- 3. SENSITIVE #}
   {% if doc.sensitive %}
-    <h4>Sensitive information</h4>
+    <h4>Sensitive information{% if doc.sensitive.total %} — {{ doc.sensitive.total }} item(s){% endif %}</h4>
     {% if doc.sensitive.matches %}
     <div class="scroll"><table data-paginate="12">
-      <thead data-marker="matches"><tr><th class="n">Page</th><th class="n">Line</th><th class="n">Col</th>
+      <thead><tr><th class="n">Page</th><th class="n">Line</th><th class="n">Col</th>
         <th>Category</th><th>Severity</th><th>Value</th>{% if report.run.reveal_used %}<th>Revealed</th>{% endif %}<th>Matched because</th></tr></thead>
       <tbody>
       {% for m in doc.sensitive.matches %}
@@ -387,12 +399,59 @@ every weight behind it is shown.</p>
       <p class="note">Nothing detected in the text that could be read.</p>
     {% endif %}
     {% if doc.sensitive.unreadable_pages %}
-      <p class="note">Page(s) {{ doc.sensitive.unreadable_pages | join(", ") }} carried no readable
-      text and were not searched. Zero findings there means those pages were not looked at.</p>
+      <p class="note"><strong>Page(s) {{ doc.sensitive.unreadable_pages | join(", ") }} carried no
+      readable text and were not searched.</strong> Zero findings there means those pages were not
+      looked at, not that they are clean.</p>
     {% endif %}
   {% endif %}
 
-  <p class="note">SHA-256 <code>{{ doc.sha256 }}</code></p>
+  {# --------------------------------------------------- everything else #}
+  <details class="more">
+    <summary>All signals, page detail and provenance</summary>
+    <div>
+    {% if doc.difficulty %}
+      <div class="scroll"><table>
+        <thead><tr><th>Signal</th><th>Measured</th><th>Rating</th>
+          {% if report.signal_weights %}<th class="n">Weight</th>{% endif %}<th>Why it matters</th></tr></thead>
+        <tbody>
+        {% for s in doc.difficulty.signals %}
+          <tr>
+            <td>{{ s.name }}</td>
+            <td>{{ s.display }}{% if s.reason %}<div class="why">{{ s.reason }}</div>{% endif %}</td>
+            <td>{% if s.rating %}<span class="r r-{{ s.rating }}">{{ s.rating }}</span>{% else %}<span class="r r-na">{{ s.status.replace("_", " ") }}</span>{% endif %}</td>
+            {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(s.weight) }}</td>{% endif %}
+            <td class="why">{{ s.why }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% if doc.difficulty.score %}
+        <p class="note">{{ doc.difficulty.score.method }}</p>
+      {% endif %}
+    {% endif %}
+
+    {% if doc.cost %}
+      <div class="scroll"><table data-paginate="15">
+        <thead><tr><th class="n">Page</th><th>Size</th><th class="n">Scan DPI</th><th>Text</th><th class="n">Text coverage</th></tr></thead>
+        <tbody>
+        {% for p in doc.cost.pages %}
+          <tr><td class="n">{{ p.number }}</td><td>{{ p.size_label }}</td>
+            <td class="n">{{ p.dpi if p.dpi else "—" }}</td><td>{{ p.text_source }}</td>
+            <td class="n">{{ "%.1f"|format(p.text_coverage_pct) }}%</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    {% endif %}
+
+    {% set unplaced = doc.previews | sum(attribute='unlocated_sensitive') %}
+    {% if unplaced %}
+      <p class="note">{{ unplaced }} sensitive match(es) could not be placed on the page. They are
+      still counted above.</p>
+    {% endif %}
+    <p class="note">SHA-256 <code>{{ doc.sha256 }}</code></p>
+    </div>
+  </details>
+
   </div>
 </details>
 {% else %}

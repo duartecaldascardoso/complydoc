@@ -81,6 +81,43 @@ def native_text(path: Path) -> None:
     c.save()
 
 
+def dense_text(path: Path) -> None:
+    """A full page of prose at ordinary business-document density.
+
+    Every other text fixture here is deliberately sparse — fifteen lines on an A4
+    page — which makes them useless for calibrating anything that measures how
+    much of a page is covered. A real contract or statement page covers 35-70% of
+    the page with word boxes. This fixture is the reference point for that, and
+    the coverage thresholds in difficulty.yaml are set against it.
+    """
+    _register_font()
+    # Kept as prose: far easier to read and edit than a forty-six item list.
+    body = (
+        "the supplier shall provide the services described in the order with "
+        "reasonable skill and care invoices are payable within fourteen days of "
+        "the invoice date unless otherwise agreed between the parties in writing "
+        "and title in any goods supplied passes on receipt of payment in full"
+    )
+    words = body.split()
+
+    c = canvas.Canvas(str(path), pagesize=A4)
+    size, leading, margin = 10, 13, 22 * mm
+    c.setFont(FONT, size)
+    width = A4[0] - 2 * margin
+    y, index = A4[1] - margin, 0
+    while y > margin:
+        line = ""
+        while True:
+            candidate = (line + " " + words[index % len(words)]).strip()
+            if c.stringWidth(candidate, FONT, size) > width:
+                break
+            line, index = candidate, index + 1
+        c.drawString(margin, y, line)
+        y -= leading
+    c.showPage()
+    c.save()
+
+
 def two_column(path: Path) -> None:
     """Two clearly separated text columns with a gutter down the middle."""
     _register_font()
@@ -464,6 +501,7 @@ def main() -> None:
     native = HERE / "native_text.pdf"
 
     native_text(native)
+    dense_text(HERE / "dense_text.pdf")
     two_column(HERE / "two_column.pdf")
     merged_header_table(HERE / "merged_header_table.pdf")
     mixed_page_sizes(HERE / "mixed_page_sizes.pdf")

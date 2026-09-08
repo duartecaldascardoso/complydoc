@@ -65,8 +65,17 @@ def test_never_reveal_categories_stay_masked_even_then(config):
 
 
 def test_html_has_no_external_assets(html):
-    for marker in ("<script src=", "<link ", "@import", "url(http"):
+    import re
+
+    for marker in ("<script src=", "@import", "url(http"):
         assert marker not in html, f"report pulls in an external asset: {marker}"
+    # A <link> is allowed only if it carries the asset inline.
+    for tag in re.findall(r"<link\b[^>]*>", html):
+        assert 'href="data:' in tag, f"link fetches something: {tag}"
+
+
+def test_report_carries_an_inline_favicon(html):
+    assert '<link rel="icon" href="data:image/svg+xml,' in html
 
 
 def test_html_carries_its_own_stylesheet(html):
@@ -198,3 +207,45 @@ def test_content_is_present_without_scripting(html, report):
     """Filtering is an enhancement; every document must be in the markup already."""
     for document in report.documents:
         assert document.relative_path in html
+
+
+# --- opt-in extracted text -------------------------------------------------
+
+
+def test_extracted_text_is_absent_by_default(report, html):
+    assert report.run.extracted_text_used is False
+    assert all(not d.extracted_text for d in report.documents)
+    assert '<details class="text">' not in html
+
+
+def test_extracted_text_is_included_and_stamped_when_asked_for(config):
+    from complydoc.report.html_writer import render_html
+
+    with_text = run_audit(FIXTURES, config, COMPONENTS, extracted_text=True)
+    assert with_text.run.extracted_text_used is True
+    document = next(d for d in with_text.documents if d.relative_path == "sensitive_sample.pdf")
+    assert document.extracted_text
+    assert "EMPLOYEE RECORD" in document.extracted_text[0].text
+
+    page = render_html(with_text, config)
+    assert "contains the extracted text" in page
+    assert '<details class="text">' in page
+
+
+def test_extracted_text_records_how_each_page_was_read(config):
+    with_text = run_audit(FIXTURES, config, COMPONENTS, extracted_text=True)
+    scanned = next(d for d in with_text.documents if d.relative_path == "scanned_page.pdf")
+    assert scanned.extracted_text[0].source == "none"
+    assert scanned.extracted_text[0].characters == 0
+
+
+def test_very_long_pages_are_truncated_not_dropped(config):
+    """One enormous document must not make the report unopenable."""
+    from complydoc.audit import _MAX_TEXT_CHARS
+
+    with_text = run_audit(FIXTURES, config, COMPONENTS, extracted_text=True)
+    for document in with_text.documents:
+        for page in document.extracted_text:
+            assert len(page.text) <= _MAX_TEXT_CHARS
+            if page.truncated:
+                assert page.characters > _MAX_TEXT_CHARS

@@ -26,6 +26,7 @@ __all__ = [
     "AuditReport",
     "DocumentReport",
     "Limitation",
+    "PageText",
     "RunMetadata",
 ]
 
@@ -57,11 +58,23 @@ class RunMetadata:
     offline_guard: str
     reveal_used: bool
     page_images_used: bool
+    extracted_text_used: bool
     ocr_requested: bool
     ocr_available: bool
     ner_available: bool
     python_version: str
     monthly_volume: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class PageText:
+    """Exactly what was read off one page, for checking extraction quality."""
+
+    number: int
+    source: str
+    characters: int
+    text: str
+    truncated: bool = False
 
 
 @dataclass(slots=True)
@@ -78,6 +91,8 @@ class DocumentReport:
     sensitive: ScanResult | None = None
     previews: list[PagePreview] = field(default_factory=list)
     """Per-page wireframes. Geometry only — never document content."""
+    extracted_text: list[PageText] = field(default_factory=list)
+    """The text itself. Only populated with --extracted-text: it is the document."""
 
 
 @dataclass(slots=True)

@@ -48,18 +48,22 @@ signals:
       poor: { eq: false }
 
   text_layer_coverage_pct:
-    # Calibrated against real business documents, where word bounding boxes cover
-    # far less of a page than people expect. A dense page of prose reaches roughly
-    # 20-35%; a normal invoice sits nearer 5-10%; below about 3% the page is
-    # effectively a picture with a caption on it. Earlier drafts of this file used
-    # 60/25 here and rated every clean invoice as poor, which was simply wrong.
+    # Calibrated against tests/fixtures/dense_text.pdf, a full page of prose at
+    # ordinary business-document density, which measures 65%. A page at 10pt with
+    # 22mm margins covers 55-70%; an airy 11pt page with wide margins is nearer
+    # 35%; an invoice with a lot of white space sits around 15-25%; below about
+    # 10% the page is effectively a picture with a caption on it.
+    #
+    # An earlier revision used 10/3 here, calibrated by mistake against the sparse
+    # synthetic fixtures rather than a realistic page. That rated every real
+    # document "good" and made the signal say nothing.
     enabled: true
     weight: 0.10
     direction: higher_is_easier
     thresholds:
-      good: { gte: 10 }
-      fair: { gte: 3 }
-      poor: { lt: 3 }
+      good: { gte: 30 }
+      fair: { gte: 10 }
+      poor: { lt: 10 }
 
   image_area_ratio_pct:
     enabled: true

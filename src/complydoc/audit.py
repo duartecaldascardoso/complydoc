@@ -27,6 +27,7 @@ from complydoc.report.models import (
     SCHEMA_VERSION,
     AuditReport,
     DocumentReport,
+    PageText,
     RunMetadata,
     build_aggregate,
 )
@@ -36,6 +37,9 @@ from complydoc.sensitive.scanner import scan
 __all__ = ["COMPONENTS", "run_audit"]
 
 COMPONENTS = ("cost", "difficulty", "sensitive")
+
+_MAX_TEXT_CHARS = 20_000
+"""Per page, so one enormous document cannot make the report unopenable."""
 
 
 def _ner_available(config: Config) -> bool:
@@ -69,6 +73,7 @@ def run_audit(
     recurse: bool = True,
     previews: bool = True,
     page_images: bool = False,
+    extracted_text: bool = False,
     render_dpi: int = 150,
     progress: Callable[[int, int, Path], None] | None = None,
 ) -> AuditReport:
@@ -127,6 +132,17 @@ def run_audit(
             entry.sensitive = scan(document, config.sensitive, reveal=reveal)
         if previews:
             entry.previews = build_previews(document, entry.sensitive, page_images=page_images)
+        if extracted_text:
+            entry.extracted_text = [
+                PageText(
+                    number=page.number,
+                    source=page.text_source,
+                    characters=len(page.text),
+                    text=page.text[:_MAX_TEXT_CHARS],
+                    truncated=len(page.text) > _MAX_TEXT_CHARS,
+                )
+                for page in document.pages
+            ]
         documents.append(entry)
 
     folder_cost = None
@@ -155,6 +171,7 @@ def run_audit(
         offline_guard=offline.guard_status(),
         reveal_used=reveal,
         page_images_used=page_images,
+        extracted_text_used=extracted_text,
         ocr_requested=ocr,
         ocr_available=ocr_module.available(),
         ner_available=_ner_available(config) if "sensitive" in requested else False,

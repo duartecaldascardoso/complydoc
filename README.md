@@ -14,7 +14,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-220-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-237-4f5d75" alt="Tests">
   <img src="https://img.shields.io/badge/mypy-strict-4f5d75" alt="mypy strict">
 </div>
 
@@ -110,6 +110,11 @@ each provider onto one of the three shapes in `vision_formulas`.
 
 Eighteen signals, each reported as a row with the measured value, a rating, and one sentence on why it matters. The table is the primary output.
 
+Coverage thresholds are calibrated against `tests/fixtures/dense_text.pdf`, a full page of
+prose at ordinary density, which measures 65%. A page at 10pt with 22mm margins covers
+55-70%; an invoice with a lot of white space sits near 15-25%; below 10% the page is
+effectively a picture with a caption.
+
 Measured: text layer presence and coverage, image area proportion, garbled character rate, table count, header depth and merged cells, column layout, page rotation, estimated skew, scan DPI, font count and embedding, date format consistency, page size variance, detected language, encryption, and AcroForm fields, which are rated as a positive signal.
 
 A weighted score is also produced. Every weight lives in `difficulty.yaml` and is printed next to its row; the config schema rejects a configuration that enables scoring with `print_weights_in_report: false`. Signals that cannot be measured are excluded from the score rather than counted as failures, and a score resting on fewer than half the signals is marked low confidence.
@@ -122,9 +127,10 @@ be placed. It answers which pages are expensive and where the risk sits, at a gl
 
 By default it is geometry only — no pixel of the page and no character of its text is
 reproduced, because a thumbnail would undo the masking and the report is meant to be
-forwardable. `--page-images` puts the rendered page beside the wireframe so you can compare
-the document against what was extracted from it; that report carries the document content
-itself and says so at the top.
+forwardable. `--page-images` puts the rendered page beside the wireframe so you can compare the
+document against what was extracted from it. `--extracted-text` adds the text read off each
+page, which is where you check whether a low score is the document's fault or the
+extractor's. Both put document content into the report and both stamp it at the top.
 
 Matches that cannot be tied back to a position are counted and reported as unplaced rather
 than dropped; DOCX and XLSX carry no word geometry, so everything in them is unplaced.
@@ -140,6 +146,11 @@ National Insurance numbers, sort codes, bank account numbers, IBANs, payment car
 Checksums filter false positives: Luhn for cards, ISO 13616 mod-97 for IBANs, mod-97 for VAT numbers, prefix rules for NI numbers. Patterns too generic to stand alone, such as a bare eight-digit account number, are only reported when a label appears within a configurable window, and the report names the label that justified each one.
 
 Pages with no readable text are listed by page number and excluded from the counts, so a page that was never read is distinguishable from a page with nothing on it.
+
+> [!WARNING]
+> Tables are found from their ruling lines, so a table whose columns are aligned with
+> whitespace alone — which is how most invoices are laid out — is not detected. A count of
+> zero means "no ruled tables", not "no tabular data", and the report says so.
 
 > [!IMPORTANT]
 > Values are masked by default. The report gives counts and locations, and shows at most the last four characters of any identifier. `--reveal` unmasks them and stamps the report; categories listed under `masking.never_reveal` in `sensitive.yaml` — card numbers and NI numbers by default — stay masked even then.

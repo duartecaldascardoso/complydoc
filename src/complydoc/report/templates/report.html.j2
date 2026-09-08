@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>complydoc — {{ report.run.target }}</title>
+<link rel="icon" href="{{ favicon_uri }}">
 <style>
   html { -webkit-text-size-adjust: 100%; }
   :root {
@@ -96,6 +97,23 @@
                   background: #fff; color: inherit; cursor: pointer; }
   .pager button:disabled { color: #bbb; cursor: default; }
   @media print { .filter, .pager { display: none; } }
+  h4.sec { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.9375rem;
+           color: #111; margin: 1.75rem 0 0.5rem; padding-top: 0.75rem;
+           border-top: 1px solid var(--line); }
+  h4.sec .tag { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.07em;
+                font-weight: 600; padding: 0.125rem 0.375rem; border-radius: 2px; }
+  .sec-diff .tag { background: #eceef2; color: #4f5d75; }
+  .sec-cost .tag { background: var(--good-bg); color: var(--good); }
+  .sec-pii  .tag { background: var(--poor-bg); color: var(--poor); }
+  .sec-text .tag { background: #eceef2; color: #4f5d75; }
+  details.text { border-bottom: 1px solid var(--line); }
+  details.text > summary { font-weight: 400; font-size: 0.8125rem; color: #555;
+                           padding: 0.375rem 0; }
+  details.text pre { margin: 0 0 0.75rem; padding: 0.75rem; background: #fff;
+                     border: 1px solid var(--line); max-height: 26rem; overflow: auto;
+                     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                     font-size: 0.75rem; line-height: 1.45; white-space: pre-wrap;
+                     word-break: break-word; }
   .drivers { display: flex; flex-wrap: wrap; gap: 2rem; margin: 0.25rem 0 1.25rem; }
   .driver { flex: 1 1 22rem; min-width: 0; }
   .driver > .lbl { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em;
@@ -153,6 +171,14 @@
 </div>
 {% endif %}
 
+{% if report.run.extracted_text_used %}
+<div class="box">
+  <strong>This report contains the extracted text.</strong>
+  <p>Generated with <code>--extracted-text</code>. The text read off every page is
+  reproduced in full, so masking the values in the tables no longer protects them.</p>
+</div>
+{% endif %}
+
 {% if report.staleness_warnings %}
 <div class="box">
   <strong>Unverified prices</strong>
@@ -193,6 +219,7 @@
 </table>
 
 {% if agg.annual_text_usd is not none or agg.annual_vision_usd is not none %}
+<h2>Cost</h2>
 <h3>At {{ "{:,}".format(report.run.monthly_volume) }} documents a month</h3>
 <div class="scroll"><table>
   <thead><tr><th>Path</th><th class="n">Per document</th><th class="n">Monthly</th><th class="n">Annual</th></tr></thead>
@@ -215,7 +242,7 @@
 {% endif %}
 
 {% if agg.sensitive_by_category %}
-<h3>Sensitive information</h3>
+<h2>Sensitive information</h2>
 <div class="scroll"><table>
   <thead><tr><th>Category</th><th>Severity</th><th class="n">Count</th><th>Note</th></tr></thead>
   <tbody>
@@ -238,7 +265,8 @@ before reading that as an all-clear.</p>
 {% endif %}
 
 {% if agg.signal_distribution %}
-<h3>Difficulty signals across the folder</h3>
+<h2>Extraction difficulty</h2>
+<h3>Signals across the folder</h3>
 <div class="scroll"><table>
   <thead><tr><th>Signal</th>{% if report.signal_weights %}<th class="n">Weight</th>{% endif %}
     <th class="n">Good</th><th class="n">Fair</th><th class="n">Poor</th><th class="n">N/A</th></tr></thead>
@@ -307,7 +335,7 @@ every weight behind it is shown.</p>
   {% if doc.difficulty %}
     {% set hard = hard_drivers(doc.difficulty) %}
     {% set easy = easy_drivers(doc.difficulty) %}
-    <h4>How hard it is to extract{% if doc.difficulty.score %} —
+    <h4 class="sec sec-diff"><span class="tag">difficulty</span>How hard it is to extract{% if doc.difficulty.score %} —
       <span class="r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.label }},
       {{ doc.difficulty.score.value }}/100</span>{% endif %}</h4>
     <div class="drivers">
@@ -345,7 +373,7 @@ every weight behind it is shown.</p>
 
   {# ------------------------------------------------------------- 2. COST #}
   {% if doc.cost %}
-    <h4>Estimated input cost</h4>
+    <h4 class="sec sec-cost"><span class="tag">cost</span>Estimated input cost</h4>
     <div class="scroll"><table>
       <thead><tr><th>Model</th><th class="n">Text tokens</th><th class="n">Text path</th>
         <th class="n">Vision tokens</th><th class="n">Vision path</th><th>Price verified</th></tr></thead>
@@ -375,7 +403,7 @@ every weight behind it is shown.</p>
 
   {# -------------------------------------------------------- 3. SENSITIVE #}
   {% if doc.sensitive %}
-    <h4>Sensitive information{% if doc.sensitive.total %} — {{ doc.sensitive.total }} item(s){% endif %}</h4>
+    <h4 class="sec sec-pii"><span class="tag">security</span>Sensitive information{% if doc.sensitive.total %} — {{ doc.sensitive.total }} item(s){% endif %}</h4>
     {% if doc.sensitive.matches %}
     <div class="scroll"><table data-paginate="12">
       <thead><tr><th class="n">Page</th><th class="n">Line</th><th class="n">Col</th>
@@ -403,6 +431,24 @@ every weight behind it is shown.</p>
       readable text and were not searched.</strong> Zero findings there means those pages were not
       looked at, not that they are clean.</p>
     {% endif %}
+  {% endif %}
+
+  {% if doc.extracted_text %}
+    <h4 class="sec sec-text"><span class="tag">extraction</span>Extracted text</h4>
+    <p class="note">Exactly what complydoc read off each page. This is what the cost,
+    difficulty and sensitive-data numbers were computed from, so it is the place to check
+    whether a low score is the document's fault or the extractor's.</p>
+    {% for pt in doc.extracted_text %}
+      <details class="text">
+        <summary>Page {{ pt.number }} — {{ "{:,}".format(pt.characters) }} characters,
+          read as {{ pt.source }}{% if pt.truncated %}, truncated{% endif %}</summary>
+        {% if pt.text.strip() %}
+          <pre>{{ pt.text }}</pre>
+        {% else %}
+          <p class="note">Nothing was read from this page.</p>
+        {% endif %}
+      </details>
+    {% endfor %}
   {% endif %}
 
   {# --------------------------------------------------- everything else #}

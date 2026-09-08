@@ -55,6 +55,14 @@ PageImagesOpt = Annotated[
         "Off by default: it puts real document content into the report.",
     ),
 ]
+ExtractedTextOpt = Annotated[
+    bool,
+    typer.Option(
+        "--extracted-text",
+        help="Include the text read off each page, so extraction quality can be "
+        "checked. Off by default: the extracted text is the document.",
+    ),
+]
 QuietOpt = Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output.")]
 ModelOpt = Annotated[
     list[str] | None,
@@ -138,6 +146,7 @@ def _run(
     resolution: str = "medium",
     select_models: list[str] | None = None,
     page_images: bool = False,
+    extracted_text: bool = False,
 ) -> None:
     offline.arm()
     config = _load(config_dir)
@@ -156,6 +165,11 @@ def _run(
             "[bold yellow]--page-images is set.[/] The HTML report will contain a picture "
             "of every page, so it carries the document content itself."
         )
+    if extracted_text:
+        errors.print(
+            "[bold yellow]--extracted-text is set.[/] The reports will contain the text read "
+            "off every page, which is the document content in full."
+        )
 
     def progress(index: int, total: int, path: Path) -> None:
         if not quiet:
@@ -172,6 +186,7 @@ def _run(
             resolution=resolution,
             select_models=select_models,
             page_images=page_images,
+            extracted_text=extracted_text,
             recurse=recurse,
             progress=progress if not quiet else None,
         )
@@ -204,6 +219,7 @@ def audit(
     ] = False,
     model: ModelOpt = None,
     page_images: PageImagesOpt = False,
+    extracted_text: ExtractedTextOpt = False,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
@@ -224,6 +240,7 @@ def audit(
         resolution=resolution,
         select_models=model,
         page_images=page_images,
+        extracted_text=extracted_text,
     )
 
 
@@ -266,6 +283,7 @@ def difficulty(
     target: TargetArg,
     out: OutDirOpt = Path("reports"),
     name: NameOpt = "complydoc-difficulty",
+    extracted_text: ExtractedTextOpt = False,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
@@ -288,6 +306,7 @@ def sensitive(
         ),
     ] = False,
     page_images: PageImagesOpt = False,
+    extracted_text: ExtractedTextOpt = False,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,

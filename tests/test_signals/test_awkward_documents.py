@@ -162,3 +162,32 @@ def test_language_is_detected_on_prose(loader, config):
 def test_language_declines_to_guess_on_a_page_of_figures(loader, config):
     signal = measure(loader("merged_header_table.pdf"), config, "language_count")
     assert signal.status is SignalStatus.NOT_APPLICABLE
+
+
+# --- calibration -----------------------------------------------------------
+
+
+def test_a_realistically_dense_page_rates_good_for_coverage(loader, config):
+    """The thresholds have to be set against a real page, not a sparse fixture.
+
+    Every other text fixture here is fifteen lines on an A4 page and measures
+    under 8%. Calibrating from those rated every genuine document "good" and made
+    the signal meaningless, so this fixture is the reference point.
+    """
+    signal = measure(loader("dense_text.pdf"), config, "text_layer_coverage_pct")
+    assert signal.value > 50, f"a full page of prose should be dense, got {signal.value}%"
+    assert signal.rating == "good"
+
+
+def test_a_page_that_is_a_picture_rates_poor_for_coverage(loader, config):
+    signal = measure(loader("scanned_page.pdf"), config, "text_layer_coverage_pct")
+    assert signal.value == 0
+    assert signal.rating == "poor"
+
+
+def test_dense_page_scores_well_overall(loader, config):
+    from complydoc.difficulty.analyser import analyse
+
+    report = analyse(loader("dense_text.pdf"), config.difficulty)
+    assert report.score is not None
+    assert report.score.value >= 75, "a clean dense text page should be straightforward"

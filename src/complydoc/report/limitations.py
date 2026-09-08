@@ -167,6 +167,32 @@ def build_limitations(
             )
         )
 
+    # --- Table detection only sees ruled tables ---------------------------
+    no_tables = [
+        d.relative_path
+        for d in documents
+        if d.difficulty
+        and any(
+            s.id == "table_count" and s.status is SignalStatus.MEASURED and s.value == 0
+            for s in d.difficulty.signals
+        )
+    ]
+    if no_tables:
+        limitations.append(
+            Limitation(
+                area="Table detection",
+                statement=(
+                    f"{len(no_tables)} document(s) were measured as containing no tables. "
+                    f"Tables are found from their ruling lines, so a table whose columns are "
+                    f"aligned with whitespace alone — which is how most invoices are laid out "
+                    f"— is not detected. Read a count of zero as 'no ruled tables', not as "
+                    f"'no tabular data'."
+                ),
+                affected=sorted(no_tables),
+                severity="important",
+            )
+        )
+
     # --- Documents with no fixed pagination -------------------------------
     unpaged = [d.relative_path for d in documents if not d.page_count_known]
     if unpaged:

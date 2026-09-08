@@ -279,6 +279,7 @@ class PdfLoader:
             document.pages[index].raster = image
 
         self._apply_ocr(document, options, ocr_module, needs_raster)
+        self._apply_ocr_compare(document, options, ocr_module)
         return document
 
     @staticmethod
@@ -359,6 +360,16 @@ class PdfLoader:
         return page
 
     @staticmethod
+    def _apply_ocr_compare(document: Document, options: IngestOptions, ocr_module: Any) -> None:
+        """Read every rasterised page with OCR as well, for side-by-side comparison."""
+        if not options.ocr_compare or not ocr_module.available():
+            return
+        for page in document.pages:
+            if page.raster is None or page.ocr_text:
+                continue
+            page.ocr_text = ocr_module.run(page.raster)
+
+    @staticmethod
     def _apply_ocr(
         document: Document, options: IngestOptions, ocr_module: Any, rendered: list[int]
     ) -> None:
@@ -392,6 +403,7 @@ class PdfLoader:
                 unread.append(page.number)
                 continue
             text = ocr_module.run(page.raster)
+            page.ocr_text = text
             if text.strip():
                 page.text = text
                 page.text_source = "ocr"

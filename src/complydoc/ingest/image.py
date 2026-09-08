@@ -78,6 +78,7 @@ class ImageLoader:
             )
         else:
             text = ocr_module.run(page.raster)
+            page.ocr_text = text
             if text.strip():
                 page.text = text
                 page.text_source = "ocr"

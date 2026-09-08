@@ -15,6 +15,7 @@ from markupsafe import escape
 
 from complydoc.config.schema import Config
 from complydoc.difficulty.registry import signal_by_id
+from complydoc.report.charts import SERIES, build_comparison, grouped_bars_svg
 from complydoc.report.models import AuditReport
 from complydoc.report.preview import PagePreview
 
@@ -168,8 +169,19 @@ def render_html(report: AuditReport, config: Config) -> str:
             return "r-fair"
         return "r-poor"
 
+    comparisons = build_comparison(report)
     template = environment.get_template("report.html.j2")
     return template.render(
+        comparisons=comparisons,
+        series=SERIES,
+        folder_chart=grouped_bars_svg(
+            comparisons, "folder_usd", "Cost for this folder, by model and architecture"
+        ),
+        annual_chart=(
+            grouped_bars_svg(comparisons, "annual_usd", "Annual cost, by model and architecture")
+            if report.run.monthly_volume
+            else ""
+        ),
         report=report,
         page_preview_svg=page_preview_svg,
         logo_svg=_LOGO_SVG,

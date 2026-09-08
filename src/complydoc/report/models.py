@@ -59,6 +59,7 @@ class RunMetadata:
     reveal_used: bool
     page_images_used: bool
     extracted_text_used: bool
+    ocr_compare_used: bool
     ocr_requested: bool
     ocr_available: bool
     ner_available: bool
@@ -74,6 +75,7 @@ class PageText:
     source: str
     characters: int
     text: str
+    ocr_text: str = ""
     truncated: bool = False
 
 

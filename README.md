@@ -14,7 +14,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-229-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-249-4f5d75" alt="Tests">
   <img src="https://img.shields.io/badge/mypy-strict-4f5d75" alt="mypy strict">
 </div>
 

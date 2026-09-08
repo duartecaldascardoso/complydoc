@@ -249,3 +249,62 @@ def test_very_long_pages_are_truncated_not_dropped(config):
             assert len(page.text) <= _MAX_TEXT_CHARS
             if page.truncated:
                 assert page.characters > _MAX_TEXT_CHARS
+
+
+# --- the four pages --------------------------------------------------------
+
+
+def test_report_has_four_pages(html):
+    import re
+
+    assert re.findall(r'<section data-page id="(\w+)"', html) == [
+        "summary",
+        "cost",
+        "security",
+        "documents",
+    ]
+
+
+def test_every_page_is_reachable_from_the_nav(html):
+    for page in ("summary", "cost", "security", "documents"):
+        assert f'data-tab="{page}"' in html
+
+
+def test_only_the_first_page_starts_visible(html):
+    import re
+
+    sections = re.findall(r'<section data-page id="(\w+)"( hidden)?>', html)
+    assert sections[0] == ("summary", "")
+    assert all(hidden for _, hidden in sections[1:])
+
+
+def test_tabs_do_not_depend_on_the_url_hash(html):
+    """A data: URL or sandboxed mail preview never reports a hash."""
+    assert 'a.addEventListener("click"' in html
+    assert "preventDefault" in html
+
+
+def test_limitations_live_on_the_summary_page_in_an_expander(html):
+    summary = html.split('id="summary"')[1].split("<section")[0]
+    assert "Limitations of this run" in summary
+    assert 'data-paginate-list="8"' in summary
+
+
+def test_cost_page_carries_the_charts(html):
+    cost = html.split('id="cost"')[1].split("<section")[0]
+    assert 'class="chart"' in cost
+    assert "Text + local OCR" in cost
+    assert "Reach" in cost
+
+
+def test_security_page_lists_every_occurrence(html, report):
+    security = html.split('id="security"')[1].split("<section")[0]
+    assert "Every occurrence" in security
+    assert "Document" in security
+
+
+def test_documents_page_holds_the_explorer(html):
+    documents = html.split('id="documents"')[1].split("</main>")[0]
+    assert 'id="docs"' in documents
+    assert "makes it harder" in documents
+    assert "makes it easier" in documents

@@ -143,130 +143,275 @@
     h2 { break-after: avoid; }
     tr, .lim { break-inside: avoid; }
   }
+
+  /* --- page chrome --------------------------------------------------- */
+  nav.tabs { display: flex; gap: 0.25rem; margin: 1.25rem 0 0; border-bottom: 1px solid #d8d8d4;
+             flex-wrap: wrap; }
+  nav.tabs a { padding: 0.5rem 0.875rem; font-size: 0.875rem; font-weight: 600;
+               color: #666; text-decoration: none; border: 1px solid transparent;
+               border-bottom: none; margin-bottom: -1px; border-radius: 3px 3px 0 0; }
+  nav.tabs a:hover { color: #111; }
+  nav.tabs a[aria-current="page"] { color: #111; background: #fff;
+                                    border-color: #d8d8d4; }
+  nav.tabs .n { font-weight: 400; color: #999; margin-left: 0.3125rem; }
+  section[data-page] > h2:first-child { border-top: none; margin-top: 1.5rem; padding-top: 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: #555;
+            margin: 0 0 0.5rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.375rem; }
+  .legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+  .chart { display: block; max-width: 100%; margin: 0.25rem 0 0.5rem; }
+  .lims { max-height: none; }
+  .pair-text { display: flex; gap: 0.75rem; }
+  .pair-text .half-text { flex: 1 1 0; min-width: 0; }
+  .pair-text .lbl { font-size: 0.625rem; color: #999; text-transform: uppercase;
+                    letter-spacing: 0.06em; margin: 0 0 0.25rem; }
+  @media print { nav.tabs { display: none; } section[data-page] { display: block !important; } }
 </style>
 </head>
 <body>
+
+{% macro matches_table(rows, show_doc) %}
+<div class="scroll"><table data-paginate="25">
+  <thead><tr>
+    {% if show_doc %}<th>Document</th>{% endif %}
+    <th class="n">Page</th><th class="n">Line</th><th>Category</th><th>Severity</th>
+    <th>Value</th>{% if report.run.reveal_used %}<th>Revealed</th>{% endif %}<th>Matched because</th>
+  </tr></thead>
+  <tbody>
+  {% for doc, m in rows %}
+    <tr>
+      {% if show_doc %}<td class="mono">{{ doc.relative_path }}</td>{% endif %}
+      <td class="n">{{ m.page }}</td><td class="n">{{ m.line }}</td>
+      <td>{{ m.label }}</td><td>{{ severity_badge(m.severity) | safe }}</td>
+      <td class="mono">{{ m.masked }}</td>
+      {% if report.run.reveal_used %}<td class="mono">{{ m.revealed if m.revealed else "—" }}</td>{% endif %}
+      <td class="why">
+        {%- if m.validators_passed %}passed {{ m.validators_passed | join(", ") }}{% endif -%}
+        {%- if m.context_term %}{% if m.validators_passed %}; {% endif %}near "{{ m.context_term }}"{% endif -%}
+        {%- if not m.validators_passed and not m.context_term %}pattern match{% endif -%}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endmacro %}
 
 {{ logo_svg | safe }}
 <div class="head">
   <h1>Document audit</h1>
   <p class="meta">{{ report.run.target }}</p>
-  <p class="meta">{{ report.run.finished_at }} · complydoc {{ report.run.tool_version }} · {{ report.run.components_run | join(", ") }}</p>
+  <p class="meta">{{ report.run.finished_at }} · complydoc {{ report.run.tool_version }} ·
+    {{ report.run.components_run | join(", ") }}</p>
 </div>
 
 {% if report.run.reveal_used %}
-<div class="box">
-  <strong>This report contains unmasked sensitive values.</strong>
+<div class="box"><strong>This report contains unmasked sensitive values.</strong>
   <p>Generated with <code>--reveal</code>. Handle it with the same care as the documents it
-  describes.</p>
-</div>
+  describes.</p></div>
 {% endif %}
-
 {% if report.run.page_images_used %}
-<div class="box">
-  <strong>This report contains pictures of the documents.</strong>
-  <p>Generated with <code>--page-images</code>, so it carries the page content itself,
-  not just measurements of it. Masking still applies to the values in the tables, but the
-  pages beside them are readable.</p>
-</div>
+<div class="box"><strong>This report contains pictures of the documents.</strong>
+  <p>Generated with <code>--page-images</code>, so it carries the page content itself.</p></div>
+{% endif %}
+{% if report.run.extracted_text_used %}
+<div class="box"><strong>This report contains the extracted text.</strong>
+  <p>Generated with <code>--extracted-text</code>. The text read off every page is reproduced
+  in full, so masking the values in the tables no longer protects them.</p></div>
 {% endif %}
 
-{% if report.run.extracted_text_used %}
-<div class="box">
-  <strong>This report contains the extracted text.</strong>
-  <p>Generated with <code>--extracted-text</code>. The text read off every page is
-  reproduced in full, so masking the values in the tables no longer protects them.</p>
-</div>
-{% endif %}
+{% set agg = report.aggregate %}
+<nav class="tabs" id="tabs">
+  <a href="#summary" data-tab="summary">Summary</a>
+  <a href="#cost" data-tab="cost">Cost</a>
+  <a href="#security" data-tab="security">Security<span class="n">{{ agg.sensitive_total }}</span></a>
+  <a href="#documents" data-tab="documents">Documents<span class="n">{{ agg.documents_audited }}</span></a>
+</nav>
+<main>
+
+{# ============================================================ SUMMARY #}
+<section data-page id="summary">
+<h2>Summary</h2>
+<table><tbody>
+  <tr><td>Documents audited</td><td class="n">{{ agg.documents_audited }}</td>
+      <td class="why">{{ agg.pages_total }} page(s){% if agg.documents_skipped %},
+        {{ agg.documents_skipped }} file(s) skipped{% endif %}</td></tr>
+  {% if agg.total_text_path_usd is not none %}
+  <tr><td>Text path, this folder</td><td class="n">{{ money(agg.total_text_path_usd) }}</td>
+      <td class="why">input tokens only</td></tr>{% endif %}
+  {% if agg.total_vision_path_usd is not none %}
+  <tr><td>Vision path, this folder</td><td class="n">{{ money(agg.total_vision_path_usd) }}</td>
+      <td class="why">at {{ report.cost.headline_resolution }} resolution</td></tr>{% endif %}
+  {% if agg.mean_difficulty_score is not none %}
+  <tr><td>Mean difficulty score</td><td class="n">{{ agg.mean_difficulty_score }} / 100</td>
+      <td class="why">higher is easier</td></tr>{% endif %}
+  {% if "sensitive" in report.run.components_run %}
+  <tr><td>Sensitive items found</td><td class="n">{{ agg.sensitive_total }}</td>
+      <td class="why">in {{ agg.documents_with_sensitive_data }} of
+        {{ agg.documents_audited }} document(s)</td></tr>{% endif %}
+  {% if agg.pages_unreadable %}
+  <tr><td>Pages not read</td><td class="n">{{ agg.pages_unreadable }}</td>
+      <td class="why">not searched for sensitive data</td></tr>{% endif %}
+  <tr><td>Network guard</td>
+      <td class="n">{% if report.run.offline_guard == "armed" %}<span class="ok">armed</span>{% else %}<span class="poor">{{ report.run.offline_guard }}</span>{% endif %}</td>
+      <td class="why">no document content left this machine</td></tr>
+</tbody></table>
 
 {% if report.staleness_warnings %}
-<div class="box">
-  <strong>Unverified prices</strong>
-  <ul>{% for w in report.staleness_warnings %}<li>{{ w }}</li>{% endfor %}</ul>
-</div>
+<div class="box"><strong>Unverified prices</strong>
+  <ul>{% for w in report.staleness_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
 {% endif %}
 
-{# ---------------------------------------------------------------- SUMMARY #}
-<h2>Summary</h2>
-{% set agg = report.aggregate %}
-<table>
-  <tbody>
-    <tr><td>Documents audited</td><td class="n">{{ agg.documents_audited }}</td>
-        <td class="why">{{ agg.pages_total }} page(s){% if agg.documents_skipped %}, {{ agg.documents_skipped }} file(s) skipped{% endif %}</td></tr>
-    {% if agg.total_text_path_usd is not none %}
-    <tr><td>Text path, this folder</td><td class="n">{{ money(agg.total_text_path_usd) }}</td>
-        <td class="why">input tokens only</td></tr>
-    {% endif %}
-    {% if agg.total_vision_path_usd is not none %}
-    <tr><td>Vision path, this folder</td><td class="n">{{ money(agg.total_vision_path_usd) }}</td>
-        <td class="why">at {{ report.cost.headline_resolution }} resolution</td></tr>
-    {% endif %}
-    {% if agg.mean_difficulty_score is not none %}
-    <tr><td>Mean difficulty score</td><td class="n">{{ agg.mean_difficulty_score }} / 100</td>
-        <td class="why">higher is easier</td></tr>
-    {% endif %}
-    {% if "sensitive" in report.run.components_run %}
-    <tr><td>Sensitive items found</td><td class="n">{{ agg.sensitive_total }}</td>
-        <td class="why">in {{ agg.documents_with_sensitive_data }} of {{ agg.documents_audited }} document(s)</td></tr>
-    {% endif %}
-    {% if agg.pages_unreadable %}
-    <tr><td>Pages not read</td><td class="n">{{ agg.pages_unreadable }}</td>
-        <td class="why">not searched for sensitive data</td></tr>
-    {% endif %}
-    <tr><td>Network guard</td><td class="n">{% if report.run.offline_guard == "armed" %}<span class="ok">armed</span>{% else %}<span class="poor">{{ report.run.offline_guard }}</span>{% endif %}</td>
-        <td class="why">no document content left this machine</td></tr>
-  </tbody>
-</table>
+<h2>Limitations of this run</h2>
+<p class="note">Generated from what happened during this run, not a standard disclaimer.
+{% set important = report.limitations | selectattr("severity", "equalto", "important") | list %}
+{{ important | length }} of {{ report.limitations | length }} are marked important.</p>
+<details class="more" open>
+  <summary>{{ report.limitations | length }} limitation(s)</summary>
+  <div class="lims" data-paginate-list="8">
+  {% for lim in report.limitations %}
+    <div class="lim{% if lim.severity == 'important' %} important{% endif %}">
+      <div class="h">{{ lim.area }}{% if lim.severity == "important" %} — important{% endif %}</div>
+      <div class="why">{{ lim.statement }}</div>
+      {% if lim.affected %}<div class="files">{{ lim.affected | join(" · ") }}</div>{% endif %}
+    </div>
+  {% else %}
+    <p class="note">Nothing was skipped and every configured check ran on every document.</p>
+  {% endfor %}
+  </div>
+</details>
 
-{% if agg.annual_text_usd is not none or agg.annual_vision_usd is not none %}
+{% if report.skipped %}
+<h3>Files skipped</h3>
+<div class="scroll"><table data-paginate="15">
+  <thead><tr><th>File</th><th>Reason</th><th>Detail</th></tr></thead>
+  <tbody>{% for s in report.skipped %}
+    <tr><td class="mono">{{ s.path.name }}</td><td>{{ s.reason }}</td>
+        <td class="why">{{ s.detail or "—" }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endif %}
+</section>
+
+{# =============================================================== COST #}
+<section data-page id="cost" hidden>
 <h2>Cost</h2>
-<h3>At {{ "{:,}".format(report.run.monthly_volume) }} documents a month</h3>
+{% if comparisons %}
+<p class="note">Three ways to get a document in front of a model. Cost alone favours the
+text layer, but it only reaches documents that have one — so reach is shown beside every
+figure.</p>
+<div class="legend">
+  {% for key, label, colour in series %}
+    <span><i style="background:{{ colour }}"></i>{{ label }}</span>
+  {% endfor %}
+</div>
+<h3>Cost for this folder</h3>
+{{ folder_chart | safe }}
+{% if annual_chart %}
+<h3>Annual cost at {{ "{:,}".format(report.run.monthly_volume) }} documents a month</h3>
+{{ annual_chart | safe }}
+{% endif %}
+
+<h3>The same numbers</h3>
 <div class="scroll"><table>
-  <thead><tr><th>Path</th><th class="n">Per document</th><th class="n">Monthly</th><th class="n">Annual</th></tr></thead>
+  <thead><tr><th>Model</th><th>Architecture</th><th class="n">Per document</th>
+    <th class="n">This folder</th>{% if report.run.monthly_volume %}<th class="n">Annual</th>{% endif %}
+    <th class="n">Reach</th><th>Note</th></tr></thead>
   <tbody>
-    {% if agg.monthly_text_usd is not none %}
-    <tr><td>Text extraction</td>
-        <td class="n">{{ money(report.cost.volume.mean_text_path_usd) }}</td>
-        <td class="n">{{ money(agg.monthly_text_usd) }}</td>
-        <td class="n">{{ money(agg.annual_text_usd) }}</td></tr>
-    {% endif %}
-    {% if agg.monthly_vision_usd is not none %}
-    <tr><td>Vision, {{ report.cost.headline_resolution }} resolution</td>
-        <td class="n">{{ money(report.cost.volume.mean_vision_path_usd) }}</td>
-        <td class="n">{{ money(agg.monthly_vision_usd) }}</td>
-        <td class="n">{{ money(agg.annual_vision_usd) }}</td></tr>
-    {% endif %}
+  {% for c in comparisons %}{% for a in c.architectures %}
+    <tr>
+      <td>{% if loop.first %}{{ c.display_name }}{% endif %}</td>
+      <td>{{ a.label }}</td>
+      <td class="n">{{ money(a.per_document_usd) if a.per_document_usd is not none else "n/a" }}</td>
+      <td class="n">{{ money(a.folder_usd) if a.folder_usd is not none else "n/a" }}</td>
+      {% if report.run.monthly_volume %}
+      <td class="n">{{ money(a.annual_usd) if a.annual_usd is not none else "n/a" }}</td>{% endif %}
+      <td class="n">{{ a.documents_served }}/{{ a.documents_total }}</td>
+      <td class="why">{{ a.note }}</td>
+    </tr>
+  {% endfor %}{% endfor %}
   </tbody>
 </table></div>
+{% if report.cost and report.cost.volume %}
 <p class="note">{{ report.cost.volume.basis }}</p>
 {% endif %}
+<p class="note">Input tokens only. What you pay for output depends on what you ask the model
+to produce, which this tool cannot know.</p>
+
+<h3>Per document</h3>
+<div class="scroll"><table data-paginate="20">
+  <thead><tr><th>Document</th><th class="n">Pages</th>
+    {% for c in comparisons %}<th class="n">{{ c.display_name }}, text</th>
+    <th class="n">{{ c.display_name }}, vision</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for doc in report.documents %}{% if doc.cost %}
+    <tr><td class="mono">{{ doc.relative_path }}</td><td class="n">{{ doc.page_count }}</td>
+      {% for m in doc.cost.models %}
+        <td class="n">{{ money(m.text_path_input_usd) if m.text_path_input_usd is not none else "n/a" }}</td>
+        <td class="n">{{ money(m.vision_input_usd_by_resolution.get(report.cost.headline_resolution)) if m.vision_input_usd_by_resolution.get(report.cost.headline_resolution) is not none else "n/a" }}</td>
+      {% endfor %}
+    </tr>
+  {% endif %}{% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<p class="note">Cost was not part of this run.</p>
+{% endif %}
+</section>
+
+{# =========================================================== SECURITY #}
+<section data-page id="security" hidden>
+<h2>Sensitive information</h2>
+{% if "sensitive" not in report.run.components_run %}
+<p class="note">The sensitive data scan was not part of this run.</p>
+{% else %}
+<p class="note">Values are masked. At most the last
+{{ report.config_masking.reveal_tail_chars }} characters of any identifier appear here{% if report.config_masking.never_reveal %};
+{{ report.config_masking.never_reveal | join(" and ") }} are never shown in full, even with
+<code>--reveal</code>{% endif %}.</p>
 
 {% if agg.sensitive_by_category %}
-<h2>Sensitive information</h2>
+<h3>By category</h3>
 <div class="scroll"><table>
   <thead><tr><th>Category</th><th>Severity</th><th class="n">Count</th><th>Note</th></tr></thead>
   <tbody>
   {% for cat, count in agg.sensitive_by_category | dictsort(by='value', reverse=true) %}
     {% set m = category_meta(cat) %}
-    <tr><td>{{ m.label }}</td>
-        <td>{{ severity_badge(m.severity) | safe }}</td>
-        <td class="n">{{ count }}</td>
-        <td class="why">{{ m.note }}</td></tr>
+    <tr><td>{{ m.label }}</td><td>{{ severity_badge(m.severity) | safe }}</td>
+        <td class="n">{{ count }}</td><td class="why">{{ m.note }}</td></tr>
   {% endfor %}
   </tbody>
 </table></div>
-<p class="note">Values are masked. At most the last
-{{ report.config_masking.reveal_tail_chars }} characters of any identifier appear in this
-report{% if report.config_masking.never_reveal %}; {{ report.config_masking.never_reveal | join(" and ") }}
-are never shown in full, even with <code>--reveal</code>{% endif %}.</p>
-{% elif "sensitive" in report.run.components_run %}
-<p class="note">Nothing detected in the text that could be read. Check the limitations below
-before reading that as an all-clear.</p>
+
+<h3>Every occurrence</h3>
+{% set rows = [] %}
+{% for doc in report.documents %}{% if doc.sensitive %}{% for m in doc.sensitive.matches %}
+  {% set _ = rows.append((doc, m)) %}
+{% endfor %}{% endif %}{% endfor %}
+{{ matches_table(rows, true) }}
+{% else %}
+<p class="note">Nothing detected in the text that could be read. Check the limitations on
+the summary page before reading that as an all-clear.</p>
 {% endif %}
 
+{% if agg.categories_not_scanned %}
+<h3>Categories not scanned</h3>
+<div class="scroll"><table>
+  <thead><tr><th>Category</th><th>Why not</th></tr></thead>
+  <tbody>{% for cat, reason in agg.categories_not_scanned | dictsort %}
+    <tr><td>{{ category_meta(cat).label }}</td><td class="why">{{ reason }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+<p class="note">A category that was not scanned has a count of zero because nothing looked
+for it, not because nothing is there.</p>
+{% endif %}
+{% endif %}
+</section>
+
+{# ========================================================== DOCUMENTS #}
+<section data-page id="documents" hidden>
+<h2>Documents</h2>
 {% if agg.signal_distribution %}
-<h2>Extraction difficulty</h2>
-<h3>Signals across the folder</h3>
+<h3>Difficulty signals across the folder</h3>
 <div class="scroll"><table>
   <thead><tr><th>Signal</th>{% if report.signal_weights %}<th class="n">Weight</th>{% endif %}
     <th class="n">Good</th><th class="n">Fair</th><th class="n">Poor</th><th class="n">N/A</th></tr></thead>
@@ -287,38 +432,38 @@ every weight behind it is shown.</p>
 {% endif %}
 {% endif %}
 
-{# -------------------------------------------------------------- DOCUMENTS #}
-<h2>Documents</h2>
+<h3>Each document</h3>
 <div id="docs">
 {% for doc in report.documents %}
-<details{% if report.documents | length <= 3 %} open{% endif %}>
+<details>
   <summary>{{ doc.relative_path }}
-    <span>— {{ doc.format }}, {{ doc.page_count }} page(s){% if not doc.page_count_known %} (not fixed){% endif %}{% if doc.difficulty and doc.difficulty.score %}, difficulty <span class="r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.value }}/100</span>{% endif %}{% if doc.sensitive and doc.sensitive.total %}, {{ doc.sensitive.total }} sensitive item(s){% endif %}</span>
+    <span>— {{ doc.format }}, {{ doc.page_count }} page(s){% if not doc.page_count_known %} (not fixed){% endif %}{% if doc.difficulty and doc.difficulty.score %}, difficulty <span class="r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.value }}/100 {{ doc.difficulty.score.label }}</span>{% endif %}{% if doc.sensitive and doc.sensitive.total %}, {{ doc.sensitive.total }} sensitive item(s){% endif %}</span>
   </summary>
   <div>
 
   {% if doc.load_warnings %}
-    <div class="warn">
-      <strong>Reading this document was incomplete.</strong>
-      <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul>
-    </div>
+    <div class="warn"><strong>Reading this document was incomplete.</strong>
+      <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
   {% endif %}
 
   {% if doc.previews %}
+    <h4 class="sec sec-text"><span class="tag">what exists</span>Pages</h4>
+    <div class="key">
+      <span><i class="sw" style="background:#dcdcdc;border-color:#cfcfcf"></i> text</span>
+      <span><i class="sw" style="background:#f4dfae;border-color:#dcbf7d"></i> image, needs OCR or vision</span>
+      <span><i class="sw" style="background:#fff;border-color:var(--poor)"></i> sensitive, high severity</span>
+      <span><i class="sw" style="background:#fff;border-color:var(--fair)"></i> sensitive, other</span>
+    </div>
     <div class="pages">
     {% for pv in doc.previews[:max_preview_pages] %}
       <div class="page">
         <div class="pair">
           {% if pv.image_data_uri %}
-          <div class="half">
-            <div class="lbl">document</div>
-            <img class="pg" src="{{ pv.image_data_uri }}" alt="Page {{ pv.number }}" loading="lazy">
-          </div>
+          <div class="half"><div class="lbl">document</div>
+            <img class="pg" src="{{ pv.image_data_uri }}" alt="Page {{ pv.number }}" loading="lazy"></div>
           {% endif %}
-          <div class="half">
-            <div class="lbl">{{ "extracted" if pv.image_data_uri else "layout" }}</div>
-            {{ page_preview_svg(pv) | safe }}
-          </div>
+          <div class="half"><div class="lbl">{{ "extracted" if pv.image_data_uri else "layout" }}</div>
+            {{ page_preview_svg(pv) | safe }}</div>
         </div>
         <div class="cap">p{{ pv.number }}{% if pv.rotation %} · {{ pv.rotation }}°{% endif %} ·
           {{ pv.image_coverage_pct | round | int }}% img{% if pv.sensitive_count %} ·
@@ -329,9 +474,11 @@ every weight behind it is shown.</p>
     {% if doc.previews | length > max_preview_pages %}
       <p class="note">Showing the first {{ max_preview_pages }} of {{ doc.previews | length }} pages.</p>
     {% endif %}
+    {% if not doc.previews[0].image_data_uri %}
+      <p class="note">Layout only. Run with <code>--page-images</code> to show the pages themselves.</p>
+    {% endif %}
   {% endif %}
 
-  {# ---------------------------------------------------- 1. HOW HARD, AND WHY #}
   {% if doc.difficulty %}
     {% set hard = hard_drivers(doc.difficulty) %}
     {% set easy = easy_drivers(doc.difficulty) %}
@@ -339,31 +486,21 @@ every weight behind it is shown.</p>
       <span class="r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.label }},
       {{ doc.difficulty.score.value }}/100</span>{% endif %}</h4>
     <div class="drivers">
-      <div class="driver">
-        <div class="lbl">makes it harder</div>
-        {% if hard %}
-        <table class="bare"><tbody>
+      <div class="driver"><div class="lbl">makes it harder</div>
+        {% if hard %}<table class="bare"><tbody>
         {% for s in hard %}
-          <tr class="d-head"><td>{{ s.name }}</td>
-              <td class="v">{{ s.display }}</td>
+          <tr class="d-head"><td>{{ s.name }}</td><td class="v">{{ s.display }}</td>
               <td class="n"><span class="wt">{{ "%.2f"|format(s.weight) }}</span></td></tr>
           <tr class="d-why"><td colspan="3" class="why">{{ s.why }}</td></tr>
-        {% endfor %}
-        </tbody></table>
-        {% else %}<p class="note">Nothing rated poor.</p>{% endif %}
+        {% endfor %}</tbody></table>{% else %}<p class="note">Nothing rated poor.</p>{% endif %}
       </div>
-      <div class="driver">
-        <div class="lbl">makes it easier</div>
-        {% if easy %}
-        <table class="bare"><tbody>
+      <div class="driver"><div class="lbl">makes it easier</div>
+        {% if easy %}<table class="bare"><tbody>
         {% for s in easy %}
-          <tr class="d-head"><td>{{ s.name }}</td>
-              <td class="v">{{ s.display }}</td>
+          <tr class="d-head"><td>{{ s.name }}</td><td class="v">{{ s.display }}</td>
               <td class="n"><span class="wt">{{ "%.2f"|format(s.weight) }}</span></td></tr>
           <tr class="d-why"><td colspan="3" class="why">{{ s.why }}</td></tr>
-        {% endfor %}
-        </tbody></table>
-        {% else %}<p class="note">Nothing rated good.</p>{% endif %}
+        {% endfor %}</tbody></table>{% else %}<p class="note">Nothing rated good.</p>{% endif %}
       </div>
     </div>
     {% if doc.difficulty.score and doc.difficulty.score.confidence_note %}
@@ -371,87 +508,47 @@ every weight behind it is shown.</p>
     {% endif %}
   {% endif %}
 
-  {# ------------------------------------------------------------- 2. COST #}
-  {% if doc.cost %}
-    <h4 class="sec sec-cost"><span class="tag">cost</span>Estimated input cost</h4>
-    <div class="scroll"><table>
-      <thead><tr><th>Model</th><th class="n">Text tokens</th><th class="n">Text path</th>
-        <th class="n">Vision tokens</th><th class="n">Vision path</th><th>Price verified</th></tr></thead>
-      <tbody>
-      {% for m in doc.cost.models %}
-        {% set res = report.cost.headline_resolution %}
-        <tr>
-          <td>{{ m.display_name }}<div class="why">{{ m.provider }}, {{ m.text_token_fidelity }} token count</div></td>
-          <td class="n">{{ "{:,}".format(m.text_tokens) }}</td>
-          <td class="n">{% if m.text_path_input_usd is not none %}{{ money(m.text_path_input_usd) }}{% else %}n/a{% endif %}</td>
-          <td class="n">{% if m.vision_tokens_by_resolution.get(res) is not none %}{{ "{:,}".format(m.vision_tokens_by_resolution[res]) }}{% else %}—{% endif %}</td>
-          <td class="n">{% if m.vision_input_usd_by_resolution.get(res) is not none %}{{ money(m.vision_input_usd_by_resolution[res]) }}{% else %}n/a{% endif %}</td>
-          <td>{% if m.last_verified %}{% if m.is_stale %}<span class="r r-poor">{{ m.last_verified }}</span>{% else %}<span class="r r-good">{{ m.last_verified }}</span>{% endif %}{% else %}<span class="r r-poor">never</span>{% endif %}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table></div>
-    {% set unavailable = doc.cost.models | selectattr("text_path_unavailable_reason") | list %}
-    {% if unavailable %}
-      <p class="note">Text path not applicable: {{ unavailable[0].text_path_unavailable_reason }}</p>
-    {% endif %}
-    {% set novision = doc.cost.models | selectattr("vision_path_unavailable_reason") | list %}
-    {% if novision %}
-      <p class="note">Vision path not applicable: {{ novision[0].vision_path_unavailable_reason }}</p>
-    {% endif %}
-  {% endif %}
-
-  {# -------------------------------------------------------- 3. SENSITIVE #}
-  {% if doc.sensitive %}
-    <h4 class="sec sec-pii"><span class="tag">security</span>Sensitive information{% if doc.sensitive.total %} — {{ doc.sensitive.total }} item(s){% endif %}</h4>
-    {% if doc.sensitive.matches %}
-    <div class="scroll"><table data-paginate="12">
-      <thead><tr><th class="n">Page</th><th class="n">Line</th><th class="n">Col</th>
-        <th>Category</th><th>Severity</th><th>Value</th>{% if report.run.reveal_used %}<th>Revealed</th>{% endif %}<th>Matched because</th></tr></thead>
-      <tbody>
-      {% for m in doc.sensitive.matches %}
-        <tr><td class="n">{{ m.page }}</td><td class="n">{{ m.line }}</td><td class="n">{{ m.column }}</td>
-          <td>{{ m.label }}</td>
-          <td>{{ severity_badge(m.severity) | safe }}</td>
-          <td class="mono">{{ m.masked }}</td>
-          {% if report.run.reveal_used %}<td class="mono">{{ m.revealed if m.revealed else "—" }}</td>{% endif %}
-          <td class="why">
-            {%- if m.validators_passed %}passed {{ m.validators_passed | join(", ") }}{% endif -%}
-            {%- if m.context_term %}{% if m.validators_passed %}; {% endif %}near "{{ m.context_term }}"{% endif -%}
-            {%- if not m.validators_passed and not m.context_term %}pattern match{% endif -%}
-          </td></tr>
-      {% endfor %}
-      </tbody>
-    </table></div>
-    {% else %}
-      <p class="note">Nothing detected in the text that could be read.</p>
-    {% endif %}
-    {% if doc.sensitive.unreadable_pages %}
-      <p class="note"><strong>Page(s) {{ doc.sensitive.unreadable_pages | join(", ") }} carried no
-      readable text and were not searched.</strong> Zero findings there means those pages were not
-      looked at, not that they are clean.</p>
-    {% endif %}
-  {% endif %}
-
   {% if doc.extracted_text %}
-    <h4 class="sec sec-text"><span class="tag">extraction</span>Extracted text</h4>
-    <p class="note">Exactly what complydoc read off each page. This is what the cost,
-    difficulty and sensitive-data numbers were computed from, so it is the place to check
-    whether a low score is the document's fault or the extractor's.</p>
+    <h4 class="sec sec-text"><span class="tag">what was read</span>Extracted text</h4>
+    <p class="note">This is what the cost, difficulty and sensitive-data numbers were computed
+    from, so it is where to check whether a low score is the document's fault or the
+    extractor's.</p>
     {% for pt in doc.extracted_text %}
       <details class="text">
         <summary>Page {{ pt.number }} — {{ "{:,}".format(pt.characters) }} characters,
           read as {{ pt.source }}{% if pt.truncated %}, truncated{% endif %}</summary>
-        {% if pt.text.strip() %}
-          <pre>{{ pt.text }}</pre>
-        {% else %}
-          <p class="note">Nothing was read from this page.</p>
-        {% endif %}
+        <div class="pair-text">
+          <div class="half-text">
+            <div class="lbl">{{ "text layer" if pt.source == "native" else pt.source }}</div>
+            {% if pt.text.strip() %}<pre>{{ pt.text }}</pre>
+            {% else %}<p class="note">Nothing was read from this page.</p>{% endif %}
+          </div>
+          {% if pt.ocr_text and pt.source == "native" %}
+          <div class="half-text">
+            <div class="lbl">what OCR sees</div>
+            <pre>{{ pt.ocr_text }}</pre>
+          </div>
+          {% endif %}
+        </div>
       </details>
     {% endfor %}
+    {% if not report.run.ocr_compare_used %}
+      <p class="note">OCR only ran where there was no text layer. Add <code>--ocr-compare</code>
+      to read every page with OCR as well and see the two side by side.</p>
+    {% endif %}
   {% endif %}
 
-  {# --------------------------------------------------- everything else #}
+  {% if doc.sensitive and doc.sensitive.matches %}
+    <h4 class="sec sec-pii"><span class="tag">security</span>Sensitive information —
+      {{ doc.sensitive.total }} item(s)</h4>
+    {% set rows = [] %}{% for m in doc.sensitive.matches %}{% set _ = rows.append((doc, m)) %}{% endfor %}
+    {{ matches_table(rows, false) }}
+  {% endif %}
+  {% if doc.sensitive and doc.sensitive.unreadable_pages %}
+    <p class="note"><strong>Page(s) {{ doc.sensitive.unreadable_pages | join(", ") }} carried no
+    readable text and were not searched.</strong></p>
+  {% endif %}
+
   <details class="more">
     <summary>All signals, page detail and provenance</summary>
     <div>
@@ -461,38 +558,25 @@ every weight behind it is shown.</p>
           {% if report.signal_weights %}<th class="n">Weight</th>{% endif %}<th>Why it matters</th></tr></thead>
         <tbody>
         {% for s in doc.difficulty.signals %}
-          <tr>
-            <td>{{ s.name }}</td>
+          <tr><td>{{ s.name }}</td>
             <td>{{ s.display }}{% if s.reason %}<div class="why">{{ s.reason }}</div>{% endif %}</td>
             <td>{% if s.rating %}<span class="r r-{{ s.rating }}">{{ s.rating }}</span>{% else %}<span class="r r-na">{{ s.status.replace("_", " ") }}</span>{% endif %}</td>
             {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(s.weight) }}</td>{% endif %}
-            <td class="why">{{ s.why }}</td>
-          </tr>
+            <td class="why">{{ s.why }}</td></tr>
         {% endfor %}
         </tbody>
       </table></div>
-      {% if doc.difficulty.score %}
-        <p class="note">{{ doc.difficulty.score.method }}</p>
-      {% endif %}
     {% endif %}
-
     {% if doc.cost %}
       <div class="scroll"><table data-paginate="15">
-        <thead><tr><th class="n">Page</th><th>Size</th><th class="n">Scan DPI</th><th>Text</th><th class="n">Text coverage</th></tr></thead>
-        <tbody>
-        {% for p in doc.cost.pages %}
+        <thead><tr><th class="n">Page</th><th>Size</th><th class="n">Scan DPI</th><th>Text</th>
+          <th class="n">Text coverage</th></tr></thead>
+        <tbody>{% for p in doc.cost.pages %}
           <tr><td class="n">{{ p.number }}</td><td>{{ p.size_label }}</td>
             <td class="n">{{ p.dpi if p.dpi else "—" }}</td><td>{{ p.text_source }}</td>
             <td class="n">{{ "%.1f"|format(p.text_coverage_pct) }}%</td></tr>
-        {% endfor %}
-        </tbody>
+        {% endfor %}</tbody>
       </table></div>
-    {% endif %}
-
-    {% set unplaced = doc.previews | sum(attribute='unlocated_sensitive') %}
-    {% if unplaced %}
-      <p class="note">{{ unplaced }} sensitive match(es) could not be placed on the page. They are
-      still counted above.</p>
     {% endif %}
     <p class="note">SHA-256 <code>{{ doc.sha256 }}</code></p>
     </div>
@@ -504,29 +588,9 @@ every weight behind it is shown.</p>
 <p class="note">No documents were audited.</p>
 {% endfor %}
 </div>
+</section>
 
-{% if report.skipped %}
-<h3>Files skipped</h3>
-<div class="scroll"><table data-paginate="15">
-  <thead><tr><th>File</th><th>Reason</th><th>Detail</th></tr></thead>
-  <tbody>{% for s in report.skipped %}
-    <tr><td class="mono">{{ s.path.name }}</td><td>{{ s.reason }}</td><td class="why">{{ s.detail or "—" }}</td></tr>
-  {% endfor %}</tbody>
-</table></div>
-{% endif %}
-
-{# ------------------------------------------------------------ LIMITATIONS #}
-<h2>Limitations of this run</h2>
-<p class="note">Generated from what happened during this run, not a standard disclaimer.</p>
-{% for lim in report.limitations %}
-  <div class="lim{% if lim.severity == 'important' %} important{% endif %}">
-    <div class="h">{{ lim.area }}{% if lim.severity == "important" %} — important{% endif %}</div>
-    <div class="why">{{ lim.statement }}</div>
-    {% if lim.affected %}<div class="files">{{ lim.affected | join(" · ") }}</div>{% endif %}
-  </div>
-{% else %}
-  <p class="note">Nothing was skipped and every configured check ran on every document.</p>
-{% endfor %}
+</main>
 
 <footer>
 complydoc {{ report.run.tool_version }} · schema v{{ report.run.schema_version }} ·
@@ -617,6 +681,71 @@ name detection {{ "on" if report.run.ner_available else "off" }}
     draw();
   }
 
+
+  function tabs() {
+    var nav = document.getElementById("tabs");
+    if (!nav) return;
+    var links = Array.prototype.slice.call(nav.querySelectorAll("a"));
+    var pages = Array.prototype.slice.call(document.querySelectorAll("section[data-page]"));
+
+    function show(id) {
+      var known = pages.some(function (p) { return p.id === id; });
+      if (!known) id = pages[0].id;
+      pages.forEach(function (p) { p.hidden = p.id !== id; });
+      links.forEach(function (a) {
+        if (a.getAttribute("data-tab") === id) a.setAttribute("aria-current", "page");
+        else a.removeAttribute("aria-current");
+      });
+      window.scrollTo(0, 0);
+    }
+    // The click is the mechanism; the hash is a convenience on top of it. Some
+    // viewers — a data: URL, a sandboxed mail preview — never report a hash, and
+    // relying on it there would leave every tab dead but the first.
+    links.forEach(function (a) {
+      a.addEventListener("click", function (event) {
+        event.preventDefault();
+        var id = a.getAttribute("data-tab");
+        show(id);
+        try {
+          history.replaceState(null, "", "#" + id);
+        } catch (err) {
+          /* file:// and data: URLs may refuse; the view has already switched. */
+        }
+      });
+    });
+    window.addEventListener("hashchange", function () {
+      show(location.hash.replace("#", ""));
+    });
+    show(location.hash.replace("#", "") || pages[0].id);
+  }
+
+  function paginateList(host) {
+    var size = parseInt(host.getAttribute("data-paginate-list"), 10);
+    var items = Array.prototype.slice.call(host.children);
+    if (!size || items.length <= size) return;
+    var page = 0, count = Math.ceil(items.length / size);
+    var bar = document.createElement("div");
+    bar.className = "pager";
+    var prev = document.createElement("button"); prev.type = "button"; prev.textContent = "Previous";
+    var next = document.createElement("button"); next.type = "button"; next.textContent = "Next";
+    var label = document.createElement("span");
+    bar.appendChild(prev); bar.appendChild(next); bar.appendChild(label);
+    host.parentNode.insertBefore(bar, host.nextSibling);
+    function draw() {
+      var first = page * size, last = Math.min(first + size, items.length);
+      items.forEach(function (el, i) { el.hidden = i < first || i >= last; });
+      label.textContent = "Showing " + (first + 1) + "\u2013" + last + " of " + items.length;
+      prev.disabled = page === 0; next.disabled = page >= count - 1;
+    }
+    prev.addEventListener("click", function () { if (page > 0) { page--; draw(); } });
+    next.addEventListener("click", function () { if (page < count - 1) { page++; draw(); } });
+    draw();
+  }
+
+  tabs();
+  Array.prototype.forEach.call(
+    document.querySelectorAll("[data-paginate-list]"), paginateList
+  );
   var docs = document.getElementById("docs");
   if (docs) makeFilter(docs);
   Array.prototype.forEach.call(
@@ -624,6 +753,5 @@ name detection {{ "on" if report.run.ner_available else "off" }}
   );
 })();
 </script>
-
 </body>
 </html>

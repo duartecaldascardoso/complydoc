@@ -97,6 +97,14 @@ class Page:
     tables: list[TableInfo] = field(default_factory=list)
     fonts: set[str] = field(default_factory=set)
     embedded_fonts: bool | None = None
+    ocr_text: str = ""
+    """What OCR read, kept separately from `text`.
+
+    Normally OCR only runs where there is no text layer, and its output becomes
+    `text`. With `ocr_compare` it runs on every page as well, so the text layer
+    and the recognised text can be put side by side — which is how you tell a
+    document that extracts badly from an extractor that reads it badly.
+    """
     raw_chars: str = ""
     """Page characters as stored, before any unicode normalisation.
 
@@ -194,6 +202,8 @@ class IngestOptions:
     max_render_pages: int = 50
     """Cap on how many pages of one document are rasterised, to bound memory."""
     extract_tables: bool = True
+    ocr_compare: bool = False
+    """Also OCR pages that already have a text layer, so the two can be compared."""
     render_all_pages: bool = False
     """Rasterise every page, not only the ones a signal needs to look at.
 

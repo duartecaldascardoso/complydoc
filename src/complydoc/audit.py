@@ -74,6 +74,7 @@ def run_audit(
     previews: bool = True,
     page_images: bool = False,
     extracted_text: bool = False,
+    ocr_compare: bool = False,
     render_dpi: int = 150,
     progress: Callable[[int, int, Path], None] | None = None,
 ) -> AuditReport:
@@ -86,12 +87,13 @@ def run_audit(
 
     # Rasterising is only worth the memory when something will actually look at
     # the pixels — OCR, or the skew signal.
-    wants_raster = ocr or page_images or "difficulty" in requested
+    wants_raster = ocr or page_images or ocr_compare or "difficulty" in requested
     options = IngestOptions(
         ocr=ocr,
         render_dpi=render_dpi,
         extract_tables="difficulty" in requested,
-        render_all_pages=page_images,
+        render_all_pages=page_images or ocr_compare,
+        ocr_compare=ocr_compare,
         max_render_pages=50 if (wants_raster or page_images) else 0,
     )
 
@@ -139,6 +141,7 @@ def run_audit(
                     source=page.text_source,
                     characters=len(page.text),
                     text=page.text[:_MAX_TEXT_CHARS],
+                    ocr_text=page.ocr_text[:_MAX_TEXT_CHARS],
                     truncated=len(page.text) > _MAX_TEXT_CHARS,
                 )
                 for page in document.pages
@@ -172,6 +175,7 @@ def run_audit(
         reveal_used=reveal,
         page_images_used=page_images,
         extracted_text_used=extracted_text,
+        ocr_compare_used=ocr_compare,
         ocr_requested=ocr,
         ocr_available=ocr_module.available(),
         ner_available=_ner_available(config) if "sensitive" in requested else False,

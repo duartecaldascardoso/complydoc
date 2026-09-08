@@ -63,6 +63,14 @@ ExtractedTextOpt = Annotated[
         "checked. Off by default: the extracted text is the document.",
     ),
 ]
+OcrCompareOpt = Annotated[
+    bool,
+    typer.Option(
+        "--ocr-compare",
+        help="Also OCR pages that already have a text layer, so the text layer and "
+        "what OCR reads can be compared. Implies --extracted-text.",
+    ),
+]
 QuietOpt = Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output.")]
 ModelOpt = Annotated[
     list[str] | None,
@@ -147,6 +155,7 @@ def _run(
     select_models: list[str] | None = None,
     page_images: bool = False,
     extracted_text: bool = False,
+    ocr_compare: bool = False,
 ) -> None:
     offline.arm()
     config = _load(config_dir)
@@ -165,7 +174,7 @@ def _run(
             "[bold yellow]--page-images is set.[/] The HTML report will contain a picture "
             "of every page, so it carries the document content itself."
         )
-    if extracted_text:
+    if extracted_text or ocr_compare:
         errors.print(
             "[bold yellow]--extracted-text is set.[/] The reports will contain the text read "
             "off every page, which is the document content in full."
@@ -186,7 +195,8 @@ def _run(
             resolution=resolution,
             select_models=select_models,
             page_images=page_images,
-            extracted_text=extracted_text,
+            extracted_text=extracted_text or ocr_compare,
+            ocr_compare=ocr_compare,
             recurse=recurse,
             progress=progress if not quiet else None,
         )
@@ -220,6 +230,7 @@ def audit(
     model: ModelOpt = None,
     page_images: PageImagesOpt = False,
     extracted_text: ExtractedTextOpt = False,
+    ocr_compare: OcrCompareOpt = False,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
@@ -241,6 +252,7 @@ def audit(
         select_models=model,
         page_images=page_images,
         extracted_text=extracted_text,
+        ocr_compare=ocr_compare,
     )
 
 
@@ -284,6 +296,7 @@ def difficulty(
     out: OutDirOpt = Path("reports"),
     name: NameOpt = "complydoc-difficulty",
     extracted_text: ExtractedTextOpt = False,
+    ocr_compare: OcrCompareOpt = False,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# uv
+.uv/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local model downloads (fetched at install time, not committed)
+models/
+
+# Generated reports — may contain document metadata
+reports/
+*.report.json
+*.report.html
+
+# OS
+.DS_Store

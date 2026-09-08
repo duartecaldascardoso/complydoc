@@ -59,15 +59,29 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["complydoc", "tests"]
+
 [tool.mypy]
-python_version = "3.11"
+# No python_version pin: mypy then uses the running interpreter, which keeps it
+# in step with the stubs its dependencies ship.
 strict = true
 warn_return_any = true
 disallow_untyped_defs = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["pdfplumber.*", "pypdfium2.*", "rapidocr_onnxruntime.*", "spacy.*", "tiktoken.*", "docx.*", "reportlab.*"]
+module = [
+    "pdfplumber.*",
+    "pypdfium2.*",
+    "rapidocr_onnxruntime.*",
+    "spacy.*",
+    "tiktoken.*",
+    "docx.*",
+    "openpyxl.*",
+    "py3langid.*",
+    "reportlab.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

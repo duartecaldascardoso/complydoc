@@ -24,7 +24,7 @@ def _profile_score(ink: object, angle: float) -> float:
     from PIL import Image as PILImage
 
     assert isinstance(ink, PILImage.Image)
-    rotated = ink.rotate(angle, resample=PILImage.BILINEAR, fillcolor=0)
+    rotated = ink.rotate(angle, resample=PILImage.Resampling.BILINEAR, fillcolor=0)
     profile = np.asarray(rotated, dtype=np.float32).sum(axis=1)
     mean = float(profile.mean())
     return float(profile.std()) / mean if mean > 0 else 0.0

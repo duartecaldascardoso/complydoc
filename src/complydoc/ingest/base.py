@@ -97,6 +97,15 @@ class Page:
     tables: list[TableInfo] = field(default_factory=list)
     fonts: set[str] = field(default_factory=set)
     embedded_fonts: bool | None = None
+    raw_chars: str = ""
+    """Page characters as stored, before any unicode normalisation.
+
+    `text` comes from the extractor's own text assembly, which NFKC-normalises —
+    turning a fi ligature into two plain letters. That is usually helpful, but it
+    destroys exactly the evidence the garbled-character signal needs, so the
+    un-normalised characters are kept alongside. Word spacing is absent here, so
+    this is only useful for character-level questions.
+    """
     raster: Image | None = None
     """Populated only for pages a signal actually needs to look at as pixels."""
     notes: list[str] = field(default_factory=list)

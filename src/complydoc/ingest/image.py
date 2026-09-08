@@ -28,8 +28,8 @@ _DEFAULT_DPI = 72.0
 
 
 class ImageLoader:
-    extensions = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp")
-    format = DocumentFormat.IMAGE
+    extensions: tuple[str, ...] = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp")
+    format: DocumentFormat = DocumentFormat.IMAGE
 
     def load(self, path: Path, options: IngestOptions) -> Document:
         from complydoc.ingest import ocr as ocr_module

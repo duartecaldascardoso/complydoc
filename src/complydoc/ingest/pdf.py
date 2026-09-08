@@ -212,8 +212,8 @@ def _render_pages(path: Path, password: str, indices: list[int], dpi: int) -> di
 
 
 class PdfLoader:
-    extensions = (".pdf",)
-    format = DocumentFormat.PDF
+    extensions: tuple[str, ...] = (".pdf",)
+    format: DocumentFormat = DocumentFormat.PDF
 
     def load(self, path: Path, options: IngestOptions) -> Document:
         from complydoc.ingest import ocr as ocr_module
@@ -230,9 +230,9 @@ class PdfLoader:
         if reader.is_encrypted:
             document.encrypted = True
             try:
-                opened = reader.decrypt("")
+                opened = bool(reader.decrypt(""))
             except Exception:
-                opened = 0
+                opened = False
             if not opened:
                 document.load_warnings.append(
                     "The file is password protected and no password was supplied, so its "
@@ -330,11 +330,12 @@ class PdfLoader:
             page.notes.append(f"image geometry unavailable: {exc}")
 
         try:
-            page.fonts = {
-                str(char["fontname"]) for char in plumber_page.chars if char.get("fontname")
-            }
+            characters = plumber_page.chars
+            page.fonts = {str(c["fontname"]) for c in characters if c.get("fontname")}
+            page.raw_chars = "".join(str(c.get("text", "")) for c in characters)
         except Exception:
             page.fonts = set()
+            page.raw_chars = ""
 
         if options.extract_tables:
             try:

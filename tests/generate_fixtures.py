@@ -274,16 +274,23 @@ def sensitive_sample(path: Path) -> None:
 def garbled(path: Path) -> None:
     """Broken ligatures, run-together words and a corrupted ToUnicode mapping.
 
-    The replacement characters are produced the way they occur in the wild: the
-    text is drawn normally, then the font's ToUnicode CMap is rewritten so one
-    glyph no longer maps to a real codepoint. Extraction then yields U+FFFD.
+    All three are produced the way they occur in the wild: the text is drawn
+    normally, then the font's ToUnicode CMap is rewritten so two glyphs no longer
+    map to the codepoints they display. "X" is remapped to U+FFFD, the
+    replacement character, and "Z" to U+FB01, the fi ligature that should have
+    been decomposed to two letters. Extraction then yields exactly the garbling a
+    badly generated PDF produces.
+
+    Writing the ligature directly does not work: reportlab helpfully decomposes
+    it on the way in, which is the correct behaviour and the opposite of what
+    this fixture needs to exercise.
     """
     _register_font()
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
     c.setFont(FONT, 11)
     lines = [
-        "Conﬁdential ﬁnancial ﬁle - ﬁrst draft",
+        "ConZdential Znancial Zle - Zrst draft",
         "TotalAmountDueOnReceiptOfThisInvoice",
         "PleaseRemitPaymentToTheAccountBelow",
         "The Xgure quoted above is provisional.",
@@ -302,7 +309,9 @@ def garbled(path: Path) -> None:
     writer = pypdf.PdfWriter()
     writer.append(reader)
 
-    patched = 0
+    # "X" becomes the replacement character, "Z" becomes the fi ligature.
+    remappings = ((b"<0058>", b"<FFFD>"), (b"<005A>", b"<FB01>"))
+    patched: set[bytes] = set()
     for obj in writer._objects:
         if not isinstance(obj, pypdf.generic.DictionaryObject):
             continue
@@ -316,13 +325,20 @@ def garbled(path: Path) -> None:
             data = stream.get_data()
         except Exception:
             continue
-        if b"<0058>" not in data:
-            continue
-        stream.set_data(data.replace(b"<0058>", b"<FFFD>"))
-        patched += 1
+        changed = data
+        for source, target in remappings:
+            if source in changed:
+                changed = changed.replace(source, target)
+                patched.add(source)
+        if changed != data:
+            stream.set_data(changed)
 
-    if not patched:
-        raise RuntimeError("could not patch the ToUnicode CMap; fixture would be wrong")
+    missing = [s.decode() for s, _ in remappings if s not in patched]
+    if missing:
+        raise RuntimeError(
+            f"could not patch the ToUnicode CMap for {missing}; the fixture would not "
+            f"actually be garbled and the tests using it would be meaningless"
+        )
 
     with path.open("wb") as handle:
         writer.write(handle)

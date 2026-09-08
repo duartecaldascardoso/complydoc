@@ -69,10 +69,12 @@ def arm() -> None:
     global _armed
     if _armed:
         return
-    socket.socket.connect = _blocked_connect  # type: ignore[method-assign]
-    socket.socket.connect_ex = _blocked_connect_ex  # type: ignore[method-assign]
-    socket.create_connection = _blocked_create_connection  # type: ignore[assignment]
-    socket.getaddrinfo = _blocked_getaddrinfo  # type: ignore[assignment]
+    # Replacing standard library entry points is the point of this module, so the
+    # signature mismatches mypy reports here are deliberate rather than accidental.
+    socket.socket.connect = _blocked_connect  # type: ignore[method-assign, assignment]
+    socket.socket.connect_ex = _blocked_connect_ex  # type: ignore[method-assign, assignment]
+    socket.create_connection = _blocked_create_connection
+    socket.getaddrinfo = _blocked_getaddrinfo
     _armed = True
 
 
@@ -81,8 +83,8 @@ def disarm() -> None:
     global _armed
     socket.socket.connect = _ORIGINAL_CONNECT  # type: ignore[method-assign]
     socket.socket.connect_ex = _ORIGINAL_CONNECT_EX  # type: ignore[method-assign]
-    socket.create_connection = _ORIGINAL_CREATE_CONNECTION  # type: ignore[assignment]
-    socket.getaddrinfo = _ORIGINAL_GETADDRINFO  # type: ignore[assignment]
+    socket.create_connection = _ORIGINAL_CREATE_CONNECTION
+    socket.getaddrinfo = _ORIGINAL_GETADDRINFO
     _armed = False
 
 

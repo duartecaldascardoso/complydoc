@@ -54,8 +54,8 @@ def _table_info(table: Any) -> TableInfo:
 
 
 class DocxLoader:
-    extensions = (".docx",)
-    format = DocumentFormat.DOCX
+    extensions: tuple[str, ...] = (".docx",)
+    format: DocumentFormat = DocumentFormat.DOCX
 
     def load(self, path: Path, options: IngestOptions) -> Document:
         document = Document(

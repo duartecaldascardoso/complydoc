@@ -194,11 +194,16 @@ class SignalConfig(_Base):
 
     def rate(self, value: float | bool | str | None) -> Rating | None:
         """First matching rating wins, checked good then fair then poor."""
-        for rating in ("good", "fair", "poor"):
-            threshold = self.thresholds.get(rating)  # type: ignore[arg-type]
+        order: tuple[Rating, ...] = ("good", "fair", "poor")
+        for rating in order:
+            threshold = self.thresholds.get(rating)
             if threshold is not None and threshold.matches(value):
-                return rating  # type: ignore[return-value]
+                return rating
         return None
+
+
+def _default_rating_points() -> dict[Rating, float]:
+    return {"good": 1.0, "fair": 0.5, "poor": 0.0}
 
 
 class ScoringConfig(_Base):
@@ -206,9 +211,7 @@ class ScoringConfig(_Base):
     method: Literal["weighted_sum"] = "weighted_sum"
     show_breakdown_by_default: bool = True
     print_weights_in_report: bool = True
-    rating_points: dict[Rating, float] = Field(
-        default_factory=lambda: {"good": 1.0, "fair": 0.5, "poor": 0.0}
-    )
+    rating_points: dict[Rating, float] = Field(default_factory=_default_rating_points)
 
     @model_validator(mode="after")
     def _weights_must_be_visible(self) -> ScoringConfig:

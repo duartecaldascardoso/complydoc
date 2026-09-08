@@ -20,8 +20,8 @@ from complydoc.ingest.registry import register
 
 
 class XlsxLoader:
-    extensions = (".xlsx", ".xlsm")
-    format = DocumentFormat.XLSX
+    extensions: tuple[str, ...] = (".xlsx", ".xlsm")
+    format: DocumentFormat = DocumentFormat.XLSX
 
     def load(self, path: Path, options: IngestOptions) -> Document:
         document = Document(
@@ -44,7 +44,8 @@ class XlsxLoader:
                 rows = int(sheet.max_row or 0)
                 cols = int(sheet.max_column or 0)
 
-                merged_ranges = list(getattr(sheet, "merged_cells", []).ranges) or []
+                merged = getattr(sheet, "merged_cells", None)
+                merged_ranges = list(getattr(merged, "ranges", []) or [])
                 merged_cells = sum(
                     (r.max_row - r.min_row + 1) * (r.max_col - r.min_col + 1) - 1
                     for r in merged_ranges

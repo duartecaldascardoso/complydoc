@@ -53,8 +53,15 @@ class GarbledSignal:
             )
 
         replacements = text.count(_REPLACEMENT)
-        ligatures = sum(text.count(c) for c in _LIGATURES)
         run_together = _run_together(text)
+
+        # Ligatures must be counted against the un-normalised characters. The
+        # extractor's text assembly turns a fi ligature into "fi" before we ever
+        # see it, so counting them in `text` would always return zero and this
+        # line of the report would be quietly meaningless.
+        raw = "".join(page.raw_chars for page in document.pages)
+        ligature_source = "unnormalised page characters" if raw else "extracted text"
+        ligatures = sum((raw or text).count(c) for c in _LIGATURES)
         total = replacements + ligatures + run_together
         rate = total / len(text) * 1000
 
@@ -65,6 +72,7 @@ class GarbledSignal:
                 "characters_examined": len(text),
                 "replacement_characters": replacements,
                 "undecomposed_ligatures": ligatures,
+                "ligature_source": ligature_source,
                 "run_together_words": run_together,
                 "total_indicators": total,
             },

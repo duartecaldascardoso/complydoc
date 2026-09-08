@@ -1,0 +1,208 @@
+# UK GDPR relevant identifier detection.
+#
+# MASKING IS THE DEFAULT AND IT IS THE POINT. complydoc reports counts and
+# locations, never values. A report that flags a leaked bank account number by
+# printing it has made the problem worse, not better. `--reveal` exists for the
+# case where someone genuinely needs the values; any report produced with it says
+# so prominently, and categories listed under masking.never_reveal stay masked
+# even then.
+#
+# `patterns` are distinctive enough to report on their own.
+# `context_patterns` are too generic to stand alone (a bare run of digits) and
+# are only reported when one of `context_terms` appears within
+# `context_window_chars` characters.
+# `validators` are checksum or format functions applied after the regex matches;
+# a match that fails its validators is discarded.
+
+schema_version: 1
+
+masking:
+  reveal_tail_chars: 4
+  mask_char: "•"
+  never_reveal:
+    # Even --reveal will not print these. Nobody needs a full PAN in a diagnostic.
+    - card_number
+    - ni_number
+
+categories:
+
+  ni_number:
+    enabled: true
+    label: National Insurance number
+    detector: regex
+    severity: high
+    patterns:
+      - '\b[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z]\s?\d{2}\s?\d{2}\s?\d{2}\s?[A-D]\b'
+    validators: [ni_prefix]
+    context_terms: ["national insurance", "ni number", "nino", "ni no"]
+    gdpr_note: >
+      A direct identifier under UK GDPR. Uniquely identifies an individual and is
+      routinely treated as high risk in a breach assessment.
+
+  sort_code:
+    enabled: true
+    label: UK sort code
+    detector: regex
+    severity: high
+    patterns:
+      - '\b\d{2}-\d{2}-\d{2}\b'
+    context_patterns:
+      - '\b\d{6}\b'
+    validators: [sort_code]
+    context_terms: ["sort code", "sortcode", "sort-code", "branch code"]
+    gdpr_note: >
+      Financial identifier. On its own it identifies a bank branch; combined with
+      an account number it enables direct debit fraud.
+
+  bank_account_number:
+    enabled: true
+    label: UK bank account number
+    detector: regex
+    severity: high
+    context_patterns:
+      - '\b\d{8}\b'
+    context_terms:
+      ["account number", "account no", "acct no", "a/c", "bank account", "account:"]
+    gdpr_note: >
+      Financial identifier. Eight bare digits are far too common to report without
+      a nearby label, so an unlabelled account number will not be found.
+
+  iban:
+    enabled: true
+    label: IBAN
+    detector: regex
+    severity: high
+    patterns:
+      - '\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){2,7}(?:[ ]?[A-Z0-9]{1,4})?\b'
+    validators: [iban_mod97]
+    context_terms: ["iban", "international bank account"]
+    gdpr_note: >
+      Financial identifier, validated here with the ISO 13616 mod-97 checksum, so
+      false positives are rare.
+
+  card_number:
+    enabled: true
+    label: Payment card number
+    detector: regex
+    severity: high
+    patterns:
+      - '\b(?:\d[ -]?){12,18}\d\b'
+    validators: [luhn]
+    context_terms: ["card", "visa", "mastercard", "amex", "pan", "card number"]
+    gdpr_note: >
+      Payment card data. Validated with the Luhn checksum. Storing this in
+      unencrypted documents is a PCI DSS problem as well as a UK GDPR one.
+
+  uk_postcode:
+    enabled: true
+    label: UK postcode
+    detector: regex
+    severity: medium
+    patterns:
+      - '\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b'
+    validators: [uk_postcode]
+    context_terms: ["postcode", "post code", "address"]
+    gdpr_note: >
+      A full postcode narrows location to a handful of properties and is treated
+      as personal data when combined with any other identifier.
+
+  street_address:
+    enabled: true
+    label: Street address
+    detector: regex
+    severity: medium
+    patterns:
+      - '\b\d+[A-Za-z]?[ ,]+(?:[A-Z][A-Za-z''-]+[ ]){1,4}(?:Road|Rd|Street|St|Avenue|Ave|Lane|Ln|Close|Drive|Dr|Way|Court|Ct|Place|Pl|Crescent|Terrace|Gardens|Grove|Hill|Park|Square|Sq)\b'
+    context_terms: ["address", "registered office", "correspondence"]
+    gdpr_note: >
+      Detected by a house-number-plus-street-type heuristic. It will miss flats,
+      named houses and multi-line addresses split across lines.
+
+  email_address:
+    enabled: true
+    label: Email address
+    detector: regex
+    severity: medium
+    patterns:
+      - '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b'
+    gdpr_note: >
+      Personal data whenever it identifies an individual, including
+      firstname.lastname@ addresses at a corporate domain.
+
+  phone_number:
+    enabled: true
+    label: Phone number
+    detector: regex
+    severity: medium
+    patterns:
+      - '(?:\+44[ ]?|\b0)(?:\d[ -]?){9,10}\b'
+    validators: [uk_phone]
+    context_terms: ["tel", "phone", "mobile", "contact"]
+    gdpr_note: >
+      Personal data when tied to an individual. UK formats only; international
+      numbers other than +44 are not detected.
+
+  date_of_birth:
+    enabled: true
+    label: Date of birth
+    detector: regex
+    severity: high
+    context_patterns:
+      - '\b\d{1,2}[/.-]\d{1,2}[/.-](?:19|20)\d{2}\b'
+      - '\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(?:19|20)\d{2}\b'
+    validators: [plausible_dob]
+    context_terms: ["date of birth", "dob", "d.o.b", "born", "birth date", "birthdate"]
+    gdpr_note: >
+      Special-risk identifier in combination with a name. Only dates near an
+      explicit birth-date label are reported, so an unlabelled DOB is missed.
+
+  vat_number:
+    enabled: true
+    label: UK VAT number
+    detector: regex
+    severity: low
+    patterns:
+      - '\bGB[ ]?\d{3}[ ]?\d{4}[ ]?\d{2}(?:[ ]?\d{3})?\b'
+    validators: [vat_mod97]
+    context_terms: ["vat", "vat no", "vat number", "vat reg"]
+    gdpr_note: >
+      Business identifier rather than personal data, unless the business is a sole
+      trader, in which case it is personal data.
+
+  utr:
+    enabled: true
+    label: Unique Taxpayer Reference
+    detector: regex
+    severity: high
+    context_patterns:
+      - '\b\d{10}\b'
+    context_terms: ["utr", "unique taxpayer", "taxpayer reference", "self assessment"]
+    gdpr_note: >
+      HMRC taxpayer identifier. Ten bare digits are too common to report without a
+      nearby label.
+
+  person_name:
+    enabled: true
+    label: Person name
+    detector: ner
+    severity: medium
+    min_confidence: 0.5
+    model:
+      name: en_core_web_sm
+      entity_labels: [PERSON]
+    gdpr_note: >
+      Found by a local statistical model, not a rule. Expect both misses and false
+      positives; treat the count as an indication of scale, not an inventory.
+
+  organisation_name:
+    enabled: true
+    label: Organisation name
+    detector: ner
+    severity: low
+    min_confidence: 0.5
+    model:
+      name: en_core_web_sm
+      entity_labels: [ORG]
+    gdpr_note: >
+      Not personal data on its own. Reported because organisation names are often
+      what makes an otherwise anonymous document re-identifiable.

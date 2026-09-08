@@ -1,0 +1,190 @@
+# Extraction difficulty signals.
+#
+# complydoc reports a TABLE of individually measured signals, not an opaque score.
+# Each row shows the measured value, a rating derived from the thresholds below,
+# and one plain sentence saying why it matters. A reader should be able to
+# disagree with any single line without rejecting the whole report.
+#
+# `weight` is only used if scoring.enabled is true, and every weight is printed
+# next to its row in the report. Weights are normalised at load time, so they do
+# not have to sum to exactly 1.0.
+#
+# `direction` says which way is better. `thresholds` are evaluated good, then
+# fair, then poor; the first match wins. A signal that cannot be measured for a
+# document is reported as not applicable, with the reason, and is excluded from
+# the score rather than being scored as zero.
+#
+# Each signal ships a default explanation in its own module. Add `why: "..."` to
+# any signal below to override that sentence with your own wording.
+
+schema_version: 1
+
+scoring:
+  enabled: true
+  method: weighted_sum
+  show_breakdown_by_default: true
+  print_weights_in_report: true
+  rating_points:
+    good: 1.0
+    fair: 0.5
+    poor: 0.0
+
+signals:
+
+  encrypted:
+    enabled: true
+    weight: 0.10
+    direction: lower_is_easier
+    thresholds:
+      good: { eq: false }
+      poor: { eq: true }
+
+  text_layer_present:
+    enabled: true
+    weight: 0.12
+    direction: higher_is_easier
+    thresholds:
+      good: { eq: true }
+      poor: { eq: false }
+
+  text_layer_coverage_pct:
+    enabled: true
+    weight: 0.10
+    direction: higher_is_easier
+    thresholds:
+      good: { gte: 60 }
+      fair: { gte: 25 }
+      poor: { lt: 25 }
+
+  image_area_ratio_pct:
+    enabled: true
+    weight: 0.09
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 20 }
+      fair: { lt: 60 }
+      poor: { gte: 60 }
+
+  garbled_char_rate:
+    enabled: true
+    weight: 0.09
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 1.0 }
+      fair: { lt: 5.0 }
+      poor: { gte: 5.0 }
+
+  table_count:
+    enabled: true
+    weight: 0.04
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 3 }
+      fair: { lt: 10 }
+      poor: { gte: 10 }
+
+  table_max_header_depth:
+    enabled: true
+    weight: 0.06
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 2 }
+      fair: { lt: 3 }
+      poor: { gte: 3 }
+
+  table_merged_cells:
+    enabled: true
+    weight: 0.06
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 1 }
+      fair: { lt: 10 }
+      poor: { gte: 10 }
+
+  column_count:
+    enabled: true
+    weight: 0.05
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 2 }
+      fair: { lt: 3 }
+      poor: { gte: 3 }
+
+  page_rotation:
+    enabled: true
+    weight: 0.03
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 1 }
+      fair: { lt: 90 }
+      poor: { gte: 90 }
+
+  skew_angle:
+    enabled: true
+    weight: 0.04
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 0.5 }
+      fair: { lt: 2.0 }
+      poor: { gte: 2.0 }
+
+  scan_dpi:
+    enabled: true
+    weight: 0.05
+    direction: higher_is_easier
+    thresholds:
+      good: { gte: 300 }
+      fair: { gte: 200 }
+      poor: { lt: 200 }
+
+  font_count:
+    enabled: true
+    weight: 0.03
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 5 }
+      fair: { lt: 12 }
+      poor: { gte: 12 }
+
+  fonts_embedded:
+    enabled: true
+    weight: 0.03
+    direction: higher_is_easier
+    thresholds:
+      good: { eq: true }
+      poor: { eq: false }
+
+  date_format_consistency:
+    enabled: true
+    weight: 0.04
+    direction: higher_is_easier
+    thresholds:
+      good: { gte: 90 }
+      fair: { gte: 60 }
+      poor: { lt: 60 }
+
+  page_size_variance:
+    enabled: true
+    weight: 0.03
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 2 }
+      fair: { lt: 3 }
+      poor: { gte: 3 }
+
+  language_count:
+    enabled: true
+    weight: 0.02
+    direction: lower_is_easier
+    thresholds:
+      good: { lt: 2 }
+      fair: { lt: 3 }
+      poor: { gte: 3 }
+
+  acroform_fields:
+    enabled: true
+    weight: 0.02
+    direction: higher_is_easier
+    thresholds:
+      good: { gte: 1 }
+      fair: { eq: 0 }

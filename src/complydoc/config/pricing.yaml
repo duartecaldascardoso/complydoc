@@ -1,0 +1,155 @@
+# Model prices and vision token formulas.
+#
+# Every entry carries its own `last_verified` date. complydoc prints that date in
+# every report and warns when it is older than `staleness_warn_days`. Prices move
+# constantly; a confidently-printed stale number is worse than no number, so an
+# entry with `last_verified: null` is treated as never verified and warned about
+# on every run until you check it and set the date yourself.
+#
+# Entries with `enabled: false` and null prices are templates. The token formula
+# shape is filled in; the price is not, because it was not sourced when this file
+# was written. Fill in the price, set last_verified, flip enabled to true.
+# complydoc will not invent a price for you.
+
+schema_version: 1
+staleness_warn_days: 90
+
+currency:
+  # Costs are computed in USD because that is the currency providers publish in.
+  # For GBP totals, set a rate you trust plus the date you checked it, and change
+  # report_in to GBP. Until then complydoc reports USD and says so in every report.
+  report_in: USD
+  usd_to_gbp:
+    rate: null
+    last_verified: null
+    source_url: null
+
+vision_formulas:
+  width_height_area:
+    kind: width_height
+    divisor: 750
+    cap_tokens: 1600
+    notes: >
+      tokens ~= (width_px * height_px) / 750, capped. Used by Anthropic models.
+      Images above the cap are downscaled by the provider before counting.
+
+  tiled_512:
+    kind: tiled
+    base_tokens: 85
+    tile_tokens: 170
+    tile_px: 512
+    max_short_side_px: 768
+    max_long_side_px: 2000
+    notes: >
+      Image is resized to fit the long/short side limits, then split into tile_px
+      squares. Cost is base_tokens plus tile_tokens per tile. Shape only - confirm
+      the constants against your provider's current documentation.
+
+  flat_then_tiled:
+    kind: flat_per_image
+    tokens_per_image: 258
+    tile_above_px: 384
+    tile_tokens: 258
+    notes: >
+      Flat count per image below tile_above_px on both sides; larger images are
+      cropped into tiles each costing tile_tokens. Shape only - confirm constants.
+
+resolution_presets:
+  low:
+    long_edge_px: 768
+  medium:
+    long_edge_px: 1536
+  high:
+    long_edge_px: 2048
+
+models:
+  - id: claude-opus-5
+    provider: anthropic
+    display_name: Claude Opus 5
+    enabled: true
+    input_per_mtok_usd: 5.00
+    output_per_mtok_usd: 25.00
+    supports_vision: true
+    vision_formula: width_height_area
+    tokenizer:
+      encoding: o200k_base
+      fidelity: approximate
+      approximate_ratio: 1.0
+      approximation_note: >
+        Anthropic does not publish an offline tokenizer, so text token counts are
+        approximated with the o200k_base encoding. Treat the figure as indicative
+        rather than exact.
+    last_verified: 2026-06-24
+    source_url: https://docs.anthropic.com/en/docs/about-claude/pricing
+
+  - id: claude-sonnet-5
+    provider: anthropic
+    display_name: Claude Sonnet 5
+    enabled: true
+    input_per_mtok_usd: 2.00
+    output_per_mtok_usd: 10.00
+    supports_vision: true
+    vision_formula: width_height_area
+    tokenizer:
+      encoding: o200k_base
+      fidelity: approximate
+      approximate_ratio: 1.0
+      approximation_note: >
+        Approximated with o200k_base; Anthropic does not publish an offline tokenizer.
+    last_verified: 2026-06-24
+    source_url: https://docs.anthropic.com/en/docs/about-claude/pricing
+
+  - id: claude-haiku-4-5
+    provider: anthropic
+    display_name: Claude Haiku 4.5
+    enabled: true
+    input_per_mtok_usd: 1.00
+    output_per_mtok_usd: 5.00
+    supports_vision: true
+    vision_formula: width_height_area
+    tokenizer:
+      encoding: o200k_base
+      fidelity: approximate
+      approximate_ratio: 1.0
+      approximation_note: >
+        Approximated with o200k_base; Anthropic does not publish an offline tokenizer.
+    last_verified: 2026-06-24
+    source_url: https://docs.anthropic.com/en/docs/about-claude/pricing
+
+  # ---- Templates. Prices not sourced. Fill in before enabling. ----
+
+  - id: openai-vision-model
+    provider: openai
+    display_name: "OpenAI model (price not configured)"
+    enabled: false
+    input_per_mtok_usd: null
+    output_per_mtok_usd: null
+    supports_vision: true
+    vision_formula: tiled_512
+    tokenizer:
+      encoding: o200k_base
+      fidelity: exact
+    last_verified: null
+    source_url: null
+    notes: >
+      Template. Set id, display_name, prices and last_verified from the provider's
+      current pricing page, then set enabled: true.
+
+  - id: google-vision-model
+    provider: google
+    display_name: "Google model (price not configured)"
+    enabled: false
+    input_per_mtok_usd: null
+    output_per_mtok_usd: null
+    supports_vision: true
+    vision_formula: flat_then_tiled
+    tokenizer:
+      encoding: o200k_base
+      fidelity: approximate
+      approximate_ratio: 1.0
+      approximation_note: >
+        Google does not publish an offline tokenizer; approximated with o200k_base.
+    last_verified: null
+    source_url: null
+    notes: >
+      Template. Set id, display_name, prices and last_verified before enabling.

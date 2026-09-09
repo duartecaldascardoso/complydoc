@@ -114,9 +114,9 @@ def test_an_unopenable_document_scores_from_one_signal(loader, config):
     assert result.score.low_confidence is True
 
 
-def test_zero_tables_is_qualified_not_asserted(report):
-    """Line-based detection misses whitespace-aligned tables, so zero is not "none"."""
+def test_alignment_tables_say_what_they_cannot_measure(report):
+    """A table with no rules carries nothing to read a span from."""
     entry = next(x for x in report.limitations if x.area == "Table detection")
-    assert "ruling lines" in entry.statement
-    assert entry.severity == "important"
-    assert "native_text.pdf" in entry.affected
+    assert "whitespace rather than ruling lines" in entry.statement
+    assert "whitespace_table.pdf" in entry.affected
+    assert "native_text.pdf" not in entry.affected, "prose is not a table"

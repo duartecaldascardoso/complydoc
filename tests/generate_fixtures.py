@@ -170,6 +170,38 @@ def two_column(path: Path) -> None:
     c.save()
 
 
+def whitespace_table(path: Path) -> None:
+    """An invoice table aligned with whitespace and no ruling lines at all.
+
+    This is how most real invoices are laid out, and line-based table detection
+    finds nothing in them. The fixture exists so the alignment fallback has
+    something true to find, and so the prose fixtures can prove it does not fire
+    on ordinary text.
+    """
+    _register_font()
+    c = canvas.Canvas(str(path), pagesize=A4)
+    c.setFont(FONT, 9)
+    c.drawString(22 * mm, A4[1] - 30 * mm, "NORTHWIND SUPPLIES LIMITED")
+    c.drawString(22 * mm, A4[1] - 36 * mm, "Invoice INV-2026-0418")
+
+    columns = (22 * mm, 108 * mm, 132 * mm, 162 * mm)
+    rows = [
+        ("Description", "Qty", "Unit", "Net"),
+        ("Consultancy, February", "12", "350.00", "4,200.00"),
+        ("Travel and expenses", "1", "180.00", "180.00"),
+        ("Software licences", "3", "240.00", "720.00"),
+        ("Support retainer", "1", "900.00", "900.00"),
+        ("Onboarding workshop", "2", "450.00", "900.00"),
+    ]
+    y = A4[1] - 52 * mm
+    for row in rows:
+        for x, cell in zip(columns, row, strict=True):
+            c.drawString(x, y, cell)
+        y -= 7 * mm
+    c.showPage()
+    c.save()
+
+
 def merged_header_table(path: Path) -> None:
     """A table whose header is three stacked rows of merged cells."""
     _register_font()
@@ -503,6 +535,7 @@ def main() -> None:
     native_text(native)
     dense_text(HERE / "dense_text.pdf")
     two_column(HERE / "two_column.pdf")
+    whitespace_table(HERE / "whitespace_table.pdf")
     merged_header_table(HERE / "merged_header_table.pdf")
     mixed_page_sizes(HERE / "mixed_page_sizes.pdf")
     acroform(HERE / "acroform.pdf")

@@ -161,29 +161,29 @@ def build_limitations(
             )
         )
 
-    # --- Table detection only sees ruled tables ---------------------------
-    no_tables = [
+    # --- What alignment-detected tables cannot report ---------------------
+    aligned = [
         d.relative_path
         for d in documents
         if d.difficulty
         and any(
-            s.id == "table_count" and s.status is SignalStatus.MEASURED and s.value == 0
+            s.id == "table_count"
+            and s.status is SignalStatus.MEASURED
+            and s.detail.get("aligned_tables")
             for s in d.difficulty.signals
         )
     ]
-    if no_tables:
+    if aligned:
         limitations.append(
             Limitation(
                 area="Table detection",
                 statement=(
-                    f"{count(len(no_tables), 'document')} were measured as containing no tables. "
-                    f"Tables are found from their ruling lines, so a table whose columns are "
-                    f"aligned with whitespace alone — which is how most invoices are laid out "
-                    f"— is not detected. Read a count of zero as 'no ruled tables', not as "
-                    f"'no tabular data'."
+                    f"{count(len(aligned), 'document')} contain tables held together by "
+                    f"whitespace rather than ruling lines. They are counted, but a table "
+                    f"with no rules carries nothing to read a span from, so header depth "
+                    f"and merged cells are not measured for them."
                 ),
-                affected=sorted(no_tables),
-                severity="important",
+                affected=sorted(aligned),
             )
         )
 

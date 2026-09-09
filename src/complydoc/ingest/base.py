@@ -81,6 +81,9 @@ class TableInfo:
     header_depth: int
     """How many stacked rows form the header. More than one means a nested header."""
     merged_cells: int
+    detected_by: Literal["lines", "alignment"] = "lines"
+    """How the table was found. Alignment carries no ruling lines, so its header
+    depth and merged-cell counts cannot be measured and are reported as unknown."""
 
 
 @dataclass(slots=True)
@@ -98,6 +101,8 @@ class Page:
     fonts: set[str] = field(default_factory=set)
     embedded_fonts: bool | None = None
     ocr_text: str = ""
+    ocr_confidence: float | None = None
+    """The engine's mean confidence in what it read, 0 to 1. None if it did not run."""
     """What OCR read, kept separately from `text`.
 
     Normally OCR only runs where there is no text layer, and its output becomes

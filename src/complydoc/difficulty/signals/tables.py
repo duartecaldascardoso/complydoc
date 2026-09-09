@@ -35,6 +35,8 @@ class TableCountSignal:
             detail={
                 "per_page": [len(p.tables) for p in document.pages],
                 "total_rows": sum(t.rows for t in tables),
+                "ruled_tables": sum(1 for t in tables if t.detected_by == "lines"),
+                "aligned_tables": sum(1 for t in tables if t.detected_by == "alignment"),
             },
         )
 
@@ -49,13 +51,19 @@ class TableHeaderDepthSignal:
 
     def measure(self, document: Document) -> Measurement:
         tables = _tables(document)
+        ruled = [t for t in tables if t.detected_by == "lines"]
         if not tables:
             return Measurement.na("no tables were detected, so there is no header to measure")
-        depth = max(t.header_depth for t in tables)
+        if not ruled:
+            return Measurement.na(
+                "the tables here are held together by whitespace rather than ruling "
+                "lines, and a table with no rules carries nothing to read a span from"
+            )
+        depth = max(t.header_depth for t in ruled)
         return Measurement(
             value=depth,
             display=f"{depth} header rows",
-            detail={"per_table": [t.header_depth for t in tables]},
+            detail={"per_table": [t.header_depth for t in ruled]},
         )
 
 
@@ -69,14 +77,20 @@ class TableMergedCellsSignal:
 
     def measure(self, document: Document) -> Measurement:
         tables = _tables(document)
+        ruled = [t for t in tables if t.detected_by == "lines"]
         if not tables:
             return Measurement.na("no tables were detected, so there are no cells to merge")
-        merged = sum(t.merged_cells for t in tables)
+        if not ruled:
+            return Measurement.na(
+                "the tables here are held together by whitespace rather than ruling "
+                "lines, so there are no spans to count"
+            )
+        merged = sum(t.merged_cells for t in ruled)
         return Measurement(
             value=merged,
             display=f"{merged} merged cells",
             detail={
-                "per_table": [t.merged_cells for t in tables],
-                "tables_with_merges": sum(1 for t in tables if t.merged_cells),
+                "per_table": [t.merged_cells for t in ruled],
+                "tables_with_merges": sum(1 for t in ruled if t.merged_cells),
             },
         )

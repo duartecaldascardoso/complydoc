@@ -137,6 +137,17 @@ signals:
       fair: { lt: 2.0 }
       poor: { gte: 2.0 }
 
+  ocr_confidence:
+    # The engine's own score for what it recognised. Anything under about 80%
+    # means the characters it returned are not the characters on the page.
+    enabled: true
+    weight: 0.05
+    direction: higher_is_easier
+    thresholds:
+      good: { gte: 90 }
+      fair: { gte: 75 }
+      poor: { lt: 75 }
+
   scan_dpi:
     enabled: true
     weight: 0.05

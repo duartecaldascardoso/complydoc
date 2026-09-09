@@ -77,10 +77,11 @@ class ImageLoader:
                 f"({ocr_module.unavailable_reason()}), so its content was not read."
             )
         else:
-            text = ocr_module.run(page.raster)
-            page.ocr_text = text
-            if text.strip():
-                page.text = text
+            read = ocr_module.run(page.raster)
+            page.ocr_text = read.text
+            page.ocr_confidence = read.confidence
+            if read.text.strip():
+                page.text = read.text
                 page.text_source = "ocr"
             else:
                 document.load_warnings.append("OCR produced no text for this image.")

@@ -33,6 +33,12 @@ from complydoc.ingest.base import (
 from complydoc.ingest.registry import register
 from complydoc.text import count, plural
 
+_ALIGNED_TABLE_SETTINGS = {"vertical_strategy": "text", "horizontal_strategy": "text"}
+_MAX_WORDS_CUT = 0.02
+"""A column edge that slices through words is an artefact of the text strategy."""
+_MIN_ALIGNED_ROWS = 3
+_MIN_ALIGNED_COLS = 2
+
 _FONT_FILE_KEYS = ("/FontFile", "/FontFile2", "/FontFile3")
 
 # The PDF standard 14. A viewer is required to have these, so they are never
@@ -182,6 +188,61 @@ def _table_shape(table: Any) -> TableInfo | None:
         header_depth=header_depth,
         merged_cells=merged,
     )
+
+
+def _aligned_tables(plumber_page: Any) -> list[TableInfo]:
+    """Tables held together by whitespace rather than ruling lines.
+
+    Most invoices align their columns with spacing and draw no rules at all, so
+    the line-based pass finds nothing in them. Running the text strategy alone is
+    worse than useless — it finds a thirteen-column "table" in a page of prose —
+    so a candidate is only accepted when its column edges fall in the gutters.
+    A boundary that cuts through words is not a column.
+    """
+    try:
+        candidates = plumber_page.find_tables(table_settings=_ALIGNED_TABLE_SETTINGS)
+        words = plumber_page.extract_words() or []
+    except Exception:
+        return []
+    if not candidates or not words:
+        return []
+
+    found: list[TableInfo] = []
+    for candidate in candidates:
+        try:
+            grid = [[(cell or "").strip() for cell in row] for row in candidate.extract()]
+        except Exception:
+            continue
+        filled = [row for row in grid if any(row)]
+        columns = max((len(row) for row in filled), default=0)
+        if len(filled) < _MIN_ALIGNED_ROWS or columns < _MIN_ALIGNED_COLS:
+            continue
+
+        edges = sorted(
+            {round(c[0], 1) for row in candidate.rows for c in row.cells if c}
+            | {round(c[2], 1) for row in candidate.rows for c in row.cells if c}
+        )
+        interior = edges[1:-1]
+        if not interior:
+            continue
+        cut = sum(
+            1 for w in words if any(w["x0"] + 0.5 < edge < w["x1"] - 0.5 for edge in interior)
+        )
+        if cut / len(words) > _MAX_WORDS_CUT:
+            continue
+
+        found.append(
+            TableInfo(
+                rows=len(filled),
+                cols=columns,
+                # Without ruling lines there is nothing to read a span from, so
+                # neither header depth nor merged cells can be measured here.
+                header_depth=1,
+                merged_cells=0,
+                detected_by="alignment",
+            )
+        )
+    return found
 
 
 def _render_pages(path: Path, password: str, indices: list[int], dpi: int) -> dict[int, Any]:
@@ -347,6 +408,8 @@ class PdfLoader:
                     info = _table_shape(table)
                     if info is not None:
                         page.tables.append(info)
+                if not page.tables:
+                    page.tables.extend(_aligned_tables(plumber_page))
             except Exception as exc:
                 page.notes.append(f"table detection failed: {exc}")
                 document.load_warnings.append(
@@ -368,7 +431,9 @@ class PdfLoader:
         for page in document.pages:
             if page.raster is None or page.ocr_text:
                 continue
-            page.ocr_text = ocr_module.run(page.raster)
+            read = ocr_module.run(page.raster)
+            page.ocr_text = read.text
+            page.ocr_confidence = read.confidence
 
     @staticmethod
     def _apply_ocr(
@@ -403,10 +468,11 @@ class PdfLoader:
             if page.raster is None:
                 unread.append(page.number)
                 continue
-            text = ocr_module.run(page.raster)
-            page.ocr_text = text
-            if text.strip():
-                page.text = text
+            read = ocr_module.run(page.raster)
+            page.ocr_text = read.text
+            page.ocr_confidence = read.confidence
+            if read.text.strip():
+                page.text = read.text
                 page.text_source = "ocr"
             else:
                 unread.append(page.number)

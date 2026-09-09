@@ -15,13 +15,22 @@ from __future__ import annotations
 
 import atexit
 import time
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from PIL.Image import Image
 
-__all__ = ["available", "engine_name", "reset_stats", "run", "stats", "unavailable_reason"]
+__all__ = [
+    "Recognised",
+    "available",
+    "engine_name",
+    "reset_stats",
+    "run",
+    "stats",
+    "unavailable_reason",
+]
 
 _IMPORT_ERROR: str | None = None
 
@@ -30,6 +39,20 @@ _IMPORT_ERROR: str | None = None
 # measured here so the report can quote a rate it actually observed.
 _pages = 0
 _seconds = 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class Recognised:
+    """What OCR read, and how sure it was.
+
+    The engine reports a confidence for every box it recognises and we used to
+    throw them away, which left OCR text asserted with exactly the same
+    authority as a native text layer. It does not deserve that.
+    """
+
+    text: str
+    confidence: float | None
+    boxes: int
 
 
 @lru_cache(maxsize=1)
@@ -90,13 +113,13 @@ def stats() -> tuple[int, float]:
     return _pages, round(_seconds, 3)
 
 
-def run(image: Image) -> str:
-    """Return recognised text for one page image, or an empty string."""
+def run(image: Image) -> Recognised:
+    """Read one page image, with the engine's own confidence in what it read."""
     global _pages, _seconds
 
     engine = _engine()
     if engine is None:
-        return ""
+        return Recognised("", None, 0)
     import numpy as np
 
     array = np.asarray(image.convert("RGB"))
@@ -104,11 +127,19 @@ def run(image: Image) -> str:
     try:
         result, _ = engine(array)
     except Exception:  # pragma: no cover - a bad page should not kill the run
-        return ""
+        return Recognised("", None, 0)
     finally:
         _seconds += time.perf_counter() - started
         _pages += 1
     if not result:
-        return ""
+        return Recognised("", None, 0)
+
     lines = [str(item[1]) for item in result if len(item) > 1]
-    return "\n".join(lines)
+    scores = [
+        float(item[2]) for item in result if len(item) > 2 and isinstance(item[2], int | float)
+    ]
+    return Recognised(
+        text="\n".join(lines),
+        confidence=round(sum(scores) / len(scores), 3) if scores else None,
+        boxes=len(lines),
+    )

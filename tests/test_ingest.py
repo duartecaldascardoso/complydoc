@@ -81,3 +81,57 @@ def test_worksheet_becomes_a_page(loader):
     document = loader("sample.xlsx")
     assert document.page_count == 2
     assert "Northwind" in document.full_text
+
+
+def test_docx_merges_are_counted_from_the_markup(loader):
+    """The count used to depend on which memory addresses got reused.
+
+    Cells were identified by `id(cell._tc)`, and python-docx builds a new proxy
+    on each access, so two different cells could share an address once the first
+    had been collected. The fixture's one three-column header cell absorbs two
+    grid positions and nothing else does.
+    """
+    tables = [t for page in loader("sample.docx").pages for t in page.tables]
+    assert len(tables) == 1
+    assert (tables[0].rows, tables[0].cols) == (4, 3)
+    assert tables[0].merged_cells == 2
+    assert tables[0].header_depth == 2
+
+
+def test_docx_merges_count_the_same_in_a_fresh_process():
+    """Reading the same file twice must not give two different answers."""
+    import subprocess
+    import sys
+
+    script = (
+        "from pathlib import Path;"
+        "from complydoc.ingest.base import IngestOptions;"
+        "from complydoc.ingest.registry import load_document;"
+        "d = load_document(Path('tests/fixtures/sample.docx'), IngestOptions());"
+        "print([t.merged_cells for p in d.pages for t in p.tables])"
+    )
+    runs = {
+        subprocess.run(
+            [sys.executable, "-c", script], capture_output=True, text=True, check=True
+        ).stdout.strip()
+        for _ in range(3)
+    }
+    assert runs == {"[2]"}, runs
+
+
+def test_a_vertical_merge_is_counted_too(tmp_path):
+    import docx
+
+    from complydoc.ingest.docx import _table_info
+
+    document = docx.Document()
+    table = document.add_table(rows=4, cols=3)
+    table.cell(0, 0).merge(table.cell(0, 2))
+    table.cell(1, 0).merge(table.cell(2, 0))
+    path = tmp_path / "merges.docx"
+    document.save(path)
+
+    info = _table_info(docx.Document(path).tables[0])
+    # Twelve grid positions; the header cell absorbs two and the vertical one.
+    assert info.merged_cells == 3
+    assert (info.rows, info.cols) == (4, 3)

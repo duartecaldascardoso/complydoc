@@ -12,6 +12,7 @@ from typing import Any
 
 import docx
 from docx.opc.exceptions import PackageNotFoundError
+from docx.oxml.ns import qn
 
 from complydoc.ingest.base import (
     Document,
@@ -27,27 +28,53 @@ from complydoc.ingest.registry import register
 _EMU_PER_POINT = 12700
 
 
+def _is_continuation(tc: Any) -> bool:
+    """Whether this cell is the lower half of a vertical merge.
+
+    A vertically merged cell is written as one `w:tc` per row it covers: the
+    first carries `w:vMerge` with `val="restart"`, the rest carry a bare
+    `w:vMerge`. Only the first is a cell in its own right.
+    """
+    properties = tc.find(qn("w:tcPr"))
+    merge = properties.find(qn("w:vMerge")) if properties is not None else None
+    if merge is None:
+        return False
+    return merge.get(qn("w:val")) != "restart"
+
+
 def _table_info(table: Any) -> TableInfo:
-    rows = len(table.rows)
+    """Grid shape and merge counts, read from the table's own XML.
+
+    An earlier revision identified cells by `id(cell._tc)`. python-docx builds a
+    fresh proxy on each access, so two different cells could share an address
+    once the first proxy had been collected — which made the merged-cell count
+    depend on memory reuse and differ between processes reading the same file.
+    The spans are attributes of the markup, so they are read from the markup.
+    """
+    rows_xml = list(table._tbl.findall(qn("w:tr")))
+    rows = len(rows_xml)
     cols = len(table.columns) if table.columns else 0
 
-    unique_cells: set[int] = set()
+    logical_cells = 0
     header_depth = 0
     counting_header = True
-    for row in table.rows:
-        try:
-            cells = list(row.cells)
-        except Exception:
-            continue
-        ids = {id(cell._tc) for cell in cells}
-        unique_cells |= ids
-        row_is_merged = len(ids) < len(cells)
-        if counting_header and row_is_merged:
+    for row in rows_xml:
+        cells = list(row.findall(qn("w:tc")))
+        spanning = False
+        for cell in cells:
+            if _is_continuation(cell):
+                spanning = True
+                continue
+            logical_cells += 1
+            if (cell.grid_span or 1) > 1:
+                spanning = True
+        if counting_header and spanning:
             header_depth += 1
         elif counting_header:
             counting_header = False
 
-    merged = max(0, rows * cols - len(unique_cells))
+    # Every grid position a spanning cell covers beyond its own is one merge.
+    merged = max(0, rows * cols - logical_cells)
     # The row of leaf labels under the spanning rows counts as header as well.
     depth = header_depth + 1 if header_depth else 1
     return TableInfo(rows=rows, cols=cols, header_depth=depth, merged_cells=merged)

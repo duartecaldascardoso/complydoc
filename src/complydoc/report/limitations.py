@@ -17,6 +17,7 @@ from complydoc.config.schema import Config
 from complydoc.difficulty.base import SignalStatus
 from complydoc.ingest.base import SkipRecord
 from complydoc.report.models import DocumentReport, Limitation, RunMetadata
+from complydoc.text import count, plural
 
 __all__ = ["build_limitations"]
 
@@ -40,7 +41,7 @@ def build_limitations(
                 Limitation(
                     area="Files not examined",
                     statement=(
-                        f"{len(files)} file(s) were not examined because they could not be "
+                        f"{count(len(files), 'file')} were not examined because they could not be "
                         f"opened ({reason}). Nothing in this report says anything about them."
                     ),
                     affected=sorted(files),
@@ -65,12 +66,12 @@ def build_limitations(
             Limitation(
                 area="Pages that could not be read",
                 statement=(
-                    f"{total} page(s) carried no readable text because {why}. Those pages "
+                    f"{count(total, 'page')} carried no readable text because {why}. Those pages "
                     f"were not searched for sensitive information, so a count of zero for "
                     f"them means 'not looked at', not 'nothing there'."
                 ),
                 affected=[
-                    f"{path}: page(s) {', '.join(map(str, pages))}"
+                    f"{path}: {plural(len(pages), 'page')} {', '.join(map(str, pages))}"
                     for path, pages in sorted(unreadable.items())
                 ],
                 severity="important",
@@ -88,7 +89,7 @@ def build_limitations(
             Limitation(
                 area="Encrypted documents",
                 statement=(
-                    f"{len(encrypted)} document(s) are password protected and could not be "
+                    f"{count(len(encrypted), 'document')} are password protected and could not be "
                     f"opened, so nothing was measured for them beyond the fact of encryption."
                 ),
                 affected=sorted(encrypted),
@@ -151,7 +152,7 @@ def build_limitations(
             Limitation(
                 area="Signals that failed",
                 statement=(
-                    f'"{name}" raised an error on {len(set(affected))} document(s) and was '
+                    f'"{name}" raised an error on {count(len(set(affected)), "document")} and was '
                     f"skipped: {reason}. This is a defect in complydoc, not a property of "
                     f"the document."
                 ),
@@ -175,7 +176,7 @@ def build_limitations(
             Limitation(
                 area="Table detection",
                 statement=(
-                    f"{len(no_tables)} document(s) were measured as containing no tables. "
+                    f"{count(len(no_tables), 'document')} were measured as containing no tables. "
                     f"Tables are found from their ruling lines, so a table whose columns are "
                     f"aligned with whitespace alone — which is how most invoices are laid out "
                     f"— is not detected. Read a count of zero as 'no ruled tables', not as "
@@ -193,7 +194,7 @@ def build_limitations(
             Limitation(
                 area="Page counts",
                 statement=(
-                    f"{len(unpaged)} document(s) have no fixed pagination until they are "
+                    f"{count(len(unpaged), 'document')} have no fixed pagination until they are "
                     f"rendered, so their page count, page dimensions and any per-page cost "
                     f"figure are not measurements. Vision-path costs are reported as not "
                     f"applicable for them rather than as zero."
@@ -273,7 +274,7 @@ def build_limitations(
             Limitation(
                 area="Volume extrapolation",
                 statement=(
-                    f"Monthly and annual figures assume the {len(documents)} document(s) "
+                    f"Monthly and annual figures assume the {count(len(documents), 'document')} "
                     f"audited here are representative of the {run.monthly_volume:,} you "
                     f"process each month. If this sample is unusual, so is the projection."
                 ),

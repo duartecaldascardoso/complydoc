@@ -18,6 +18,7 @@ from complydoc.difficulty.registry import signal_by_id
 from complydoc.report.charts import SERIES, build_comparison, grouped_bars_svg
 from complydoc.report.models import AuditReport
 from complydoc.report.preview import PagePreview
+from complydoc.text import count
 
 __all__ = ["page_preview_svg", "render_html", "write_html"]
 
@@ -94,7 +95,7 @@ def page_preview_svg(preview: PagePreview, width: int = _PREVIEW_WIDTH) -> str:
         f'<svg class="pv" viewBox="0 0 {width} {height}" width="{width}" height="{height}" '
         f'role="img" aria-label="Page {preview.number} layout: '
         f"{preview.text_coverage_pct}% text, {preview.image_coverage_pct}% image, "
-        f'{preview.sensitive_count} sensitive item(s)">'
+        f'{count(preview.sensitive_count, "sensitive item")}">'
     ]
 
     def rect(box: object, **attrs: object) -> str:

@@ -15,6 +15,7 @@ from dataclasses import dataclass
 
 from complydoc.config.schema import ScoringConfig
 from complydoc.difficulty.base import SignalResult
+from complydoc.text import count
 
 __all__ = ["DifficultyScore", "ScoreComponent", "compute_score"]
 
@@ -106,7 +107,7 @@ def compute_score(results: list[SignalResult], config: ScoringConfig) -> Difficu
         method=(
             f"{config.method}: each signal's rating scores "
             + ", ".join(f"{k}={v}" for k, v in config.rating_points.items())
-            + f"; weights renormalised across the {len(counted)} signal(s) that produced "
+            + f"; weights renormalised across the {count(len(counted), 'signal')} that produced "
             f"a rating for this document, then expressed out of 100."
         ),
     )

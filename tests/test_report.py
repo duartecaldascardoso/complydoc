@@ -294,10 +294,25 @@ def test_tabs_do_not_depend_on_the_url_hash(html):
     assert "preventDefault" in html
 
 
-def test_limitations_live_on_the_summary_page_in_an_expander(html):
-    summary = html.split('id="summary"')[1].split("<section")[0]
-    assert "What this run could not tell you" in summary
-    assert "data-paginate-list=" in summary
+def test_limitations_stay_in_the_json_not_the_html(html, report):
+    """The list is written for an agent to act on; the HTML is read by people.
+
+    The facts that change a business conclusion are surfaced in their own right:
+    unverified prices get a callout, unread pages appear on their document.
+    """
+    assert report.limitations, "the run still records them"
+    assert "What this run could not tell you" not in html
+    assert "not a standard disclaimer" not in html
+
+
+def test_decision_changing_facts_survive_in_the_html(html, report):
+    if report.staleness_warnings:
+        assert "Unverified prices" in html
+    unread = [d for d in report.documents if d.sensitive and d.sensitive.unreadable_pages]
+    if unread:
+        flat = " ".join(html.split())
+        assert "not searched" in flat
+        assert "nothing was found there because nothing looked" in flat.lower()
 
 
 def test_summary_leads_with_the_three_business_figures(html):
@@ -353,3 +368,21 @@ def test_signal_explanations_are_one_sentence(config):
     for signal in all_signals():
         assert signal.why.count(".") <= 1, f"{signal.id} runs to more than one sentence"
         assert len(signal.why) <= 100, f"{signal.id} is {len(signal.why)} characters"
+
+
+# --- copy quality ----------------------------------------------------------
+
+
+def test_no_parenthesised_plurals_reach_the_reader(html):
+    """ "3 page(s)" reads like a template, not like something someone wrote."""
+    import re
+
+    found = re.findall(r"\w+\(s\)", html)
+    assert not found, f"parenthesised plurals in the report: {sorted(set(found))}"
+
+
+def test_footer_carries_the_run_and_the_guarantee(html):
+    footer = html.split("<footer>")[1]
+    assert "No document content left this machine" in footer
+    assert "Audited" in footer and "Finished" in footer
+    assert "network guard" in footer

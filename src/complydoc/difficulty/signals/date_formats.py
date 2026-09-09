@@ -8,6 +8,7 @@ from collections import Counter
 from complydoc.difficulty.base import ALL_FORMATS, Measurement
 from complydoc.difficulty.registry import signal
 from complydoc.ingest.base import Document
+from complydoc.text import count
 
 _MONTH = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"
 
@@ -42,7 +43,7 @@ class DateFormatConsistencySignal:
         total = sum(counts.values())
         if total < _MIN_DATES:
             return Measurement.na(
-                f"only {total} date(s) were found, which is too few to say anything about "
+                f"only {count(total, 'date')} were found, which is too few to say anything about "
                 f"consistency"
             )
 

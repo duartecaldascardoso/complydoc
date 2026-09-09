@@ -24,6 +24,7 @@ from complydoc.cost.estimator import UnknownModelError
 from complydoc.report.html_writer import write_html
 from complydoc.report.json_writer import write_json
 from complydoc.report.models import AuditReport
+from complydoc.text import count
 
 app = typer.Typer(
     add_completion=False,
@@ -184,7 +185,7 @@ def _summary(report: AuditReport) -> None:
     important = [x for x in report.limitations if x.severity == "important"]
     if important:
         console.print(
-            f"\n[yellow]{len(important)} important limitation(s)[/] — see the report before "
+            f"\n[yellow]{count(len(important), 'important limitation')}[/] — see the report before "
             f"drawing conclusions."
         )
     for warning in report.staleness_warnings:
@@ -637,7 +638,7 @@ def pricing_import(
         raise typer.Exit(code=1)
 
     errors.print(
-        f"[dim]# {len(chosen)} model(s) from {len(table)} in the table. "
+        f"[dim]# {count(len(chosen), 'model')} from {len(table)} in the table. "
         f"Paste under `models:` in pricing.yaml.[/]"
     )
     print(to_yaml(chosen))

@@ -189,8 +189,11 @@
   .viewer > .doc[hidden] { display: none; }
   .doc h3 { margin-top: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             font-size: 0.9375rem; }
-  .flags { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0.375rem 0 1rem; }
-  .flag { font-size: 0.6875rem; padding: 0.125rem 0.4375rem; border-radius: 2px;
+  .flags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem;
+           margin: 0.5rem 0 1.25rem; }
+  .flag { display: inline-block; flex: 0 0 auto; font-size: 0.6875rem; line-height: 1.5;
+          padding: 0.125rem 0.5rem; border-radius: 3px; white-space: nowrap;
+          max-width: 100%; overflow: hidden; text-overflow: ellipsis;
           background: var(--na-bg); color: var(--na); }
   .flag.bad { background: var(--poor-bg); color: var(--poor); }
   .flag.warn { background: var(--fair-bg); color: var(--fair); }
@@ -202,7 +205,8 @@
                     border-bottom: 2px solid transparent; color: var(--muted);
                     cursor: pointer; margin-bottom: -1px; }
   .subtabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
-  .pcap { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.375rem; }
+  .pcap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem;
+          margin-top: 0.375rem; }
   @media (max-width: 860px) {
     .explorer { flex-direction: column; }
     .files { flex: 1 1 auto; max-width: none; position: static; width: 100%; }
@@ -227,8 +231,17 @@
   details.more > summary { font-weight: 400; font-size: 0.8125rem; color: var(--muted);
                            padding: 0.375rem 0; }
   details.more > summary::marker { color: var(--faint); }
-  footer { margin-top: 3rem; padding-top: 0.75rem; border-top: 1px solid var(--line);
-           color: var(--faint); font-size: 0.75rem; }
+  footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 2px solid var(--accent); }
+  .foot-main { display: flex; flex-wrap: wrap; gap: 2.5rem; align-items: flex-start; }
+  .foot-main > div:first-child { flex: 1 1 18rem; }
+  footer .logo { width: 170px; height: auto; margin: 0 0 0.5rem -5px; }
+  .foot-claim { font-size: 0.8125rem; color: var(--muted); max-width: 32ch; margin: 0; }
+  .foot-meta { flex: 1 1 22rem; display: grid; grid-template-columns: auto 1fr;
+               gap: 0.25rem 1rem; margin: 0; font-size: 0.75rem; }
+  .foot-meta dt { color: var(--faint); white-space: nowrap; }
+  .foot-meta dd { margin: 0; color: var(--ink-2); overflow-wrap: anywhere; }
+  .foot-rule { margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid var(--line);
+               color: var(--faint); font-size: 0.6875rem; }
   @media print {
     body { padding: 0; max-width: none; font-size: 10.5pt; background: #fff; color: #000; }
     details > div { display: block !important; }
@@ -262,6 +275,8 @@
 </style>
 </head>
 <body>
+
+{% macro plural(n, word, suffix="s") %}{{ n }} {{ word }}{{ "" if n == 1 else suffix }}{% endmacro %}
 
 {% macro matches_table(rows, show_doc) %}
 <div class="scroll"><table data-paginate="25">
@@ -350,7 +365,7 @@
       <div class="s">
         {% set bands = agg.difficulty_bands %}
         {{ bands.get("straightforward", 0) + bands.get("workable", 0) }} of
-        {{ agg.documents_audited }} document(s) are workable or better. Higher is easier.</div>
+        {{ agg.documents_audited }} are workable or better. Higher is easier.</div>
     {% else %}<div class="v">—</div><div class="s">difficulty was not part of this run</div>{% endif %}
   </div>
 
@@ -359,7 +374,7 @@
     {% if "sensitive" in report.run.components_run %}
       <div class="v">{{ "%.1f"|format(agg.sensitive_total / agg.documents_audited) if agg.documents_audited else 0 }}</div>
       <div class="s">{{ agg.sensitive_total }} found in
-        {{ agg.documents_with_sensitive_data }} of {{ agg.documents_audited }} document(s).
+        {{ agg.documents_with_sensitive_data }} of {{ agg.documents_audited }} documents.
         {% if agg.counts_by_severity_high is defined %}{% endif %}
         {% set high = agg.sensitive_by_severity.get("high", 0) %}
         {{ high }} rated high severity.</div>
@@ -382,33 +397,14 @@
   <ul>{% for w in report.staleness_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
 {% endif %}
 
-<h2>What this run could not tell you</h2>
-<p class="note">{% set important = report.limitations | selectattr("severity", "equalto", "important") | list %}
-{{ important | length }} of {{ report.limitations | length }} need attention. Signals that did
-not apply to a particular document are listed on that document.</p>
-<details class="more" open>
-  <summary>{{ report.limitations | length }} limitation(s)</summary>
-  <div class="lims" data-paginate-list="6">
-  {% for lim in report.limitations %}
-    <div class="lim{% if lim.severity == 'important' %} important{% endif %}">
-      <div class="h">{{ lim.area }}{% if lim.severity == "important" %} — important{% endif %}</div>
-      <div class="why">{{ lim.statement }}</div>
-      {% if lim.affected %}<div class="files">{{ lim.affected | join(" · ") }}</div>{% endif %}
-    </div>
-  {% else %}
-    <p class="note">Nothing was skipped and every configured check ran on every document.</p>
-  {% endfor %}
-  </div>
-</details>
-
 <details class="more">
-  <summary>Run detail — {{ agg.documents_audited }} document(s),
-    {{ agg.pages_total }} page(s){% if agg.documents_skipped %},
+  <summary>Run detail — {{ plural(agg.documents_audited, "document") }},
+    {{ plural(agg.pages_total, "page") }}{% if agg.documents_skipped %},
     {{ agg.documents_skipped }} skipped{% endif %}</summary>
   <div>
   <table><tbody>
     <tr><td>Documents audited</td><td class="n">{{ agg.documents_audited }}</td>
-        <td class="why">{{ agg.pages_total }} page(s)</td></tr>
+        <td class="why">{{ plural(agg.pages_total, "page") }}</td></tr>
     {% if agg.pages_unreadable %}
     <tr><td>Pages not read</td><td class="n">{{ agg.pages_unreadable }}</td>
         <td class="why">not searched for sensitive data</td></tr>{% endif %}
@@ -594,7 +590,7 @@ before reading that as an all-clear.</p>
       <h3>{{ doc.relative_path }}</h3>
       <div class="flags">
         <span class="flag">{{ doc.format }}</span>
-        <span class="flag">{{ doc.page_count }} page(s){% if not doc.page_count_known %}, not fixed{% endif %}</span>
+        <span class="flag">{{ doc.page_count }} page{{ "" if doc.page_count == 1 else "s" }}{% if not doc.page_count_known %}, not fixed{% endif %}</span>
         {% if doc.difficulty and doc.difficulty.score %}
           <span class="flag {{ 'ok' if score_band(doc.difficulty.score.value) == 'good' else ('warn' if score_band(doc.difficulty.score.value) == 'fair' else 'bad') }}">
             {{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>
@@ -602,7 +598,16 @@ before reading that as an all-clear.</p>
         {% for s in doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty %}
           <span class="flag bad" title="{{ s.why }}">{{ s.name | lower }}: {{ s.display }}</span>
         {% endfor %}
+        {% if doc.sensitive and doc.sensitive.unreadable_pages %}
+          <span class="flag bad">{{ plural(doc.sensitive.unreadable_pages | length, "page") }}
+            not read</span>
+        {% endif %}
       </div>
+      {% if doc.sensitive and doc.sensitive.unreadable_pages %}
+        <p class="note"><strong>Page {{ doc.sensitive.unreadable_pages | join(", ") }} carried no
+        readable text and {{ "was" if doc.sensitive.unreadable_pages | length == 1 else "were" }}
+        not searched.</strong> Nothing was found there because nothing looked.</p>
+      {% endif %}
 
       {% if doc.load_warnings %}
         <div class="warn"><strong>Reading this document was incomplete.</strong>
@@ -700,7 +705,7 @@ before reading that as an all-clear.</p>
         {% set skipped = doc.difficulty.signals | rejectattr("rating") | list %}
         {% if skipped %}
         <details class="more">
-          <summary>{{ skipped | length }} signal(s) not measured for this document</summary>
+          <summary>{{ plural(skipped | length, "signal") }} not measured for this document</summary>
           <div class="scroll"><table>
             <thead><tr><th>Signal</th><th>Why not</th></tr></thead>
             <tbody>{% for sg in skipped %}
@@ -734,11 +739,25 @@ before reading that as an all-clear.</p>
 </main>
 
 <footer>
-complydoc {{ report.run.tool_version }} · schema v{{ report.run.schema_version }} ·
-config {{ report.run.config_digest }} · Python {{ report.run.python_version }} ·
-{{ "%.1f"|format(report.run.duration_seconds) }}s ·
-OCR {{ "on" if report.run.ocr_available and report.run.ocr_requested else "off" }} ·
-name detection {{ "on" if report.run.ner_available else "off" }}
+  <div class="foot-main">
+    <div>
+      {{ logo_svg | safe }}
+      <p class="foot-claim">No document content left this machine. Outbound network access
+      was blocked for the whole run.</p>
+    </div>
+    <dl class="foot-meta">
+      <dt>Audited</dt><dd>{{ report.run.target }}</dd>
+      <dt>Finished</dt><dd>{{ report.run.finished_at }} in {{ "%.1f"|format(report.run.duration_seconds) }}s</dd>
+      <dt>Documents</dt><dd>{{ agg.documents_audited }} across {{ agg.pages_total }} page{{ "" if agg.pages_total == 1 else "s" }}{% if agg.documents_skipped %}, {{ agg.documents_skipped }} skipped{% endif %}</dd>
+      <dt>Read by</dt><dd>text layer{% if report.run.ocr_available and report.run.ocr_requested %}, local OCR{% endif %}{% if report.run.ner_available %}, local name detection{% endif %}</dd>
+      <dt>Priced against</dt><dd>{{ comparisons | length }} model{{ "" if comparisons | length == 1 else "s" }}</dd>
+    </dl>
+  </div>
+  <div class="foot-rule">
+    complydoc {{ report.run.tool_version }} · report schema v{{ report.run.schema_version }} ·
+    config {{ report.run.config_digest }} · Python {{ report.run.python_version }} ·
+    network guard {{ report.run.offline_guard }}
+  </div>
 </footer>
 
 <script>
@@ -790,8 +809,8 @@ name detection {{ "on" if report.run.ner_available else "off" }}
       });
       if (count) {
         count.textContent = q
-          ? shown + " of " + items.length + " file(s)"
-          : items.length + " file(s)";
+          ? shown + " of " + items.length + " files"
+          : items.length + (items.length === 1 ? " file" : " files");
       }
       var current = docs.filter(function (d) { return !d.hidden; })[0];
       var visible = firstVisible();

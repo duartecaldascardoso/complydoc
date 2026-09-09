@@ -22,6 +22,7 @@ from complydoc.cost.tokenizer import TokenCount, count_tokens
 from complydoc.cost.vision import RenderedSize, rendered_size, vision_tokens
 from complydoc.geometry import coverage_fraction
 from complydoc.ingest.base import Document
+from complydoc.text import count
 
 __all__ = [
     "DocumentCostEstimate",
@@ -302,7 +303,7 @@ def _extrapolate(
         annual_text_usd=mean_text * monthly_volume * 12 if mean_text is not None else None,
         annual_vision_usd=mean_vision * monthly_volume * 12 if mean_vision is not None else None,
         basis=(
-            f"Mean cost per document across the {len(estimates)} document(s) audited, using "
+            f"Mean cost per document across the {count(len(estimates), 'document')} audited, using "
             f"the cheapest priced model for each, multiplied by the stated monthly volume. "
             f"This assumes the audited sample is representative of the wider set; if it is "
             f"not, the extrapolation is not either."

@@ -31,6 +31,7 @@ from complydoc.ingest.base import (
     sha256_of,
 )
 from complydoc.ingest.registry import register
+from complydoc.text import count, plural
 
 _FONT_FILE_KEYS = ("/FontFile", "/FontFile2", "/FontFile3")
 
@@ -383,7 +384,7 @@ class PdfLoader:
 
         if not options.ocr:
             document.load_warnings.append(
-                f"{len(candidates)} page(s) carry little or no text layer and OCR was not "
+                f"{count(len(candidates), 'page')} carry little or no text layer and OCR was not "
                 f"requested, so their content was not read: "
                 f"{', '.join(str(p.number) for p in candidates)}."
             )
@@ -391,7 +392,7 @@ class PdfLoader:
 
         if not ocr_module.available():
             document.load_warnings.append(
-                f"{len(candidates)} page(s) carry little or no text layer and OCR is "
+                f"{count(len(candidates), 'page')} carry little or no text layer and OCR is "
                 f"unavailable ({ocr_module.unavailable_reason()}), so their content was "
                 f"not read: {', '.join(str(p.number) for p in candidates)}."
             )
@@ -411,7 +412,8 @@ class PdfLoader:
                 unread.append(page.number)
         if unread:
             document.load_warnings.append(
-                f"OCR produced no text for page(s) {', '.join(str(n) for n in unread)}."
+                f"OCR produced no text for {plural(len(unread), 'page')} "
+                f"{', '.join(str(n) for n in unread)}."
             )
 
 

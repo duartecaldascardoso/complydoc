@@ -21,13 +21,21 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from complydoc.config.schema import ModelPricing, TokenizerSpec
 
-__all__ = ["TABLE_PATH", "family_of", "imported_models", "released_on", "table_provenance"]
+__all__ = [
+    "TABLE_PATH",
+    "family_of",
+    "imported_models",
+    "line_of",
+    "released_on",
+    "table_provenance",
+]
 
 TABLE_PATH = Path(__file__).parent.parent / "config" / "model_prices.json"
 
@@ -84,6 +92,24 @@ def table_provenance() -> tuple[str | None, dt.date | None, int]:
         dt.date.fromisoformat(imported) if imported else None,
         len(table.get("models", {})),
     )
+
+
+_VERSION = re.compile(r"(?:^|-)(?:v?\d+(?:[.\-]\d+)*|k\d+(?:\.\d+)*)(?=-|$)")
+_QUALIFIER = re.compile(r"-(latest|preview|exp|chat|non-reasoning|reasoning|highspeed)(?=-|$)")
+
+
+def line_of(model_id: str) -> str:
+    """The product line a model belongs to, with its version taken off.
+
+    Providers name a line and version it: claude-haiku-4-5 and claude-haiku-5
+    are two cuts of haiku, gemini-3.8-flash and gemini-2.5-flash two cuts of
+    flash. The line is what a reader recognises and what a comparison should
+    carry one of, rather than four versions of the same thing.
+    """
+    stem = model_id.rsplit("/", 1)[-1]
+    stem = _QUALIFIER.sub("", stem)
+    stem = _VERSION.sub("-", stem)
+    return re.sub(r"-+", "-", stem).strip("-")
 
 
 def family_of(model_id: str) -> str:

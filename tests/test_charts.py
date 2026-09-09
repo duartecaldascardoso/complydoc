@@ -26,10 +26,27 @@ def test_all_three_architectures_are_costed(comparisons):
 
 
 def test_vision_costs_more_than_text(comparisons):
+    """Where a model can do both. Some read text only, and have no vision cost
+    at all rather than a cost of zero."""
+    compared = 0
     for comparison in comparisons:
         text = comparison.by_key("text_ocr")
         vision = comparison.by_key("vision")
-        assert vision.folder_usd > text.folder_usd
+        if text.folder_usd is None or vision.folder_usd is None:
+            continue
+        compared += 1
+        assert vision.folder_usd > text.folder_usd, comparison.model_id
+    assert compared, "no model in the comparison could do both"
+
+
+def test_a_text_only_model_has_no_vision_cost_rather_than_zero(comparisons):
+    """It is a real choice for the cheapest path, and free is not what it is."""
+    text_only = [c for c in comparisons if c.by_key("vision").folder_usd is None]
+    for comparison in text_only:
+        vision = comparison.by_key("vision")
+        assert vision.folder_usd is None
+        assert vision.per_1000_usd is None
+        assert comparison.by_key("text_ocr").folder_usd is not None
 
 
 def test_ocr_reaches_more_documents_than_the_text_layer_alone(comparisons):

@@ -62,36 +62,64 @@ def test_every_provider_is_in_the_comparison(config):
     assert compared == offered
 
 
-def test_each_provider_contributes_a_spread_of_prices(config):
-    """Four models at the same price answer nothing.
+def test_each_provider_contributes_one_model_per_product_line(config):
+    """Providers name a line and version it, and the line is what a reader knows.
 
-    The comparison exists to show the trade being made, so each provider's
-    models are picked across its price range — Anthropic contributing haiku,
-    sonnet, opus and fable rather than four cuts of opus.
+    Four cuts of opus answer nothing; haiku, sonnet, opus and fable are the
+    choice actually being made.
     """
     import collections
 
-    wanted = config.pricing.compare.per_provider
-    prices = collections.defaultdict(list)
+    from complydoc.cost.price_table import line_of
+
+    lines = collections.defaultdict(list)
     for model in config.pricing.usable_models:
-        prices[model.provider].append(model.input_per_mtok_usd or 0.0)
+        lines[model.provider].append(line_of(model.id.rsplit("/", 1)[-1]))
 
-    for provider, found in prices.items():
-        assert len(found) <= wanted, provider
-        assert len(set(found)) == len(found), f"{provider} repeats a price point"
-        if len(found) >= 3:
-            cheapest, dearest = min(found), max(found)
-            assert dearest >= cheapest * 2, f"{provider} spans too narrow a range: {found}"
+    for provider, found in lines.items():
+        assert len(found) == len(set(found)), f"{provider} shows one line twice: {found}"
+        assert len(found) <= config.pricing.compare.per_provider, provider
 
 
-def test_the_anthropic_ladder_is_the_shape_it_should_be(config):
-    """The worked example: the tiers, not four versions of one tier."""
-    from complydoc.cost.price_table import family_of
+def test_nothing_built_for_another_job_is_compared(config):
+    """A speech model and a coding model both have a price and take images.
 
-    picked = [m for m in config.pricing.usable_models if m.provider == "anthropic"]
-    families = {family_of(m.id.rsplit("/", 1)[-1]) for m in picked}
-    assert len(families) == len(picked), "one model per family"
-    assert len(picked) == config.pricing.compare.per_provider
+    Neither is what anyone compares when choosing how to read invoices, and
+    either would push out a model that is.
+    """
+    banned = ("tts", "audio", "voxtral", "whisper", "codex", "codestral", "devstral", "realtime")
+    for model in config.pricing.usable_models:
+        name = model.id.lower()
+        assert not any(word in name for word in banned), model.id
+
+
+def test_a_provider_does_not_list_another_provider_s_model(config):
+    """A reseller files someone else's model under its own name; it is the same
+    model at a different price, and it is not that provider's line-up."""
+    marques = {
+        "anthropic": "claude",
+        "openai": "gpt",
+        "gemini": "gemini",
+        "deepseek": "deepseek",
+        "moonshot": "kimi",
+        "zai": "glm",
+        "xai": "grok",
+    }
+    for model in config.pricing.usable_models:
+        expected = marques.get(model.provider)
+        if not expected:
+            continue
+        for other, marque in marques.items():
+            if other != model.provider:
+                assert marque not in model.id.lower(), f"{model.id} under {model.provider}"
+
+
+def test_the_anthropic_lineup_is_the_one_a_reader_would_name(config):
+    """The worked example: the four tiers, not four cuts of one tier."""
+    from complydoc.cost.price_table import line_of
+
+    picked = {line_of(m.id) for m in config.pricing.usable_models if m.provider == "anthropic"}
+    assert picked == {"claude-haiku", "claude-sonnet", "claude-opus", "claude-fable"}
 
 
 def test_the_comparison_never_lists_one_model_twice(config):

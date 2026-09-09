@@ -133,13 +133,53 @@ def _with_imported(pricing: PricingConfig) -> PricingConfig:
     return pricing.model_copy(update={"models": merged})
 
 
-_RECENT_MONTHS = 18
-"""How far back the comparison reaches for a model.
+_SPECIALISED = (
+    "codex",
+    "computer-use",
+    "realtime",
+    "live",
+    "tts",
+    "audio",
+    "omni",
+    "customtools",
+    "search",
+    "guard",
+    "moderation",
+    "translate",
+    "build",
+    "multi-agent",
+    # Written to produce code, not to read a page of one.
+    "codex",
+    "codestral",
+    "devstral",
+    # Speech, not documents.
+    "voxtral",
+    "whisper",
+)
+"""Lines built for something other than reading a document.
 
-Price alone would put a two-year-old model at the cheap end of every ladder and
-a long-retired premium one at the top. Both are real prices; neither is what
-anyone is choosing between today.
+A speech model and a computer-use model both have a price and both take images.
+Neither is what anyone compares when deciding how to process a folder of
+invoices, and either would push out a model that is.
 """
+
+
+_MARQUES = {
+    "anthropic": ("claude",),
+    "openai": ("gpt", "o1", "o3", "o4"),
+    "gemini": ("gemini", "gemma"),
+    "deepseek": ("deepseek",),
+    "moonshot": ("kimi",),
+    "zai": ("glm",),
+    "mistral": ("mistral", "pixtral", "devstral", "codestral", "magistral", "ministral"),
+    "xai": ("grok",),
+}
+_OTHER_PROVIDERS = {
+    provider: tuple(
+        word for other, words in _MARQUES.items() if other != provider for word in words
+    )
+    for provider in _MARQUES
+}
 
 
 def _bare(model_id: str) -> str:
@@ -150,105 +190,80 @@ def _bare(model_id: str) -> str:
 def _select(
     models: list[ModelPricing], per_provider: int, providers: list[str]
 ) -> list[ModelPricing]:
-    """Choose the comparison: `per_provider` models spread across each price range.
+    """Choose the comparison: each provider's current line-up.
 
-    Every model is a candidate, curated or catalogue, so the ladder is chosen on
-    its merits rather than around whichever entries happened to be written down
-    first. A verified price wins a tie, because it is the one somebody checked.
+    One model per product line, the newest cut of it, and the most recently
+    released lines first. That is what a reader recognises — Anthropic's haiku,
+    sonnet, opus and fable; OpenAI's astra, terra, sol and luna — rather than
+    four versions of one model or whatever happened to sit at a price point.
+
+    Text-only models are included. They cannot answer the vision column, and the
+    report already says so per model, but they are perfectly real choices for
+    reading a text layer, which is the cheapest path and often the chosen one.
     """
-    from complydoc.cost.price_table import family_of, released_on
+    from complydoc.cost.price_table import line_of, released_on
 
     candidates: dict[str, list[ModelPricing]] = defaultdict(list)
     for model in models:
         if providers and model.provider.lower() not in providers:
             continue
-        if model.is_priced and model.supports_vision:
-            candidates[model.provider].append(model)
+        if not model.is_priced:
+            continue
+        name = _bare(model.id).lower()
+        if any(word in name for word in _SPECIALISED):
+            continue
+        # A provider that resells another's model files it under its own name.
+        # It is the same model at a different price, and listing it as this
+        # provider's current line-up misrepresents both of them.
+        if any(other in name for other in _OTHER_PROVIDERS.get(model.provider, ())):
+            continue
+        candidates[model.provider].append(model)
 
     chosen: set[str] = set()
     for available in candidates.values():
-        chosen.update(m.id for m in _spread(available, per_provider, family_of, released_on))
+        chosen.update(m.id for m in _current_lineup(available, per_provider, line_of, released_on))
 
     return [m.model_copy(update={"enabled": m.id in chosen}) for m in models]
 
 
-def _spread(
+def _current_lineup(
     models: list[ModelPricing],
     wanted: int,
-    family_of: Callable[[str], str],
+    line_of: Callable[[str], str],
     released: Callable[[str], dt.date | None],
 ) -> list[ModelPricing]:
-    """`wanted` models spread across the price range of what is current.
-
-    Reduced three times before spreading: to what was released recently enough
-    to be a live choice, then to one per family so a model stamped with its
-    release date does not appear beside itself, then to one per price so five
-    versions of one tier cannot fill the whole comparison.
-    """
+    """The newest cut of each of the provider's `wanted` newest lines."""
     if not models:
         return []
 
-    cutoff = dt.date.today() - dt.timedelta(days=int(_RECENT_MONTHS * 30.5))
-    current = [m for m in models if (released(m.id) or dt.date.min) >= cutoff]
-    # A provider whose whole line predates the cutoff still gets a comparison,
-    # built from the newest it has, rather than dropping out of the report.
-    if len(current) < wanted:
-        by_age = sorted(models, key=lambda m: released(m.id) or dt.date.min, reverse=True)
-        current = by_age[: max(wanted, len(current))]
-
-    def preference(model: ModelPricing) -> tuple[Any, ...]:
-        # Newest first; a verified price breaks a tie, being the one checked.
+    def within_line(model: ModelPricing) -> tuple[Any, ...]:
+        """Which cut of a line to show: the newest, named as plainly as possible."""
         return (
             released(model.id) or dt.date.min,
+            -len(_bare(model.id)),
             model.price_source == "verified",
-            model.id,
         )
 
-    ranked = sorted(current, key=preference, reverse=True)
+    newest_of_line: dict[str, ModelPricing] = {}
+    for model in sorted(models, key=within_line, reverse=True):
+        newest_of_line.setdefault(line_of(_bare(model.id)), model)
 
-    seen: set[str] = set()
-    by_family: list[ModelPricing] = []
-    for model in ranked:
-        key = family_of(_bare(model.id))
-        if key in seen:
-            continue
-        seen.add(key)
-        by_family.append(model)
+    def between_lines(model: ModelPricing) -> tuple[Any, ...]:
+        """Which lines to show: the newest, and a named one over the bare family.
 
-    by_price: dict[float, ModelPricing] = {}
-    for model in by_family:
-        by_price.setdefault(m_price(model), model)
+        Several lines are released on the same day. When that happens the named
+        ones — astra, terra, luna, sol — are what a reader recognises, ahead of
+        the plain family name they were all cut from.
+        """
+        line = line_of(_bare(model.id))
+        return (
+            released(model.id) or dt.date.min,
+            line.count("-"),
+            model.price_source == "verified",
+            line,
+        )
 
-    ladder = sorted(by_price.values(), key=m_price)
-    ladder = _without_outliers(ladder)
-    if wanted >= len(ladder):
-        return ladder
-    if wanted == 1:
-        return [ladder[0]]
-    # Evenly spaced, always keeping both ends: the cheapest option and the
-    # dearest are the two a reader most wants to see.
-    step = (len(ladder) - 1) / (wanted - 1)
-    return [ladder[i] for i in sorted({round(i * step) for i in range(wanted)})]
-
-
-_OUTLIER_MULTIPLE = 8.0
-"""How far above the middle of a provider's range a price may sit and still be
-part of the comparison.
-
-One model at a hundred and fifty dollars a million tokens is a real price and a
-useless bar: it flattens every other model on the chart to nothing, and nobody
-choosing how to read invoices is choosing it.
-"""
-
-
-def _without_outliers(ladder: list[ModelPricing]) -> list[ModelPricing]:
-    if len(ladder) < 3:
-        return ladder
-    middle = m_price(ladder[len(ladder) // 2])
-    if middle <= 0:
-        return ladder
-    kept = [m for m in ladder if m_price(m) <= middle * _OUTLIER_MULTIPLE]
-    return kept if len(kept) >= 2 else ladder
+    return sorted(newest_of_line.values(), key=between_lines, reverse=True)[:wanted]
 
 
 def m_price(model: ModelPricing) -> float:

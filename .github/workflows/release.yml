@@ -88,7 +88,12 @@ jobs:
       # Signed, verifiable provenance for the artefacts, tying each file to this
       # commit and this workflow. Check one with:
       #   gh attestation verify <file> --repo duartecaldascardoso/complydoc
-      - uses: actions/attest-build-provenance@v3
+      # GitHub will not store attestations for a user-owned private repository,
+      # so this step waits for the repository to be public rather than failing a
+      # release that is otherwise complete. The release notes say which it was.
+      - id: attest
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: |
             dist/*.whl
@@ -105,13 +110,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if [ "${{ steps.attest.outcome }}" = "success" ]; then
+            provenance="Every artefact carries signed build provenance. Verify one with:
+
+              gh attestation verify complydoc-${{ needs.verify.outputs.version }}-py3-none-any.whl --repo ${{ github.repository }}"
+          else
+            provenance="Build provenance was not attested: GitHub does not store attestations for user-owned private repositories. \`SHA256SUMS\` is in the assets."
+          fi
           gh release create "${{ github.ref_name }}" dist/* \
             --title "${{ github.ref_name }}" \
             --notes "See CHANGELOG.md for what changed.
 
-          Every artefact carries signed build provenance. Verify one with:
-
-              gh attestation verify complydoc-${{ needs.verify.outputs.version }}-py3-none-any.whl --repo ${{ github.repository }}
+          ${provenance}
 
           \`complydoc-sbom.json\` is a CycloneDX bill of materials for a full install, built from the lockfile." \
             --draft

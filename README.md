@@ -247,15 +247,19 @@ git tag -a v0.2.0 -m "complydoc v0.2.0"
 git push origin v0.2.0
 ```
 
-The tag builds the wheel and sdist, writes a CycloneDX SBOM from the lockfile, signs
-build provenance for each artefact, and opens a draft release. The tag has to match
-`complydoc.__version__` and the changelog has to have an entry for it, or the build stops
-before it produces anything — a report that names a version the artefact does not carry
-would be worse than no release. Verify a downloaded artefact with:
+The tag builds the wheel and sdist, writes a CycloneDX SBOM from the lockfile, records
+checksums, signs build provenance for each artefact, and opens a draft release. The tag
+has to match `complydoc.__version__` and the changelog has to have an entry for it, or
+the build stops before it produces anything — a report that names a version the artefact
+does not carry would be worse than no release. Verify a downloaded artefact with:
 
 ```bash
 gh attestation verify complydoc-0.2.0-py3-none-any.whl --repo duartecaldascardoso/complydoc
 ```
+
+GitHub does not store attestations for a user-owned private repository, so while this
+repository is private the release ships `SHA256SUMS` and the SBOM without a signed
+provenance statement, and says so in its notes.
 
 ## Licence
 

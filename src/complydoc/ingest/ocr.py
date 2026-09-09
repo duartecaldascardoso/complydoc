@@ -24,15 +24,35 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 
 __all__ = [
     "Recognised",
+    "add_stats",
     "available",
     "engine_name",
     "reset_stats",
     "run",
+    "set_threads",
     "stats",
     "unavailable_reason",
 ]
 
 _IMPORT_ERROR: str | None = None
+
+_threads: int | None = None
+"""Native threads the engine may use per page. None leaves it to the engine."""
+
+
+def set_threads(count: int | None) -> None:
+    """Limit the engine's own threading. Must be called before the first page.
+
+    The engine spreads a single page across every core by default, which is the
+    right thing for one process and the wrong thing for several: with `--jobs`
+    the workers end up competing for the same cores and the run gets slower. A
+    worker pins itself to one thread and lets the process pool do the spreading.
+    """
+    global _threads
+    if count != _threads:
+        _engine.cache_clear()
+    _threads = count
+
 
 # OCR dominates the wall clock on a folder of scans, and how fast it runs is a
 # property of this machine rather than something worth guessing at. It is
@@ -63,8 +83,13 @@ def _engine() -> Any | None:
     except ImportError as exc:
         _IMPORT_ERROR = str(exc)
         return None
+    options = (
+        {"intra_op_num_threads": _threads, "inter_op_num_threads": _threads}
+        if _threads is not None
+        else {}
+    )
     try:
-        return RapidOCR()
+        return RapidOCR(**options)
     except Exception as exc:  # pragma: no cover - engine init is environment-specific
         _IMPORT_ERROR = f"RapidOCR failed to initialise: {exc}"
         return None
@@ -106,6 +131,18 @@ def reset_stats() -> None:
     """Start counting again. Called once at the top of a run."""
     global _pages, _seconds
     _pages, _seconds = 0, 0.0
+
+
+def add_stats(pages: int, seconds: float) -> None:
+    """Fold in counts measured in another process.
+
+    With `--jobs` the OCR happens in worker processes, each with its own copy of
+    these counters. The workers hand their totals back so the report can still
+    quote a rate for the run as a whole.
+    """
+    global _pages, _seconds
+    _pages += pages
+    _seconds += seconds
 
 
 def stats() -> tuple[int, float]:

@@ -291,22 +291,35 @@ class PdfLoader:
         password = ""
         if reader.is_encrypted:
             document.encrypted = True
-            try:
-                opened = bool(reader.decrypt(""))
-            except Exception:
-                opened = False
+            opened = False
+            # The supplied password first, then an empty one, which opens a file
+            # that is protected against casual opening but not against reading.
+            for candidate in (options.password, ""):
+                if candidate is None:
+                    continue
+                try:
+                    if reader.decrypt(candidate):
+                        opened, password = True, candidate
+                        break
+                except Exception:
+                    continue
             if not opened:
                 document.load_warnings.append(
-                    "The file is password protected and no password was supplied, so its "
-                    "content could not be read. Page count, text, tables and sensitive "
-                    "data were all left unmeasured."
+                    "The file is password protected and neither the supplied password nor "
+                    "an empty one opened it, so its content could not be read. Page count, "
+                    "text, tables and sensitive data were all left unmeasured."
+                    if options.password
+                    else "The file is password protected and no password was supplied, so "
+                    "its content could not be read. Page count, text, tables and sensitive "
+                    "data were all left unmeasured. Pass --password to open it."
                 )
                 return document
-            document.decrypted_with_empty_password = True
-            document.load_warnings.append(
-                "The file is encrypted but opened with an empty password, so it was read "
-                "in full. Note that its contents are protected against casual opening only."
-            )
+            document.decrypted_with_empty_password = password == ""
+            if password == "":
+                document.load_warnings.append(
+                    "The file is encrypted but opened with an empty password, so it was "
+                    "read in full. Its contents are protected against casual opening only."
+                )
 
         try:
             fields = reader.get_fields()

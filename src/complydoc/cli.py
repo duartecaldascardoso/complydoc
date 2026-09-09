@@ -117,6 +117,31 @@ PrintJsonOpt = Annotated[
     ),
 ]
 QuietOpt = Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output.")]
+JobsOpt = Annotated[
+    int,
+    typer.Option(
+        "--jobs",
+        "-j",
+        help="Documents to process at once. 0 uses one process per CPU. "
+        "Changes how long the run takes and nothing about what it finds.",
+    ),
+]
+SampleOpt = Annotated[
+    int | None,
+    typer.Option(
+        "--sample",
+        help="Audit at most this many documents, keeping each file type's share of "
+        "the folder. The report says it is a sample.",
+    ),
+]
+PasswordOpt = Annotated[
+    str,
+    typer.Option(
+        "--password",
+        help="Password to try on encrypted PDFs. Passed on the command line, so it "
+        "will be in your shell history.",
+    ),
+]
 ModelOpt = Annotated[
     list[str] | None,
     typer.Option(
@@ -209,6 +234,9 @@ def _run(
     extracted_text: bool = False,
     ocr_compare: bool = False,
     print_json: bool = False,
+    password: str = "",
+    jobs: int = 1,
+    sample: int | None = None,
 ) -> None:
     offline.arm()
     # stdout has to stay pure JSON when a caller is parsing it.
@@ -256,6 +284,9 @@ def _run(
             extracted_text=extracted_text or ocr_compare,
             ocr_compare=ocr_compare,
             recurse=recurse,
+            password=password,
+            jobs=jobs,
+            sample=sample,
             progress=progress if not quiet else None,
         )
     except UnknownModelError as exc:
@@ -297,6 +328,9 @@ def audit(
     page_images: PageImagesOpt = False,
     extracted_text: ExtractedTextOpt = False,
     ocr_compare: OcrCompareOpt = False,
+    password: PasswordOpt = "",
+    jobs: JobsOpt = 1,
+    sample: SampleOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
@@ -321,6 +355,9 @@ def audit(
         extracted_text=extracted_text,
         ocr_compare=ocr_compare,
         print_json=print_json,
+        password=password,
+        jobs=jobs,
+        sample=sample,
     )
 
 
@@ -337,6 +374,9 @@ def cost(
         str, typer.Option("--vision-resolution", help="Headline vision resolution preset.")
     ] = "medium",
     model: ModelOpt = None,
+    password: PasswordOpt = "",
+    jobs: JobsOpt = 1,
+    sample: SampleOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
@@ -357,6 +397,9 @@ def cost(
         resolution=resolution,
         select_models=model,
         print_json=print_json,
+        password=password,
+        jobs=jobs,
+        sample=sample,
     )
 
 
@@ -367,6 +410,9 @@ def difficulty(
     name: NameOpt = "complydoc-difficulty",
     extracted_text: ExtractedTextOpt = False,
     ocr_compare: OcrCompareOpt = False,
+    password: PasswordOpt = "",
+    jobs: JobsOpt = 1,
+    sample: SampleOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
@@ -386,6 +432,9 @@ def difficulty(
         extracted_text=extracted_text,
         ocr_compare=ocr_compare,
         print_json=print_json,
+        password=password,
+        jobs=jobs,
+        sample=sample,
     )
 
 
@@ -403,6 +452,9 @@ def sensitive(
     ] = False,
     page_images: PageImagesOpt = False,
     extracted_text: ExtractedTextOpt = False,
+    password: PasswordOpt = "",
+    jobs: JobsOpt = 1,
+    sample: SampleOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
@@ -423,6 +475,9 @@ def sensitive(
         page_images=page_images,
         extracted_text=extracted_text,
         print_json=print_json,
+        password=password,
+        jobs=jobs,
+        sample=sample,
     )
 
 

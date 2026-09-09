@@ -33,6 +33,7 @@ __all__ = [
     "VolumeExtrapolation",
     "estimate_document",
     "estimate_folder",
+    "folder_from_estimates",
     "resolve_models",
 ]
 
@@ -317,6 +318,36 @@ def _extrapolate(
     )
 
 
+def folder_from_estimates(
+    estimates: list[DocumentCostEstimate],
+    pricing: PricingConfig,
+    headline_resolution: str = "medium",
+    monthly_volume: int | None = None,
+) -> FolderCostEstimate:
+    """Assemble the folder view from per-document estimates already computed.
+
+    Split out so the parallel path can cost each document inside its worker and
+    still produce exactly the same folder totals.
+    """
+    resolutions = list(pricing.resolution_presets)
+    if headline_resolution not in resolutions and resolutions:
+        headline_resolution = resolutions[0]
+
+    fx = pricing.currency.usd_to_gbp
+    use_fx = pricing.currency.report_in.upper() != "USD" and fx.rate is not None
+
+    folder = FolderCostEstimate(
+        currency=pricing.currency.report_in.upper() if use_fx else "USD",
+        usd_to_report_rate=fx.rate if use_fx else None,
+        headline_resolution=headline_resolution,
+        resolutions=resolutions,
+        documents=estimates,
+    )
+    if monthly_volume:
+        folder.volume = _extrapolate(estimates, monthly_volume, headline_resolution)
+    return folder
+
+
 def estimate_folder(
     documents: list[Document],
     pricing: PricingConfig,
@@ -326,20 +357,9 @@ def estimate_folder(
     select_models: Sequence[str] | None = None,
 ) -> FolderCostEstimate:
     chosen = resolve_models(pricing, select_models)
-    resolutions = list(pricing.resolution_presets)
-    if headline_resolution not in resolutions and resolutions:
-        headline_resolution = resolutions[0]
-
-    fx = pricing.currency.usd_to_gbp
-    use_fx = pricing.currency.report_in.upper() != "USD" and fx.rate is not None
-
-    estimate = FolderCostEstimate(
-        currency=pricing.currency.report_in.upper() if use_fx else "USD",
-        usd_to_report_rate=fx.rate if use_fx else None,
-        headline_resolution=headline_resolution,
-        resolutions=resolutions,
-        documents=[estimate_document(d, pricing, today, chosen) for d in documents],
+    return folder_from_estimates(
+        [estimate_document(d, pricing, today, chosen) for d in documents],
+        pricing,
+        headline_resolution,
+        monthly_volume,
     )
-    if monthly_volume:
-        estimate.volume = _extrapolate(estimate.documents, monthly_volume, headline_resolution)
-    return estimate

@@ -67,6 +67,13 @@ class RunMetadata:
     ner_available: bool
     python_version: str
     monthly_volume: int | None
+    jobs: int = 1
+    """Worker processes used. More than one changes nothing about the findings."""
+    sampled_from: int | None = None
+    """Documents found, when --sample meant only some of them were opened."""
+    sample_size: int | None = None
+    """Documents the sample selected. Fewer may appear if one failed to parse."""
+    password_used: bool = False
 
 
 @dataclass(frozen=True, slots=True)

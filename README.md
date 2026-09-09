@@ -73,6 +73,19 @@ Inputs: PDF (native and scanned), PNG, JPG, TIFF, BMP, DOCX, XLSX. Folders are r
 Anything that cannot be opened is skipped and reported. OCR is on by default so scanned
 pages are still readable; `--no-ocr` is faster.
 
+On a large folder:
+
+```bash
+complydoc audit ~/invoices --jobs 0        # one worker process per CPU
+complydoc audit ~/invoices --sample 200    # 200 documents, keeping each file type's share
+complydoc audit ~/invoices --password s3cret   # try this on encrypted PDFs
+```
+
+`--jobs` changes how long the run takes and nothing about what it finds. `--sample` does
+change what it finds, so the report says on its front page that it read a sample and how
+many documents it skipped. The choice is deterministic — two runs of the same folder pick
+the same documents, so their reports compare.
+
 ## The report
 
 One self-contained HTML file, four pages behind a tab bar.

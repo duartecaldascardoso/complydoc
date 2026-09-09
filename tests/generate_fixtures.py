@@ -14,6 +14,7 @@ the names are invented.
 
 from __future__ import annotations
 
+import argparse
 import io
 from pathlib import Path
 
@@ -529,29 +530,37 @@ def unsupported_file(path: Path) -> None:
 
 
 def main() -> None:
-    HERE.mkdir(parents=True, exist_ok=True)
-    native = HERE / "native_text.pdf"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=HERE,
+        help="Where to write. Defaults to the committed fixture directory.",
+    )
+    out = parser.parse_args().out
+    out.mkdir(parents=True, exist_ok=True)
+    native = out / "native_text.pdf"
 
     native_text(native)
-    dense_text(HERE / "dense_text.pdf")
-    two_column(HERE / "two_column.pdf")
-    whitespace_table(HERE / "whitespace_table.pdf")
-    merged_header_table(HERE / "merged_header_table.pdf")
-    mixed_page_sizes(HERE / "mixed_page_sizes.pdf")
-    acroform(HERE / "acroform.pdf")
-    sensitive_sample(HERE / "sensitive_sample.pdf")
-    garbled(HERE / "garbled.pdf")
-    scanned_page(HERE / "scanned_page.pdf", native)
-    rotated_scan(HERE / "rotated_scan.pdf", native)
-    encrypted(HERE / "encrypted.pdf", native)
-    scan_image(HERE / "scan_page.png", native)
-    sample_docx(HERE / "sample.docx")
-    sample_xlsx(HERE / "sample.xlsx")
-    broken_pdf(HERE / "broken.pdf")
-    unsupported_file(HERE / "notes.txt")
+    dense_text(out / "dense_text.pdf")
+    two_column(out / "two_column.pdf")
+    whitespace_table(out / "whitespace_table.pdf")
+    merged_header_table(out / "merged_header_table.pdf")
+    mixed_page_sizes(out / "mixed_page_sizes.pdf")
+    acroform(out / "acroform.pdf")
+    sensitive_sample(out / "sensitive_sample.pdf")
+    garbled(out / "garbled.pdf")
+    scanned_page(out / "scanned_page.pdf", native)
+    rotated_scan(out / "rotated_scan.pdf", native)
+    encrypted(out / "encrypted.pdf", native)
+    scan_image(out / "scan_page.png", native)
+    sample_docx(out / "sample.docx")
+    sample_xlsx(out / "sample.xlsx")
+    broken_pdf(out / "broken.pdf")
+    unsupported_file(out / "notes.txt")
 
-    print(f"wrote fixtures to {HERE}")
-    for item in sorted(HERE.iterdir()):
+    print(f"wrote fixtures to {out}")
+    for item in sorted(out.iterdir()):
         print(f"  {item.name:28s} {item.stat().st_size:>8,d} bytes")
 
 

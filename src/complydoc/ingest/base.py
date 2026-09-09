@@ -207,6 +207,8 @@ class IngestOptions:
     max_render_pages: int = 50
     """Cap on how many pages of one document are rasterised, to bound memory."""
     extract_tables: bool = True
+    password: str = ""
+    """Tried on encrypted files before falling back to an empty password."""
     ocr_compare: bool = False
     """Also OCR pages that already have a text layer, so the two can be compared."""
     render_all_pages: bool = False

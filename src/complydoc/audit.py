@@ -3,24 +3,35 @@
 The three components are independent. Asking for only the sensitive data scan
 loads no tokenizer and computes no cost, and the report says plainly which
 components were run so nobody reads a partial audit as a complete one.
+
+With `jobs` above one the documents are spread over a process pool. That is a
+wall-clock decision and nothing else: documents are analysed independently, so
+the report comes out the same either way, and `tests/test_parallel.py` asserts
+it. Because the pool uses spawn, code calling `run_audit` from a script must
+guard its entry point with `if __name__ == "__main__":`, as with any use of
+multiprocessing. The console entry point already does.
 """
 
 from __future__ import annotations
 
 import datetime as dt
+import os
 import platform
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterator, Sequence
+from concurrent.futures import ProcessPoolExecutor
+from dataclasses import dataclass
+from multiprocessing import get_context
 from pathlib import Path
 
 from complydoc import __version__, offline
 from complydoc.config.loader import check_staleness
-from complydoc.config.schema import Config
-from complydoc.cost.estimator import estimate_folder
+from complydoc.config.schema import Config, ModelPricing
+from complydoc.cost.estimator import estimate_document, folder_from_estimates, resolve_models
 from complydoc.difficulty.analyser import analyse
 from complydoc.discovery import discover
 from complydoc.ingest import ocr as ocr_module
-from complydoc.ingest.base import Document, IngestOptions, LoaderError, SkipRecord
+from complydoc.ingest.base import IngestOptions, LoaderError, SkipRecord
 from complydoc.ingest.registry import load_document
 from complydoc.report.limitations import build_limitations
 from complydoc.report.models import (
@@ -33,9 +44,10 @@ from complydoc.report.models import (
     build_aggregate,
 )
 from complydoc.report.preview import build_previews
+from complydoc.sampling import sample_files
 from complydoc.sensitive.scanner import scan
 
-__all__ = ["COMPONENTS", "run_audit"]
+__all__ = ["COMPONENTS", "resolve_jobs", "run_audit"]
 
 COMPONENTS = ("cost", "difficulty", "sensitive")
 
@@ -61,6 +73,161 @@ def _relative(path: Path, root: Path) -> str:
         return str(path)
 
 
+@dataclass(frozen=True, slots=True)
+class _Work:
+    """Everything analysing one document needs, and nothing that it does not.
+
+    Kept picklable on purpose: with `--jobs` this is what crosses into each
+    worker process. A `Document` never crosses back — it holds page rasters and
+    is far larger than the report entry derived from it — so cost is estimated
+    where the document already is, and only the finished entry is returned.
+    """
+
+    config: Config
+    options: IngestOptions
+    target: Path
+    requested: tuple[str, ...]
+    reveal: bool
+    previews: bool
+    page_images: bool
+    extracted_text: bool
+    models: tuple[ModelPricing, ...] | None
+    today: dt.date
+
+
+@dataclass(frozen=True, slots=True)
+class _Outcome:
+    entry: DocumentReport | None
+    skipped: SkipRecord | None
+    ocr_pages: int = 0
+    ocr_seconds: float = 0.0
+
+
+def _process(path: Path, work: _Work) -> _Outcome:
+    """Read one document and produce its report entry. Never raises."""
+    ocr_before = ocr_module.stats()
+    read_started = time.perf_counter()
+    try:
+        document = load_document(path, work.options)
+    except LoaderError as exc:
+        return _Outcome(None, SkipRecord(path=path, reason="could not be parsed", detail=str(exc)))
+    except Exception as exc:
+        return _Outcome(
+            None,
+            SkipRecord(
+                path=path,
+                reason="unexpected error while reading",
+                detail=f"{type(exc).__name__}: {exc}",
+            ),
+        )
+    read_seconds = time.perf_counter() - read_started
+
+    entry = DocumentReport(
+        path=document.path,
+        relative_path=_relative(document.path, work.target),
+        sha256=document.sha256,
+        format=document.format,
+        page_count=document.page_count,
+        page_count_known=document.page_count_known,
+        load_warnings=list(document.load_warnings),
+    )
+
+    analyse_started = time.perf_counter()
+    if "difficulty" in work.requested:
+        entry.difficulty = analyse(document, work.config.difficulty)
+    analyse_seconds = time.perf_counter() - analyse_started
+
+    scan_started = time.perf_counter()
+    if "sensitive" in work.requested:
+        entry.sensitive = scan(document, work.config.sensitive, reveal=work.reveal)
+    scan_seconds = time.perf_counter() - scan_started
+
+    if work.models is not None:
+        entry.cost = estimate_document(document, work.config.pricing, work.today, list(work.models))
+    if work.previews:
+        entry.previews = build_previews(document, entry.sensitive, page_images=work.page_images)
+    if work.extracted_text:
+        entry.extracted_text = [
+            PageText(
+                number=page.number,
+                source=page.text_source,
+                characters=len(page.text),
+                text=page.text[:_MAX_TEXT_CHARS],
+                ocr_text=page.ocr_text[:_MAX_TEXT_CHARS],
+                truncated=len(page.text) > _MAX_TEXT_CHARS,
+            )
+            for page in document.pages
+        ]
+
+    total_seconds = read_seconds + analyse_seconds + scan_seconds
+    entry.timing = DocumentTiming(
+        read_seconds=round(read_seconds, 3),
+        analyse_seconds=round(analyse_seconds, 3),
+        scan_seconds=round(scan_seconds, 3),
+        total_seconds=round(total_seconds, 3),
+        seconds_per_page=(
+            round(total_seconds / document.page_count, 3) if document.page_count else None
+        ),
+    )
+    ocr_after = ocr_module.stats()
+    return _Outcome(entry, None, ocr_after[0] - ocr_before[0], ocr_after[1] - ocr_before[1])
+
+
+_WORKER_WORK: _Work | None = None
+
+
+def _worker_init(work: _Work) -> None:
+    """Set up a worker process. The network guard is armed here too.
+
+    A guard that only holds in the parent would be no guard at all, so every
+    process that opens a document arms it before it opens anything.
+
+    The native thread pools are pinned to one thread each. OCR otherwise spreads
+    one page across every core, so without this the workers spend their time
+    fighting each other for the same cores and the run gets slower rather than
+    faster. It has to happen before the OCR engine is built, which is why it
+    happens here.
+    """
+    global _WORKER_WORK
+    for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
+        os.environ.setdefault(variable, "1")
+    ocr_module.set_threads(1)
+    offline.arm()
+    _WORKER_WORK = work
+
+
+def _worker(path: Path) -> _Outcome:
+    assert _WORKER_WORK is not None
+    return _process(path, _WORKER_WORK)
+
+
+def _outcomes(files: list[Path], work: _Work, jobs: int) -> Iterator[_Outcome]:
+    """Results in the order the files were discovered, serial or parallel."""
+    if jobs <= 1 or len(files) < 2:
+        for path in files:
+            yield _process(path, work)
+        return
+
+    # Spawn rather than fork: the OCR engine holds native threads, and forking a
+    # process that has them is a known way to deadlock a child.
+    with ProcessPoolExecutor(
+        max_workers=jobs,
+        mp_context=get_context("spawn"),
+        initializer=_worker_init,
+        initargs=(work,),
+    ) as pool:
+        for outcome in pool.map(_worker, files, chunksize=1):
+            ocr_module.add_stats(outcome.ocr_pages, outcome.ocr_seconds)
+            yield outcome
+
+
+def resolve_jobs(jobs: int, files: int) -> int:
+    """How many processes to actually use. 0 means one per CPU."""
+    if jobs == 0:
+        jobs = os.cpu_count() or 1
+    return max(1, min(jobs, max(1, files)))
+
+
 def run_audit(
     target: Path,
     config: Config,
@@ -77,6 +244,9 @@ def run_audit(
     extracted_text: bool = False,
     ocr_compare: bool = False,
     render_dpi: int = 150,
+    password: str = "",
+    jobs: int = 1,
+    sample: int | None = None,
     progress: Callable[[int, int, Path], None] | None = None,
 ) -> AuditReport:
     started = time.monotonic()
@@ -85,6 +255,10 @@ def run_audit(
 
     target = target.expanduser().resolve()
     files, skipped = discover(target, recurse=recurse)
+    found = len(files)
+    if sample is not None and sample < found:
+        files = sample_files(files, sample)
+    sampled = len(files) < found
 
     # Rasterising is only worth the memory when something will actually look at
     # the pixels — OCR, or the skew signal.
@@ -96,88 +270,43 @@ def run_audit(
         render_all_pages=page_images or ocr_compare,
         ocr_compare=ocr_compare,
         max_render_pages=50 if (wants_raster or page_images) else 0,
+        password=password,
     )
 
     ocr_module.reset_stats()
+    jobs = resolve_jobs(jobs, len(files))
+    work = _Work(
+        config=config,
+        options=options,
+        target=target,
+        requested=tuple(requested),
+        reveal=reveal,
+        previews=previews,
+        page_images=page_images,
+        extracted_text=extracted_text,
+        models=(
+            tuple(resolve_models(config.pricing, select_models)) if "cost" in requested else None
+        ),
+        today=dt.date.today(),
+    )
+
     documents: list[DocumentReport] = []
-    loaded: list[Document] = []
-
-    for index, path in enumerate(files, start=1):
+    for index, outcome in enumerate(_outcomes(files, work, jobs), start=1):
         if progress is not None:
-            progress(index, len(files), path)
-        read_started = time.perf_counter()
-        try:
-            document = load_document(path, options)
-        except LoaderError as exc:
-            skipped.append(SkipRecord(path=path, reason="could not be parsed", detail=str(exc)))
-            continue
-        except Exception as exc:
-            skipped.append(
-                SkipRecord(
-                    path=path,
-                    reason="unexpected error while reading",
-                    detail=f"{type(exc).__name__}: {exc}",
-                )
-            )
-            continue
-
-        read_seconds = time.perf_counter() - read_started
-        loaded.append(document)
-        entry = DocumentReport(
-            path=document.path,
-            relative_path=_relative(document.path, target),
-            sha256=document.sha256,
-            format=document.format,
-            page_count=document.page_count,
-            page_count_known=document.page_count_known,
-            load_warnings=list(document.load_warnings),
-        )
-        analyse_started = time.perf_counter()
-        if "difficulty" in requested:
-            entry.difficulty = analyse(document, config.difficulty)
-        analyse_seconds = time.perf_counter() - analyse_started
-
-        scan_started = time.perf_counter()
-        if "sensitive" in requested:
-            entry.sensitive = scan(document, config.sensitive, reveal=reveal)
-        scan_seconds = time.perf_counter() - scan_started
-        if previews:
-            entry.previews = build_previews(document, entry.sensitive, page_images=page_images)
-        if extracted_text:
-            entry.extracted_text = [
-                PageText(
-                    number=page.number,
-                    source=page.text_source,
-                    characters=len(page.text),
-                    text=page.text[:_MAX_TEXT_CHARS],
-                    ocr_text=page.ocr_text[:_MAX_TEXT_CHARS],
-                    truncated=len(page.text) > _MAX_TEXT_CHARS,
-                )
-                for page in document.pages
-            ]
-        total_seconds = read_seconds + analyse_seconds + scan_seconds
-        entry.timing = DocumentTiming(
-            read_seconds=round(read_seconds, 3),
-            analyse_seconds=round(analyse_seconds, 3),
-            scan_seconds=round(scan_seconds, 3),
-            total_seconds=round(total_seconds, 3),
-            seconds_per_page=(
-                round(total_seconds / document.page_count, 3) if document.page_count else None
-            ),
-        )
-        documents.append(entry)
+            progress(index, len(files), files[index - 1])
+        if outcome.skipped is not None:
+            skipped.append(outcome.skipped)
+        if outcome.entry is not None:
+            documents.append(outcome.entry)
 
     folder_cost = None
     if "cost" in requested:
-        folder_cost = estimate_folder(
-            loaded,
+        folder_cost = folder_from_estimates(
+            [e.cost for e in documents if e.cost is not None],
             config.pricing,
             headline_resolution=resolution,
             monthly_volume=monthly_volume,
-            select_models=select_models,
         )
-        for entry, estimate in zip(documents, folder_cost.documents, strict=True):
-            entry.cost = estimate
 
     finished_at = dt.datetime.now().astimezone()
     run = RunMetadata(
@@ -200,6 +329,10 @@ def run_audit(
         ner_available=_ner_available(config) if "sensitive" in requested else False,
         python_version=platform.python_version(),
         monthly_volume=monthly_volume,
+        jobs=jobs,
+        sampled_from=found if sampled else None,
+        sample_size=len(files) if sampled else None,
+        password_used=bool(password),
     )
 
     staleness = check_staleness(config.pricing) if "cost" in requested else []

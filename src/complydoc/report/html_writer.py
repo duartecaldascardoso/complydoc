@@ -194,11 +194,16 @@ def render_html(report: AuditReport, config: Config) -> str:
         ("--page-images", run.page_images_used),
         ("--extracted-text", run.extracted_text_used),
         ("--reveal", run.reveal_used),
+        ("--password", run.password_used),
     ):
         if used:
             options.append(flag)
     if run.monthly_volume:
         options.append(f"--monthly-volume {run.monthly_volume:,}")
+    if run.sampled_from is not None:
+        options.append(f"--sample (of {run.sampled_from:,} found)")
+    if run.jobs > 1:
+        options.append(f"--jobs {run.jobs}")
     template = environment.get_template("report.html.j2")
     return template.render(
         comparisons=comparisons,

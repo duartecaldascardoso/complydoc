@@ -31,6 +31,21 @@ def build_limitations(
 ) -> list[Limitation]:
     limitations: list[Limitation] = []
 
+    # --- Only part of the folder was looked at ----------------------------
+    if run.sampled_from is not None:
+        limitations.append(
+            Limitation(
+                area="Sampling",
+                statement=(
+                    f"--sample limited this run to {run.sample_size} of the {run.sampled_from} "
+                    f"documents found. Every total and monthly figure describes that sample, not "
+                    f"the folder. The sample keeps each file type's share of the folder and is "
+                    f"chosen the same way every time, so two runs of this folder compare."
+                ),
+                severity="important",
+            )
+        )
+
     # --- Files that were never opened -------------------------------------
     if skipped:
         by_reason: dict[str, list[str]] = defaultdict(list)

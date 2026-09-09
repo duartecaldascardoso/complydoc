@@ -1,0 +1,91 @@
+name: checks
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "1"
+
+jobs:
+  lint:
+    name: lint and types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --extra ocr --extra ner --group dev
+      # The same commands `make lint` and `make types` run locally.
+      - name: ruff
+        run: uv run ruff check src/complydoc tests
+      - name: format
+        run: uv run ruff format --check src/complydoc tests
+      - name: mypy
+        run: uv run mypy src/complydoc
+
+  test:
+    name: tests (python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+      - run: uv sync --extra ocr --group dev
+      - name: tests
+        run: uv run pytest -q
+
+  test-ner:
+    name: tests with the local NER model
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --extra ocr --extra ner --group dev
+      # Downloading the model is a build step. complydoc itself never reaches
+      # the network, which the offline guard tests assert on every run.
+      - run: uv run python -m spacy download en_core_web_sm
+      - name: tests
+        run: uv run pytest -q
+
+  fixtures:
+    name: fixtures match their generator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group dev
+      - name: regenerate into a scratch directory
+        run: uv run python tests/generate_fixtures.py --out "${RUNNER_TEMP}/fixtures"
+      # The fixtures are committed so the suite does not depend on a PDF
+      # writer's output staying byte-stable. This checks the generator still
+      # produces every document the suite expects to find.
+      - name: every committed fixture is still generated
+        run: |
+          uv run python - "${RUNNER_TEMP}/fixtures" <<'PY'
+          import pathlib, sys
+          made = {p.name for p in pathlib.Path(sys.argv[1]).iterdir()}
+          want = {p.name for p in pathlib.Path("tests/fixtures").iterdir()}
+          missing = sorted(want - made)
+          if missing:
+              sys.exit(f"the generator no longer produces: {missing}")
+          print(f"{len(want)} fixtures accounted for")
+          PY

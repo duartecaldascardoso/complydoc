@@ -99,6 +99,22 @@ diagrams: ## Re-export the README architecture diagrams to SVG
 build: ## Build the wheel and sdist
 	$(UV) build
 
+.PHONY: sbom
+sbom: ## Write a CycloneDX bill of materials for a full install
+	$(PYTHON) python scripts/build_sbom.py
+
+.PHONY: dist
+dist: build sbom ## Build everything a release ships, with checksums
+	cd dist && sha256sum * > SHA256SUMS && cat SHA256SUMS
+
+.PHONY: release-check
+release-check: ## Confirm the version, the changelog and the tree agree before tagging
+	@version=$$($(PYTHON) python -c "import complydoc; print(complydoc.__version__)"); \
+	grep -q "^## \[$$version\]" CHANGELOG.md \
+		|| { echo "CHANGELOG.md has no entry for $$version"; exit 1; }; \
+	test -z "$$(git status --porcelain)" || { echo "the working tree is dirty"; exit 1; }; \
+	echo "ready to tag: git tag -a v$$version -m 'complydoc v$$version' && git push origin v$$version"
+
 .PHONY: clean
 clean: ## Remove caches, build output and generated reports
 	rm -rf $(OUT) dist build .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov

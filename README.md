@@ -222,6 +222,41 @@ sizes, a fillable form, and a file that is not a valid PDF. Every identifier in 
 PII fixture is fake: a published test card number, the IBAN from the ISO 13616 specification,
 an Ofcom fiction-range phone number, and invented names.
 
+## Branches and releases
+
+`main` holds released code and nothing else. Work lands on `development` first and reaches
+`main` as one merge per release; both branches run the full check suite on every push.
+
+Versions are semantic, and what each number means is decided by what a reader of an old
+report would notice:
+
+| Change | Bump |
+| --- | --- |
+| The JSON shape breaks, or a config key changes meaning | Major |
+| A signal, detector, model or flag is added | Minor |
+| A measurement, threshold or price is corrected | Patch |
+
+The JSON carries its own `schema_version`, which is the field to branch on when reading
+reports programmatically — it moves only when the shape does.
+
+Releases are cut by tagging `main`:
+
+```bash
+make release-check       # version, changelog and working tree agree
+git tag -a v0.2.0 -m "complydoc v0.2.0"
+git push origin v0.2.0
+```
+
+The tag builds the wheel and sdist, writes a CycloneDX SBOM from the lockfile, signs
+build provenance for each artefact, and opens a draft release. The tag has to match
+`complydoc.__version__` and the changelog has to have an entry for it, or the build stops
+before it produces anything — a report that names a version the artefact does not carry
+would be worse than no release. Verify a downloaded artefact with:
+
+```bash
+gh attestation verify complydoc-0.2.0-py3-none-any.whl --repo duartecaldascardoso/complydoc
+```
+
 ## Licence
 
 MIT

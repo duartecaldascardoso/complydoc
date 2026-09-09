@@ -1,0 +1,117 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build, for a dry run"
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  UV_FROZEN: "1"
+
+jobs:
+  verify:
+    name: verify the tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      # A tag that disagrees with the version the tool reports would put the
+      # wrong number in every report the release produces.
+      - id: version
+        name: the tag matches the packaged version
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          version=$(uv run python -c "import complydoc; print(complydoc.__version__)")
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if [ "${tag}" != "v${version}" ]; then
+            echo "tag ${tag} does not match version ${version} in complydoc/__init__.py" >&2
+            exit 1
+          fi
+          echo "${tag} matches the packaged version"
+      - name: the changelog mentions this version
+        run: |
+          grep -q "^## \[${{ steps.version.outputs.version }}\]" CHANGELOG.md \
+            || { echo "CHANGELOG.md has no entry for ${{ steps.version.outputs.version }}" >&2; exit 1; }
+
+  checks:
+    name: full check suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --extra ocr --extra ner --group dev
+      - run: uv run ruff check src/complydoc tests
+      - run: uv run ruff format --check src/complydoc tests
+      - run: uv run mypy src/complydoc
+      - run: uv run pytest -q
+
+  build:
+    name: build, attest and publish
+    needs: [verify, checks]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # Signing the provenance statement. Nothing here needs a stored key: the
+      # certificate is issued to this workflow's own identity.
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --group dev
+
+      - name: build the sdist and wheel
+        run: uv build
+
+      - name: build the SBOM
+        run: uv run python scripts/build_sbom.py --out dist/complydoc-sbom.json
+
+      - name: checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS && cat SHA256SUMS
+
+      # Signed, verifiable provenance for the artefacts, tying each file to this
+      # commit and this workflow. Check one with:
+      #   gh attestation verify <file> --repo duartecaldascardoso/complydoc
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/*.whl
+            dist/*.tar.gz
+            dist/complydoc-sbom.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: complydoc-${{ needs.verify.outputs.version }}
+          path: dist/
+
+      - name: draft the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/* \
+            --title "${{ github.ref_name }}" \
+            --notes "See CHANGELOG.md for what changed.
+
+          Every artefact carries signed build provenance. Verify one with:
+
+              gh attestation verify complydoc-${{ needs.verify.outputs.version }}-py3-none-any.whl --repo ${{ github.repository }}
+
+          \`complydoc-sbom.json\` is a CycloneDX bill of materials for a full install, built from the lockfile." \
+            --draft

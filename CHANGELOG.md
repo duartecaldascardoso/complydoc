@@ -18,9 +18,20 @@ branch on when reading reports programmatically.
   marked as imported, kept apart from the handful someone verified against a provider's
   page, and a report that prices against one says so in its limitations.
   Batch prices come from litellm, the only one of the two sources that publishes them.
+- The report compares three models per provider rather than whichever ten had been
+  written down, so every provider is represented and two of them are no longer missing
+  altogether. Each provider is topped up from the catalogue with its most recently
+  released models that take images; `compare.per_provider` in `pricing.yaml` sets the
+  number. A refreshed catalogue brings a refreshed comparison.
 - Batch pricing, where the provider publishes one. The cost page shows what the same
   tokens cost through a batch endpoint beside the interactive price. Never inferred from
   the customary half price: a discount nobody can check does not belong in a budget.
+
+### Fixed
+
+- An imported price is no longer reported as a verification that went stale. It was
+  never claimed to be verified, and warning once per model buried the run's real
+  limitations under a dozen copies of what the provenance entry says once.
 
 ### Changed
 

@@ -146,9 +146,23 @@ class CurrencyConfig(_Base):
     usd_to_gbp: FxRate
 
 
+class CompareConfig(_Base):
+    """How many models the report compares, and how they are chosen.
+
+    The curated entries are always in. Below `per_provider`, each provider is
+    topped up from the vendored catalogue with its most recently released models
+    that take images, so a refreshed catalogue brings a refreshed comparison
+    rather than a file somebody has to remember to edit.
+    """
+
+    per_provider: int = 3
+    top_up_from_catalogue: bool = True
+
+
 class PricingConfig(_Base):
     schema_version: int
     staleness_warn_days: int = 90
+    compare: CompareConfig = CompareConfig()
     currency: CurrencyConfig
     vision_formulas: dict[str, VisionFormula]
     resolution_presets: dict[str, ResolutionPreset]

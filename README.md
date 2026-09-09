@@ -186,7 +186,7 @@ Three files under `src/complydoc/config/`, overridable with `--config-dir`:
 
 | File | Contents |
 | --- | --- |
-| `pricing.yaml` | Curated model prices, vision formulas, resolution presets, `last_verified` dates |
+| `pricing.yaml` | Curated model prices, how many to compare per provider, vision formulas, `last_verified` dates |
 | `model_prices.json` | The current first-party models from models.dev, available to `--model` |
 | `readiness.yaml` | Signal weights, rating thresholds, scoring rules |
 | `sensitive.yaml` | Patterns, validators, regions, severities, masking rules |

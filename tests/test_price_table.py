@@ -53,11 +53,56 @@ def test_every_imported_price_says_it_was_imported():
         assert model.imported_on is not None
 
 
-def test_imported_models_are_not_compared_by_default(config):
-    """Three hundred models on a chart answers nobody's question."""
+def test_the_comparison_covers_every_provider(config):
+    """A comparison missing two providers entirely was answering less.
+
+    Each provider is topped up from the catalogue with its most recently
+    released models, so nobody has to remember to edit a file when a provider
+    ships something new.
+    """
+    import collections
+
     default = config.pricing.usable_models
-    assert 0 < len(default) < 30
-    assert all(m.price_source == "verified" for m in default)
+    assert 0 < len(default) < 40, "the whole catalogue on one chart answers nobody"
+
+    counts = collections.Counter(m.provider for m in default)
+    catalogue = {m.provider for m in config.pricing.models if m.supports_vision and m.is_priced}
+    assert set(counts) == catalogue, "every provider with a usable model is represented"
+
+    wanted = config.pricing.compare.per_provider
+    for provider, count in counts.items():
+        available = sum(
+            1
+            for m in config.pricing.models
+            if m.provider == provider and m.supports_vision and m.is_priced
+        )
+        assert count == min(wanted, available), provider
+
+
+def test_the_comparison_never_lists_one_model_twice(config):
+    """A curated entry may prefix the provider where the catalogue does not."""
+    bare = [m.id.rsplit("/", 1)[-1] for m in config.pricing.usable_models]
+    assert len(bare) == len(set(bare)), sorted(bare)
+
+
+def test_topped_up_models_are_still_marked_imported(config):
+    """Being in the comparison does not make a price verified."""
+    topped = [m for m in config.pricing.usable_models if m.price_source == "imported"]
+    assert topped, "the curated list does not reach three per provider on its own"
+    assert all(m.last_verified is None for m in topped)
+
+
+def test_an_imported_price_is_not_reported_as_a_stale_verification(config):
+    """It was never claimed to be verified, so it cannot have gone stale.
+
+    Warning once per model would bury the run's real limitations under a dozen
+    copies of what the provenance entry says once.
+    """
+    from complydoc.config.loader import check_staleness
+
+    warnings = check_staleness(config.pricing)
+    imported = {m.id for m in config.pricing.models if m.price_source == "imported"}
+    assert not [w for w in warnings if w.entry.removeprefix("model ") in imported]
 
 
 def test_a_curated_price_is_never_replaced_by_an_imported_one(config):

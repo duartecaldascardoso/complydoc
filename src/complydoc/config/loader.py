@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
@@ -12,6 +13,7 @@ import yaml
 
 from complydoc.config.schema import (
     Config,
+    ModelPricing,
     PricingConfig,
     ReadinessConfig,
     SensitiveConfig,
@@ -111,14 +113,54 @@ def _with_imported(pricing: PricingConfig) -> PricingConfig:
     """
     from complydoc.cost.price_table import imported_models
 
+    # Curated entries name some models with a provider prefix and the catalogue
+    # never does, so kimi-k3 and moonshot/kimi-k3 are one model. Matching on the
+    # bare name as well keeps it from being compared against itself.
     known = {model.id for model in pricing.models}
+    known |= {model.id.rsplit("/", 1)[-1] for model in pricing.models}
     extra = [model for model in imported_models() if model.id not in known]
     if not extra:
         return pricing
     usable = [
         m for m in extra if m.vision_formula is None or m.vision_formula in pricing.vision_formulas
     ]
-    return pricing.model_copy(update={"models": [*pricing.models, *usable]})
+
+    merged = [*pricing.models, *usable]
+    if pricing.compare.top_up_from_catalogue:
+        merged = _top_up(merged, pricing.compare.per_provider)
+    return pricing.model_copy(update={"models": merged})
+
+
+def _top_up(models: list[ModelPricing], per_provider: int) -> list[ModelPricing]:
+    """Bring every provider up to `per_provider` models in the comparison.
+
+    Newest first, and only models that take images: the comparison prices a page
+    three ways, and a text-only model cannot answer two of them. A provider with
+    nothing left to offer simply stays short.
+
+    The models chosen this way are imported, not verified, and the report says so
+    — but a comparison missing two providers entirely was answering less.
+    """
+    from complydoc.cost.price_table import released_on
+
+    counts = Counter(m.provider for m in models if m.enabled and m.is_priced)
+    candidates: dict[str, list[ModelPricing]] = defaultdict(list)
+    for model in models:
+        if not model.enabled and model.is_priced and model.supports_vision:
+            candidates[model.provider].append(model)
+
+    chosen: set[str] = set()
+    for provider, available in candidates.items():
+        missing = per_provider - counts.get(provider, 0)
+        if missing <= 0:
+            continue
+        # Undated models sort last rather than being taken for ancient ones.
+        available.sort(key=lambda m: (released_on(m.id) or dt.date.min, m.id), reverse=True)
+        chosen.update(m.id for m in available[:missing])
+
+    if not chosen:
+        return models
+    return [m.model_copy(update={"enabled": True}) if m.id in chosen else m for m in models]
 
 
 def check_staleness(pricing: PricingConfig, today: dt.date | None = None) -> list[StalenessWarning]:
@@ -133,6 +175,12 @@ def check_staleness(pricing: PricingConfig, today: dt.date | None = None) -> lis
 
     for model in pricing.models:
         if not model.enabled:
+            continue
+        if model.price_source == "imported":
+            # Not a verification that went stale — a price that was never
+            # claimed to be verified. Telling the reader to "check it and set
+            # the date" once per model would bury the run's real limitations
+            # under a dozen copies of a fact the provenance entry states once.
             continue
         age = model.days_since_verified(now)
         if age is None:

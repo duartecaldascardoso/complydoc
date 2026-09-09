@@ -14,7 +14,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-288-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-306-4f5d75" alt="Tests">
 </div>
 
 <br>
@@ -79,7 +79,7 @@ One self-contained HTML file, four pages behind a tab bar.
 
 | Page | Answers |
 | --- | --- |
-| **Summary** | Cost per 1,000 documents, average quality, sensitive items per document |
+| **Summary** | Cost per 1,000 documents, average quality, preparation time, sensitive items per document |
 | **Cost** | Every model across three processing architectures, filterable by provider |
 | **Security** | What personal data is in there, by category and by occurrence |
 | **Documents** | A file browser: each page, what was extracted, what OCR sees, what makes it hard |
@@ -100,6 +100,13 @@ so the number of documents each approach can serve is shown beside every figure.
 
 Input cost only. Output depends on your prompt. Prices carry a `last_verified` date and the
 report warns past 90 days.
+
+**Time.** Reading and analysing a document is measured on the machine that runs the audit, so
+the report quotes a rate it observed rather than one it assumed — per document, per page, and
+the OCR throughput that dominates a folder of scans. That is the work before anything reaches
+a model. Time *on* the model is not estimated by default: complydoc cannot benchmark a hosted
+endpoint offline. Add `input_tokens_per_second` to a model in `pricing.yaml` from your own
+benchmark and it will.
 
 **Difficulty.** Eighteen signals, each with a measured value, a rating, and one sentence on
 why it matters. Text layer and coverage, image proportion, garbled characters, tables and

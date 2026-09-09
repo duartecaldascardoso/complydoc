@@ -27,6 +27,7 @@ from complydoc.report.models import (
     SCHEMA_VERSION,
     AuditReport,
     DocumentReport,
+    DocumentTiming,
     PageText,
     RunMetadata,
     build_aggregate,
@@ -97,12 +98,14 @@ def run_audit(
         max_render_pages=50 if (wants_raster or page_images) else 0,
     )
 
+    ocr_module.reset_stats()
     documents: list[DocumentReport] = []
     loaded: list[Document] = []
 
     for index, path in enumerate(files, start=1):
         if progress is not None:
             progress(index, len(files), path)
+        read_started = time.perf_counter()
         try:
             document = load_document(path, options)
         except LoaderError as exc:
@@ -118,6 +121,7 @@ def run_audit(
             )
             continue
 
+        read_seconds = time.perf_counter() - read_started
         loaded.append(document)
         entry = DocumentReport(
             path=document.path,
@@ -128,10 +132,15 @@ def run_audit(
             page_count_known=document.page_count_known,
             load_warnings=list(document.load_warnings),
         )
+        analyse_started = time.perf_counter()
         if "difficulty" in requested:
             entry.difficulty = analyse(document, config.difficulty)
+        analyse_seconds = time.perf_counter() - analyse_started
+
+        scan_started = time.perf_counter()
         if "sensitive" in requested:
             entry.sensitive = scan(document, config.sensitive, reveal=reveal)
+        scan_seconds = time.perf_counter() - scan_started
         if previews:
             entry.previews = build_previews(document, entry.sensitive, page_images=page_images)
         if extracted_text:
@@ -146,6 +155,16 @@ def run_audit(
                 )
                 for page in document.pages
             ]
+        total_seconds = read_seconds + analyse_seconds + scan_seconds
+        entry.timing = DocumentTiming(
+            read_seconds=round(read_seconds, 3),
+            analyse_seconds=round(analyse_seconds, 3),
+            scan_seconds=round(scan_seconds, 3),
+            total_seconds=round(total_seconds, 3),
+            seconds_per_page=(
+                round(total_seconds / document.page_count, 3) if document.page_count else None
+            ),
+        )
         documents.append(entry)
 
     folder_cost = None

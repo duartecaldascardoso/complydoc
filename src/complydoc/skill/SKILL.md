@@ -55,6 +55,8 @@ complydoc sensitive ./invoices --print-json | jq '{
   `severity`.
 - `documents[].cost.models[]` — token counts and USD per model, with `last_verified`
   and `is_stale` on the price.
+- `aggregate.seconds_per_document` / `hours_per_1000_documents` — measured local
+  preparation time, and `ocr_pages_per_second` where OCR ran.
 - `limitations[]` — what this run could not establish, generated from the run itself.
 
 `complydoc schema` prints the full shape.
@@ -75,6 +77,10 @@ price as stale rather than quoting it plainly.
 
 **A count of zero tables means no *ruled* tables.** Detection works from ruling lines,
 so a whitespace-aligned invoice table is not counted.
+
+**Timing is local only.** `seconds_per_document` is the cost of reading and analysing a
+document on this machine, before anything reaches a model. Time on the model is null
+unless someone has configured a measured throughput.
 
 ## Reporting back
 

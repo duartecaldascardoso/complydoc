@@ -18,7 +18,7 @@ from complydoc.difficulty.registry import signal_by_id
 from complydoc.report.charts import SERIES, build_comparison, grouped_bars_svg
 from complydoc.report.models import AuditReport
 from complydoc.report.preview import PagePreview
-from complydoc.text import count
+from complydoc.text import count, duration
 
 __all__ = ["page_preview_svg", "render_html", "write_html"]
 
@@ -224,6 +224,7 @@ def render_html(report: AuditReport, config: Config) -> str:
         category_meta=category_meta,
         signal_name=signal_name,
         signal_why=signal_why,
+        duration=duration,
         severity_class=severity_class,
         severity_badge=severity_badge,
         hard_drivers=lambda d, n=3: _drivers(d, "poor", n),

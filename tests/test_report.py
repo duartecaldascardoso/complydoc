@@ -452,3 +452,15 @@ def test_filtering_the_chart_animates_rather_than_snapping(html):
     assert "requestAnimationFrame" in html
     assert "prefers-reduced-motion" in html
     assert ".grp.out" in html, "filtered rows fade rather than vanishing"
+
+
+def test_the_summary_leads_with_preparation_time(html):
+    summary = html.split('id="summary"')[1].split("<section")[0]
+    assert "Local preparation" in summary
+    assert "before anything reaches a model" in summary
+
+
+def test_the_footer_records_the_observed_rates(html):
+    footer = html.split("<footer>")[1]
+    assert "Took" in footer
+    assert "a page" in footer

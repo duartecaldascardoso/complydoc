@@ -73,6 +73,8 @@ class ModelCostEstimate:
     vision_input_usd_by_resolution: dict[str, float]
     vision_path_unavailable_reason: str | None
     """None when the vision path was costed. Set when it could not be."""
+    text_path_seconds: float | None
+    """Only set when the model carries a measured throughput in pricing.yaml."""
     vision_formula: str | None
 
 
@@ -207,6 +209,9 @@ def _model_estimate(
             vision_tokens_by[name] = total
             vision_cost_by[name] = total / 1_000_000 * price
 
+    throughput = model.input_tokens_per_second
+    text_seconds = token_count.tokens / throughput if throughput and text_cost is not None else None
+
     age = model.days_since_verified(today)
     return ModelCostEstimate(
         model_id=model.id,
@@ -224,6 +229,7 @@ def _model_estimate(
         vision_tokens_by_resolution=vision_tokens_by,
         vision_input_usd_by_resolution=vision_cost_by,
         vision_path_unavailable_reason=vision_unavailable,
+        text_path_seconds=round(text_seconds, 2) if text_seconds else None,
         vision_formula=model.vision_formula,
     )
 

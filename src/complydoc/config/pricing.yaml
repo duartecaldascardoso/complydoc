@@ -14,6 +14,11 @@
 schema_version: 1
 staleness_warn_days: 90
 
+# Processing time is not estimated by default. Prefill throughput depends on your
+# account, region and load, complydoc cannot measure it offline, and it will not
+# invent one. Add `input_tokens_per_second:` to a model from your own benchmark
+# and the report will estimate how long a document takes on it.
+
 currency:
   # Costs are computed in USD because that is the currency providers publish in.
   # For GBP totals, set a rate you trust plus the date you checked it, and change

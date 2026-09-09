@@ -92,6 +92,13 @@ class ModelPricing(_Base):
     supports_vision: bool = True
     vision_formula: str | None = None
     tokenizer: TokenizerSpec
+    input_tokens_per_second: float | None = None
+    """Observed prefill throughput, for estimating how long a document takes.
+
+    Left unset because complydoc cannot measure it offline and will not invent it.
+    Set it from your own benchmark and the report will estimate processing time;
+    leave it and the report says the time was not estimated.
+    """
     last_verified: dt.date | None = None
     source_url: str | None = None
     notes: str | None = None

@@ -373,6 +373,17 @@
   </div>
 
   <div class="tile">
+    <div class="k">Local preparation</div>
+    {% if agg.hours_per_1000_documents is not none %}
+      <div class="v">{{ duration(agg.hours_per_1000_documents * 3600) }}<span class="u"> / 1,000</span></div>
+      <div class="s">measured on this machine at
+        {{ duration(agg.seconds_per_document) }} a document.
+        {% if agg.ocr_pages_per_second %}OCR ran at {{ agg.ocr_pages_per_second }} pages a
+        second.{% endif %} This is before anything reaches a model.</div>
+    {% else %}<div class="v">—</div><div class="s">nothing was timed</div>{% endif %}
+  </div>
+
+  <div class="tile">
     <div class="k">Sensitive items per document</div>
     {% if "sensitive" in report.run.components_run %}
       <div class="v">{{ "%.1f"|format(agg.sensitive_total / agg.documents_audited) if agg.documents_audited else 0 }}</div>
@@ -579,7 +590,8 @@ before reading that as an all-clear.</p>
     <div class="doc" data-doc="{{ loop.index0 }}" hidden>
       <h3>{{ doc.relative_path }}</h3>
       <p class="doc-meta">{{ doc.format }} · {{ plural(doc.page_count, "page") }}{% if not doc.page_count_known %}, not fixed{% endif %}{% if doc.difficulty and doc.difficulty.score %} ·
-        <span class="{{ 'attn' if score_band(doc.difficulty.score.value) == 'poor' else '' }}">{{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>{% endif %}</p>
+        <span class="{{ 'attn' if score_band(doc.difficulty.score.value) == 'poor' else '' }}">{{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>{% endif %}{% if doc.timing %} ·
+        {{ duration(doc.timing.total_seconds) }} to read and analyse{% endif %}</p>
       {% set concerns = doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty else [] %}
       {% if concerns or (doc.sensitive and doc.sensitive.unreadable_pages) %}
       <p class="concerns">
@@ -735,6 +747,9 @@ before reading that as an all-clear.</p>
       <dt>Documents</dt><dd>{{ agg.documents_audited }} across {{ agg.pages_total }} page{{ "" if agg.pages_total == 1 else "s" }}{% if agg.documents_skipped %}, {{ agg.documents_skipped }} skipped{% endif %}</dd>
       <dt>Read by</dt><dd>text layer{% if report.run.ocr_available and report.run.ocr_requested %}, local OCR{% endif %}{% if report.run.ner_available %}, local name detection{% endif %}</dd>
       <dt>Priced against</dt><dd>{{ plural(comparisons | length, "model") }}</dd>
+      <dt>Took</dt><dd>{{ duration(agg.total_seconds) }} of work,
+        {{ duration(agg.seconds_per_page) }} a page{% if agg.ocr_pages %},
+        {{ agg.ocr_pages_per_second }} pages a second through OCR{% endif %}</dd>
       <dt>Options</dt><dd class="opts">{{ run_options }}</dd>
     </dl>
   </div>

@@ -16,6 +16,7 @@ from complydoc.config.schema import MaskingConfig
 from complydoc.cost.estimator import DocumentCostEstimate, FolderCostEstimate
 from complydoc.difficulty.analyser import DifficultyReport
 from complydoc.difficulty.base import SignalStatus
+from complydoc.ingest import ocr as ocr_module
 from complydoc.ingest.base import DocumentFormat, SkipRecord
 from complydoc.report.preview import PagePreview
 from complydoc.sensitive.scanner import ScanResult
@@ -25,6 +26,7 @@ __all__ = [
     "Aggregate",
     "AuditReport",
     "DocumentReport",
+    "DocumentTiming",
     "Limitation",
     "PageText",
     "RunMetadata",
@@ -68,6 +70,17 @@ class RunMetadata:
 
 
 @dataclass(frozen=True, slots=True)
+class DocumentTiming:
+    """Wall clock spent on one document, measured rather than modelled."""
+
+    read_seconds: float
+    analyse_seconds: float
+    scan_seconds: float
+    total_seconds: float
+    seconds_per_page: float | None
+
+
+@dataclass(frozen=True, slots=True)
 class PageText:
     """Exactly what was read off one page, for checking extraction quality."""
 
@@ -93,6 +106,7 @@ class DocumentReport:
     sensitive: ScanResult | None = None
     previews: list[PagePreview] = field(default_factory=list)
     """Per-page wireframes. Geometry only — never document content."""
+    timing: DocumentTiming | None = None
     extracted_text: list[PageText] = field(default_factory=list)
     """The text itself. Only populated with --extracted-text: it is the document."""
 
@@ -125,6 +139,15 @@ class Aggregate:
     sensitive_total: int = 0
     documents_with_sensitive_data: int = 0
     categories_not_scanned: dict[str, str] = field(default_factory=dict)
+
+    total_seconds: float = 0.0
+    """Wall clock for the whole run, measured on the machine that ran it."""
+    seconds_per_document: float | None = None
+    seconds_per_page: float | None = None
+    ocr_pages: int = 0
+    ocr_seconds: float = 0.0
+    ocr_pages_per_second: float | None = None
+    hours_per_1000_documents: float | None = None
 
 
 @dataclass(slots=True)
@@ -187,6 +210,10 @@ def build_aggregate(
             for entry in document.sensitive.unscanned_categories:
                 not_scanned.setdefault(entry.category, entry.reason)
 
+    timings = [d.timing for d in documents if d.timing]
+    measured_seconds = sum(t.total_seconds for t in timings)
+    ocr_pages, ocr_seconds = ocr_module.stats()
+
     aggregate = Aggregate(
         documents_audited=len(documents),
         documents_skipped=len(skipped),
@@ -201,6 +228,15 @@ def build_aggregate(
         sensitive_total=int(sum(by_category.values())),
         documents_with_sensitive_data=with_sensitive,
         categories_not_scanned=not_scanned,
+        total_seconds=round(measured_seconds, 3),
+        seconds_per_document=(round(measured_seconds / len(timings), 3) if timings else None),
+        seconds_per_page=round(measured_seconds / pages, 3) if pages else None,
+        ocr_pages=ocr_pages,
+        ocr_seconds=ocr_seconds,
+        ocr_pages_per_second=(round(ocr_pages / ocr_seconds, 2) if ocr_seconds > 0 else None),
+        hours_per_1000_documents=(
+            round(measured_seconds / len(timings) * 1000 / 3600, 2) if timings else None
+        ),
     )
 
     if cost is not None:

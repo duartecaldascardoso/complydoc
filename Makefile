@@ -10,6 +10,7 @@ SRC     := src/complydoc
 TESTS   := tests
 DOCS    ?= tests/fixtures
 OUT     ?= reports
+SPACY_MODEL := https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 
 .PHONY: help
 help: ## Show this help
@@ -34,8 +35,15 @@ install-all: ## Install everything, including OCR and the local NER model
 	$(PYTHON) python -m spacy download en_core_web_sm
 
 .PHONY: tool
-tool: ## Install complydoc on PATH so it runs from any directory
-	$(UV) tool install . --force
+tool: ## Install (or update) complydoc on PATH, with OCR and name detection
+# `uv tool install` copies the source as it stands, so a global complydoc does
+# not follow the repository: re-run this after changing anything. --reinstall
+# matters as much as --force — without it uv reuses the wheel it built for this
+# version number, and an edit that leaves the version alone is silently ignored.
+# Rebuilding the environment drops the spaCy model, so it is put back after.
+	$(UV) tool install . --force --reinstall --with rapidocr-onnxruntime --with spacy
+	$(UV) pip install --python "$$($(UV) tool dir)/complydoc/bin/python" $(SPACY_MODEL)
+	@complydoc doctor
 
 # ----------------------------------------------------------------- check ---
 

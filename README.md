@@ -55,15 +55,21 @@ and a diagnostic run is still useful without them. `complydoc doctor` says which
 them are present. To install both:
 
 ```bash
-uv tool install --force --with rapidocr-onnxruntime --with spacy \
+uv tool install --force --reinstall --with rapidocr-onnxruntime --with spacy \
   git+https://github.com/duartecaldascardoso/complydoc
-uv pip install --python "$(which complydoc)" \
+uv pip install --python "$(uv tool dir)/complydoc/bin/python" \
   https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 ```
 
 The second line installs the spaCy model into the tool's own environment;
 `spacy download` cannot, because it shells out to pip and a uv tool environment has
-none. In a checkout, `make install-all` does both.
+none. `complydoc doctor` says which extras it can see.
+
+`uv tool install` copies the source as it stands, so a global `complydoc` does not
+follow this repository — re-run the install to pick up changes, and pass
+`--reinstall` as well as `--force`, or uv reuses the wheel it already built for this
+version number and the update does nothing. From a checkout, `make tool` does all of
+it and puts the extras back.
 
 ## Use
 

@@ -39,7 +39,7 @@ def _is_continuation(tc: Any) -> bool:
     merge = properties.find(qn("w:vMerge")) if properties is not None else None
     if merge is None:
         return False
-    return merge.get(qn("w:val")) != "restart"
+    return bool(merge.get(qn("w:val")) != "restart")
 
 
 def _table_info(table: Any) -> TableInfo:

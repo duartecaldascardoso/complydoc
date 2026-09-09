@@ -74,8 +74,17 @@ def test_articles_read_as_english(report):
 
 def test_signals_that_do_not_apply_are_not_run_level_limitations(report):
     """Eighteen per document buried everything that actually needed attention."""
-    assert "Signals not measured" not in {x.area for x in report.limitations}
-    assert len(report.limitations) < 15
+    areas = {x.area for x in report.limitations}
+    assert "Signals not measured" not in areas
+
+    signals = {s.id for d in report.documents if d.difficulty for s in d.difficulty.signals}
+    assert not areas & signals, "a signal became a run-level limitation"
+
+    # The entries describe the run, so how many there are tracks the run's own
+    # facts rather than the signals measured on each of its documents. The exact
+    # number moves with which optional extras are installed — a detector that is
+    # missing is itself a limitation — so the bound is on the shape, not a count.
+    assert len(report.limitations) < len(report.documents) * 2
 
 
 def test_a_signal_that_did_not_apply_still_says_why_on_its_document(report):

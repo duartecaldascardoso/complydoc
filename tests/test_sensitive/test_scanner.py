@@ -138,3 +138,12 @@ def test_unavailable_detectors_are_reported_as_unscanned_not_zero(loader, config
     assert "person_name" not in result.counts_by_category
     unscanned = {u.category for u in result.unscanned_categories}
     assert {"person_name", "organisation_name"} <= unscanned
+
+
+def test_detection_is_not_tied_to_one_jurisdiction(config):
+    """GDPR is not a UK-only regime, and several of these are not GDPR at all."""
+    regions = {c.region for c in config.sensitive.enabled_categories.values()}
+    assert len(regions) >= 6
+    assert "UK" in regions and "US" in regions
+    for category in config.sensitive.categories.values():
+        assert "UK GDPR" not in (category.gdpr_note or "")

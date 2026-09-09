@@ -409,7 +409,7 @@ def sensitive(
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
-    """Scan for UK GDPR relevant identifiers only."""
+    """Scan for personal and financial identifiers only."""
     _run(
         target,
         ("sensitive",),

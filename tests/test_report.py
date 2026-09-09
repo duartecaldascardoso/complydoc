@@ -425,3 +425,10 @@ def test_run_options_record_exactly_what_was_asked_for(config):
     assert "--monthly-volume 500" in options
     assert "--page-images" not in options
     assert "--reveal" not in options
+
+
+def test_filtering_the_chart_animates_rather_than_snapping(html):
+    """A viewBox is an attribute, so it has to be tweened, not CSS-transitioned."""
+    assert "requestAnimationFrame" in html
+    assert "prefers-reduced-motion" in html
+    assert ".grp.out" in html, "filtered rows fade rather than vanishing"

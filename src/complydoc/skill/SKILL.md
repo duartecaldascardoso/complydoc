@@ -1,14 +1,14 @@
 ---
 name: complydoc
-description: Audit a folder of documents offline for LLM processing cost, extraction difficulty, and GDPR identifiers (UK, US, EU national IDs, cards, IBANs). Use when asked what documents would cost to process with an LLM, how hard they are to extract from, whether a folder contains personal or financial data, or to check documents for PII before sending them anywhere. Runs locally and makes no network calls.
+description: Audit a folder of documents offline for LLM processing cost, extraction difficulty, and personal or financial identifiers (national IDs across the UK, US and EU, payment cards, IBANs, bank details). Use when asked what documents would cost to process with an LLM, how hard they are to extract from, whether a folder contains personal data, or to check documents for PII before sending them anywhere. Runs locally and makes no network calls.
 ---
 
 # complydoc
 
 `complydoc` audits a folder of business documents and reports three things: what they
 would cost to process with an LLM, how hard they are to extract structured data from,
-and which GDPR relevant identifiers they contain. It makes no network calls, so it is
-safe to run on material that must not leave the machine.
+and which personal or financial identifiers they contain. It makes no network calls, so
+it is safe to run on material that must not leave the machine.
 
 ## Running it
 

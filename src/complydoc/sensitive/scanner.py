@@ -1,4 +1,4 @@
-"""Component 3: find UK GDPR relevant identifiers, and report them masked.
+"""Component 3: find personal and financial identifiers, and report them masked.
 
 The scan reports counts and locations. Values are masked unless `--reveal` was
 passed, and categories under `masking.never_reveal` stay masked even then.

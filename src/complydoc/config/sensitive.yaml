@@ -1,4 +1,8 @@
-# UK GDPR relevant identifier detection.
+# Personal and financial identifier detection.
+#
+# Categories carry a `region`. GDPR covers the EU and, in its retained form, the
+# UK; the US and other identifiers here fall under their own regimes. Nothing in
+# this file assumes a single jurisdiction.
 #
 # MASKING IS THE DEFAULT AND IT IS THE POINT. complydoc reports counts and
 # locations, never values. A report that flags a leaked bank account number by
@@ -37,8 +41,8 @@ categories:
     validators: [ni_prefix]
     context_terms: ["national insurance", "ni number", "nino", "ni no"]
     gdpr_note: >
-      A direct identifier under UK GDPR. Uniquely identifies an individual and is
-      routinely treated as high risk in a breach assessment.
+      A direct identifier under UK data protection law. Uniquely identifies an
+      individual and is routinely treated as high risk in a breach assessment.
 
   sort_code:
     enabled: true
@@ -96,7 +100,7 @@ categories:
     context_terms: ["card", "visa", "mastercard", "amex", "pan", "card number"]
     gdpr_note: >
       Payment card data. Validated with the Luhn checksum. Storing this in
-      unencrypted documents is a PCI DSS problem as well as a UK GDPR one.
+      unencrypted documents is a PCI DSS problem as well as a data protection one.
 
   uk_postcode:
     enabled: true

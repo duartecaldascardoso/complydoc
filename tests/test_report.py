@@ -240,7 +240,7 @@ def test_extracted_text_is_included_and_stamped_when_asked_for(config):
     assert "EMPLOYEE RECORD" in document.extracted_text[0].text
 
     page = render_html(with_text, config)
-    assert 'class="text"' in page
+    assert "EMPLOYEE RECORD" in page, "the text belongs beside the page it was read from"
     options = page.split('class="opts">')[1].split("<")[0]
     assert "--extracted-text" in options
 
@@ -367,7 +367,7 @@ def test_documents_page_holds_the_explorer(html):
     documents = html.split('id="documents"')[1].split("</main>")[0]
     assert 'id="filelist"' in documents
     assert 'class="viewer"' in documents
-    for view in ("pages", "text", "ocr", "signals"):
+    for view in ("pages", "signals"):
         assert f'data-view="{view}"' in documents
 
 

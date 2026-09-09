@@ -7,6 +7,7 @@ no external assets and no scripts to fetch.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -16,11 +17,11 @@ from markupsafe import escape
 from complydoc.config.schema import Config
 from complydoc.difficulty.registry import signal_by_id
 from complydoc.report.charts import SERIES, build_comparison, grouped_bars_svg
-from complydoc.report.models import AuditReport
+from complydoc.report.models import AuditReport, DocumentReport
 from complydoc.report.preview import PagePreview
 from complydoc.text import count, duration
 
-__all__ = ["page_preview_svg", "render_html", "write_html"]
+__all__ = ["PageRow", "page_preview_svg", "page_rows", "render_html", "write_html"]
 
 # The mark, inlined so the report stays a single file: a document inside the
 # network guard boundary, with one line redacted.
@@ -57,7 +58,54 @@ _FAVICON_URI = (
 )
 
 _PREVIEW_WIDTH = 240
-_MAX_PREVIEW_PAGES = 12
+
+
+@dataclass(frozen=True, slots=True)
+class PageRow:
+    """One page of a document, as the viewer needs it: the page and its content.
+
+    Previews and extracted text are collected separately and either can be
+    absent — the default report carries no page images and no text — so they are
+    joined by page number here rather than being assumed to line up.
+    """
+
+    number: int
+    preview: PagePreview | None = None
+    image_data_uri: str | None = None
+    text: str = ""
+    ocr_text: str = ""
+    source: str = ""
+    characters: int = 0
+    truncated: bool = False
+
+    @property
+    def flags(self) -> list[tuple[str, str]]:
+        return self.preview.flags if self.preview is not None else []
+
+
+def page_rows(document: DocumentReport) -> list[PageRow]:
+    """Every page of one document, in order, whether or not it could be read."""
+    previews = {p.number: p for p in document.previews}
+    texts = {t.number: t for t in document.extracted_text}
+
+    rows: list[PageRow] = []
+    for number in sorted(set(previews) | set(texts)):
+        preview = previews.get(number)
+        text = texts.get(number)
+        rows.append(
+            PageRow(
+                number=number,
+                preview=preview,
+                image_data_uri=preview.image_data_uri if preview is not None else None,
+                text=text.text if text else "",
+                ocr_text=text.ocr_text if text else "",
+                source=text.source if text else "",
+                characters=text.characters if text else 0,
+                truncated=bool(text and text.truncated),
+            )
+        )
+    return rows
+
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -224,7 +272,7 @@ def render_html(report: AuditReport, config: Config) -> str:
         page_preview_svg=page_preview_svg,
         logo_svg=_LOGO_SVG,
         favicon_uri=_FAVICON_URI,
-        max_preview_pages=_MAX_PREVIEW_PAGES,
+        page_rows=page_rows,
         money=lambda v: _money(v, currency),
         category_meta=category_meta,
         signal_name=signal_name,

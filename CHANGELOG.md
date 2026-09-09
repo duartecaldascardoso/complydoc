@@ -8,6 +8,18 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Changed
+
+- The Documents page is a page viewer rather than a grid of the first twelve pages.
+  Every page of a document is reachable, by stepping or by typing a page number, and
+  the page sits beside the text that was read off it instead of in a separate tab.
+
+### Fixed
+
+- DOCX merged cells were counted by object identity, which made the count depend on
+  memory reuse and differ between processes reading the same file. They are read from
+  the markup now.
+
 ## [0.1.0]
 
 First release.

@@ -254,7 +254,7 @@ def test_page_previews_reach_the_html(tmp_path):
     )
     html = (tmp_path / "pv.html").read_text()
     assert 'class="pv"' in html, "the page wireframe should be in the report"
-    assert 'class="pair"' in html, "wireframes sit in a document/extraction pair"
+    assert 'class="spread"' in html, "a page sits beside what was read off it"
     assert "<text" not in html.split('class="pv"')[1].split("</svg>")[0]
 
 

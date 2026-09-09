@@ -106,15 +106,43 @@
   .lim .files { color: var(--muted); font-size: 0.75rem; margin-top: 0.25rem;
                 font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
                 word-break: break-all; }
-  .pages { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 0.75rem 0 1rem; }
-  .page { }
-  .pair { display: flex; gap: 0.5rem; }
-  .half { }
-  .half > .lbl { font-size: 0.625rem; color: var(--faint); text-transform: uppercase;
-                 letter-spacing: 0.06em; margin-bottom: 0.1875rem; }
-  .pv, .pg { display: block; width: 240px; height: auto; background: var(--pv-page);
-             border: 1px solid var(--line-2); }
-  .page .cap { font-size: 0.6875rem; color: var(--muted); margin-top: 0.375rem; line-height: 1.3; }
+  /* --- the page viewer: one page, the page beside what was read off it -- */
+  .pagebar { display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.75rem;
+             font-size: 0.8125rem; color: var(--muted); }
+  .pagebar .pstep { font: inherit; font-size: 1rem; line-height: 1; width: 1.75rem;
+                    padding: 0.25rem 0; border: 1px solid var(--line-2);
+                    background: var(--panel); color: inherit; cursor: pointer;
+                    border-radius: 3px; }
+  .pagebar .pstep:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); }
+  .pagebar .pstep:disabled { color: var(--faint); cursor: default; }
+  .pagebar .pat { display: inline-flex; align-items: baseline; gap: 0.375rem; }
+  .pagebar .pjump { font: inherit; font-size: 0.8125rem; width: 4rem; text-align: right;
+                    padding: 0.1875rem 0.375rem; border: 1px solid var(--line-2);
+                    background: var(--panel); color: var(--ink); border-radius: 3px; }
+  .pagebar .pjump:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .pagebar .pmiss { color: var(--attn); }
+  .spread { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .spread[hidden] { display: none; }
+  .spread .side { flex: 1 1 0; min-width: 0; }
+  .spread .side > .lbl { font-size: 0.625rem; color: var(--faint); text-transform: uppercase;
+                         letter-spacing: 0.06em; margin-bottom: 0.375rem; min-height: 1.25rem; }
+  .swap { display: inline-flex; border: 1px solid var(--line-2); border-radius: 3px;
+          overflow: hidden; }
+  .swap button { font: inherit; font-size: 0.625rem; text-transform: uppercase;
+                 letter-spacing: 0.06em; padding: 0.1875rem 0.5rem; border: none;
+                 background: var(--panel); color: var(--faint); cursor: pointer; }
+  .swap button + button { border-left: 1px solid var(--line-2); }
+  .swap button[aria-selected="true"] { background: var(--na-bg); color: var(--ink); }
+  .face[hidden] { display: none; }
+  .pv, .pg { display: block; width: 100%; max-width: 420px; height: auto;
+             background: var(--pv-page); border: 1px solid var(--line-2); }
+  .spread pre { margin: 0; padding: 0.75rem; background: var(--panel);
+                border: 1px solid var(--line); min-height: 14rem; max-height: 32rem;
+                overflow: auto;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                font-size: 0.75rem; line-height: 1.5; white-space: pre-wrap;
+                word-break: break-word; }
+  @media (max-width: 720px) { .spread { flex-direction: column; } }
   .key { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: var(--muted);
          margin: 0 0 1rem; align-items: center; }
   .key span { display: inline-flex; align-items: center; gap: 0.3125rem; }
@@ -612,75 +640,105 @@ before reading that as an all-clear.</p>
 
       <div class="subtabs" role="tablist">
         <button type="button" data-view="pages" aria-selected="true">Pages</button>
-        <button type="button" data-view="text" aria-selected="false">Extracted text</button>
-        <button type="button" data-view="ocr" aria-selected="false">What OCR sees</button>
         <button type="button" data-view="signals" aria-selected="false">All signals</button>
       </div>
 
       <div data-view="pages">
-        {% if doc.previews %}
+        {% set rows = page_rows(doc) %}
+        {% if rows %}
+        <div class="pagebar">
+          <button type="button" class="pstep" data-step="-1" aria-label="Previous page">&lsaquo;</button>
+          <span class="pat">Page
+            <input type="number" class="pjump" min="{{ rows[0].number }}"
+                   max="{{ rows[-1].number }}" value="{{ rows[0].number }}"
+                   aria-label="Go to page number"> of {{ rows[-1].number }}</span>
+          <button type="button" class="pstep" data-step="1" aria-label="Next page">&rsaquo;</button>
+          <span class="pmiss" hidden>no page with that number</span>
+        </div>
+
+        <div class="pageview">
+        {% for row in rows %}
+          <div class="spread" data-page="{{ row.number }}" hidden>
+            <div class="side">
+              <div class="lbl">
+                {% if row.image_data_uri %}
+                <span class="swap" role="group">
+                  <button type="button" data-face="img" aria-selected="true">page</button>
+                  <button type="button" data-face="svg" aria-selected="false">layout</button>
+                </span>
+                {% else %}layout{% endif %}
+              </div>
+              {% if row.image_data_uri %}
+                <img class="pg face" data-face="img" src="{{ row.image_data_uri }}"
+                     alt="Page {{ row.number }}" loading="lazy">
+              {% endif %}
+              {% if row.preview %}
+                <div class="face" data-face="svg" {% if row.image_data_uri %}hidden{% endif %}>
+                  {{ page_preview_svg(row.preview) | safe }}
+                </div>
+              {% else %}
+                <p class="note">This page could not be read.</p>
+              {% endif %}
+              <div class="pcap">
+                {%- for level, label in row.flags %}<span class="flag {{ level }}">{{ label }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
+              </div>
+            </div>
+
+            <div class="side">
+              {# Both panes are only worth offering when they can differ. On a page
+                 with no text layer the extracted text IS the OCR output, so a
+                 switch between them would be a switch between one thing and
+                 itself; --ocr-compare is what makes the comparison real. #}
+              {% set compare = row.source == "native" and row.ocr_text %}
+              <div class="lbl">
+                {% if compare %}
+                <span class="swap" role="group">
+                  <button type="button" data-face="text" aria-selected="true">text layer</button>
+                  <button type="button" data-face="ocr" aria-selected="false">what OCR sees</button>
+                </span>
+                {% elif row.source == "ocr" %}what OCR read from this page
+                {% elif row.text %}text read from this page
+                {% else %}content{% endif %}
+              </div>
+              {% if row.text or row.ocr_text %}
+                <div class="face" data-face="text">
+                  <pre>{{ row.text or row.ocr_text }}</pre>
+                  <p class="pcap">{{ "{:,}".format(row.characters or (row.ocr_text | length)) }}
+                    characters{% if row.source %}, read as {{ row.source }}{% endif %}
+                    {%- if row.truncated %}, truncated for the report{% endif %}</p>
+                </div>
+                {% if compare %}
+                <div class="face" data-face="ocr" hidden>
+                  <pre>{{ row.ocr_text }}</pre>
+                  <p class="pcap">{{ "{:,}".format(row.ocr_text | length) }} characters read by OCR</p>
+                </div>
+                {% endif %}
+              {% elif row.preview and row.preview.unreadable %}
+                <p class="note">Nothing was read from this page. It carries no text layer, and
+                {% if report.run.ocr_requested %}OCR found nothing on it{% else %}OCR was not
+                run — pass <code>--ocr</code>{% endif %}.</p>
+              {% else %}
+                <p class="note">The text is not in this report. Run with
+                <code>--extracted-text</code> to put what was read off each page beside it.</p>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+        </div>
+
         <div class="key">
           <span><i class="sw" style="background:var(--pv-text);border-color:var(--pv-text)"></i> text</span>
           <span><i class="sw" style="background:var(--pv-image);border-color:var(--pv-image)"></i> image, needs OCR or vision</span>
           <span><i class="sw" style="background:transparent;border-color:var(--poor)"></i> sensitive, high</span>
           <span><i class="sw" style="background:transparent;border-color:var(--fair)"></i> sensitive, other</span>
         </div>
-        <div class="pages">
-        {% for pv in doc.previews[:max_preview_pages] %}
-          <div class="page">
-            <div class="pair">
-              {% if pv.image_data_uri %}
-              <div class="half"><div class="lbl">document</div>
-                <img class="pg" src="{{ pv.image_data_uri }}" alt="Page {{ pv.number }}" loading="lazy"></div>
-              {% endif %}
-              <div class="half"><div class="lbl">{{ "extracted" if pv.image_data_uri else "layout" }}</div>
-                {{ page_preview_svg(pv) | safe }}</div>
-            </div>
-            <div class="cap">page {{ pv.number }}</div>
-            <div class="pcap">
-              {%- for level, label in pv.flags %}<span class="flag {{ level }}">{{ label }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
-            </div>
-          </div>
-        {% endfor %}
-        </div>
-        {% if doc.previews | length > max_preview_pages %}
-          <p class="note">Showing the first {{ max_preview_pages }} of {{ doc.previews | length }} pages.</p>
+        {% set imaged = rows | selectattr("image_data_uri") | list | length %}
+        {% if report.run.page_images_used and imaged and imaged < rows | length %}
+          <p class="note">{{ imaged }} of {{ rows | length }} pages were rendered as pictures;
+          the rest are shown as layout. Only so many pages of one document are rasterised, so
+          that a long scan cannot exhaust memory or make the report too large to send.</p>
         {% endif %}
         {% else %}<p class="note">No pages could be read from this document.</p>{% endif %}
-      </div>
-
-      <div data-view="text" hidden>
-        {% if doc.extracted_text %}
-          {% for pt in doc.extracted_text %}
-            <details class="text" {% if loop.first %}open{% endif %}>
-              <summary>Page {{ pt.number }} — {{ "{:,}".format(pt.characters) }} characters,
-                read as {{ pt.source }}{% if pt.truncated %}, truncated{% endif %}</summary>
-              {% if pt.text.strip() %}<pre>{{ pt.text }}</pre>
-              {% else %}<p class="note">Nothing was read from this page.</p>{% endif %}
-            </details>
-          {% endfor %}
-        {% else %}
-          <p class="note">Run with <code>--extracted-text</code> to include the text read off
-          each page.</p>
-        {% endif %}
-      </div>
-
-      <div data-view="ocr" hidden>
-        {% set any_ocr = doc.extracted_text | selectattr("ocr_text") | list %}
-        {% if any_ocr %}
-          {% for pt in doc.extracted_text %}
-            {% if pt.ocr_text %}
-            <details class="text" {% if loop.first %}open{% endif %}>
-              <summary>Page {{ pt.number }} — OCR read
-                {{ "{:,}".format(pt.ocr_text | length) }} characters</summary>
-              <pre>{{ pt.ocr_text }}</pre>
-            </details>
-            {% endif %}
-          {% endfor %}
-        {% else %}
-          <p class="note">No OCR output. OCR runs only where there is no text layer; add
-          <code>--ocr-compare</code> to read every page.</p>
-        {% endif %}
       </div>
 
       <div data-view="signals" hidden>
@@ -904,7 +962,76 @@ before reading that as an all-clear.</p>
           views.forEach(function (v) { v.hidden = v.getAttribute("data-view") !== want; });
         });
       });
+      pageviewer(doc);
     });
+  }
+
+  // One page at a time, the page beside the text read off it. Every page of the
+  // document is reachable: the arrows step, and the number box jumps straight to
+  // a page, which is the only practical way through a long scan.
+  function pageviewer(doc) {
+    var bar = doc.querySelector(".pagebar");
+    var spreads = Array.prototype.slice.call(doc.querySelectorAll(".pageview > .spread"));
+    if (!bar || !spreads.length) return;
+
+    var numbers = spreads.map(function (s) { return Number(s.getAttribute("data-page")); });
+    var jump = bar.querySelector(".pjump");
+    var missing = bar.querySelector(".pmiss");
+    var steps = Array.prototype.slice.call(bar.querySelectorAll(".pstep"));
+    var at = 0;
+
+    function show(index) {
+      at = Math.max(0, Math.min(spreads.length - 1, index));
+      spreads.forEach(function (s, i) { s.hidden = i !== at; });
+      steps.forEach(function (b) {
+        var step = Number(b.getAttribute("data-step"));
+        b.disabled = step < 0 ? at === 0 : at === spreads.length - 1;
+      });
+      if (jump && document.activeElement !== jump) jump.value = String(numbers[at]);
+      if (missing) missing.hidden = true;
+    }
+
+    steps.forEach(function (button) {
+      button.addEventListener("click", function () {
+        show(at + Number(button.getAttribute("data-step")));
+      });
+    });
+
+    if (jump) {
+      jump.addEventListener("input", function () {
+        var wanted = Number(jump.value);
+        if (jump.value === "") { if (missing) missing.hidden = true; return; }
+        var index = numbers.indexOf(wanted);
+        // A page number the document does not have is said so rather than
+        // silently snapping to the nearest one, which would be a lie about
+        // which page you are looking at.
+        if (index === -1) { if (missing) missing.hidden = false; return; }
+        show(index);
+      });
+      jump.addEventListener("blur", function () { show(at); });
+    }
+
+    doc.addEventListener("keydown", function (event) {
+      if (event.target === jump || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key === "ArrowLeft") { show(at - 1); event.preventDefault(); }
+      if (event.key === "ArrowRight") { show(at + 1); event.preventDefault(); }
+    });
+
+    // The page/layout and text/OCR switches, scoped to the side they sit in.
+    Array.prototype.slice.call(doc.querySelectorAll(".spread .swap")).forEach(function (swap) {
+      var side = swap.closest(".side");
+      var options = Array.prototype.slice.call(swap.querySelectorAll("button"));
+      var faces = Array.prototype.slice.call(side.querySelectorAll(".face"));
+      options.forEach(function (option) {
+        option.addEventListener("click", function () {
+          var want = option.getAttribute("data-face");
+          options.forEach(function (o) { o.setAttribute("aria-selected", String(o === option)); });
+          faces.forEach(function (f) { f.hidden = f.getAttribute("data-face") !== want; });
+        });
+      });
+    });
+
+    show(0);
   }
 
   function theme() {

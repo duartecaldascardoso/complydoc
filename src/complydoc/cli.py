@@ -27,7 +27,7 @@ from complydoc.report.models import AuditReport
 
 app = typer.Typer(
     add_completion=False,
-    no_args_is_help=True,
+    no_args_is_help=False,
     help=(
         "Audit a folder of business documents offline: what they would cost to process "
         "with an LLM, how hard they are to extract from, and what sensitive information "
@@ -37,12 +37,48 @@ app = typer.Typer(
 console = Console()
 errors = Console(stderr=True)
 
+
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context) -> None:
+    """Run `complydoc` on its own to audit the folder you are standing in.
+
+    Anything more specific is a subcommand: `complydoc audit <path>`, `cost`,
+    `difficulty`, `sensitive`, `models`, `schema`, `doctor`.
+    """
+    if ctx.invoked_subcommand is not None:
+        return
+    here = Path.cwd()
+    console.print(f"[dim]Auditing[/] {here}")
+    _run(
+        here,
+        COMPONENTS,
+        DEFAULT_OUT,
+        "complydoc",
+        None,
+        True,
+        True,
+        False,
+    )
+
+
 TargetArg = Annotated[Path, typer.Argument(help="A file or folder to audit.")]
-OutDirOpt = Annotated[Path, typer.Option("--out", "-o", help="Directory for the reports.")]
+OutDirOpt = Annotated[
+    Path,
+    typer.Option("--out", "-o", help="Directory for the reports."),
+]
+DEFAULT_OUT = Path(".complydoc")
+"""Hidden, so a second run does not discover the first run's own reports."""
 ConfigOpt = Annotated[
     Path | None, typer.Option("--config-dir", help="Override the config directory.")
 ]
-OcrOpt = Annotated[bool, typer.Option("--ocr/--no-ocr", help="Read scanned pages with local OCR.")]
+OcrOpt = Annotated[
+    bool,
+    typer.Option(
+        "--ocr/--no-ocr",
+        help="Read scanned pages with local OCR. On by default, so a scanned page is "
+        "still readable; --no-ocr is faster.",
+    ),
+]
 RecurseOpt = Annotated[
     bool, typer.Option("--recurse/--no-recurse", help="Descend into subfolders.")
 ]
@@ -240,7 +276,7 @@ def _run(
 @app.command()
 def audit(
     target: TargetArg,
-    out: OutDirOpt = Path("reports"),
+    out: OutDirOpt = DEFAULT_OUT,
     name: NameOpt = "complydoc",
     monthly_volume: Annotated[
         int | None,
@@ -261,7 +297,7 @@ def audit(
     extracted_text: ExtractedTextOpt = False,
     ocr_compare: OcrCompareOpt = False,
     config_dir: ConfigOpt = None,
-    ocr: OcrOpt = False,
+    ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
@@ -290,7 +326,7 @@ def audit(
 @app.command()
 def cost(
     target: TargetArg,
-    out: OutDirOpt = Path("reports"),
+    out: OutDirOpt = DEFAULT_OUT,
     name: NameOpt = "complydoc-cost",
     monthly_volume: Annotated[
         int | None,
@@ -301,7 +337,7 @@ def cost(
     ] = "medium",
     model: ModelOpt = None,
     config_dir: ConfigOpt = None,
-    ocr: OcrOpt = False,
+    ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
@@ -326,12 +362,12 @@ def cost(
 @app.command()
 def difficulty(
     target: TargetArg,
-    out: OutDirOpt = Path("reports"),
+    out: OutDirOpt = DEFAULT_OUT,
     name: NameOpt = "complydoc-difficulty",
     extracted_text: ExtractedTextOpt = False,
     ocr_compare: OcrCompareOpt = False,
     config_dir: ConfigOpt = None,
-    ocr: OcrOpt = False,
+    ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
@@ -355,7 +391,7 @@ def difficulty(
 @app.command()
 def sensitive(
     target: TargetArg,
-    out: OutDirOpt = Path("reports"),
+    out: OutDirOpt = DEFAULT_OUT,
     name: NameOpt = "complydoc-sensitive",
     reveal: Annotated[
         bool,
@@ -367,7 +403,7 @@ def sensitive(
     page_images: PageImagesOpt = False,
     extracted_text: ExtractedTextOpt = False,
     config_dir: ConfigOpt = None,
-    ocr: OcrOpt = False,
+    ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,

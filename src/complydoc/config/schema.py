@@ -253,6 +253,8 @@ class NerModelSpec(_Base):
 class CategoryConfig(_Base):
     enabled: bool = True
     label: str
+    region: str = "international"
+    """Which jurisdiction the identifier belongs to, shown in the report."""
     detector: str
     severity: Severity = "medium"
     patterns: list[str] = Field(default_factory=list)

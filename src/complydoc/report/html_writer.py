@@ -140,10 +140,11 @@ def render_html(report: AuditReport, config: Config) -> str:
     def category_meta(category_id: str) -> dict[str, Any]:
         entry = config.sensitive.categories.get(category_id)
         if entry is None:
-            return {"label": category_id, "severity": "medium", "note": ""}
+            return {"label": category_id, "severity": "medium", "region": "?", "note": ""}
         return {
             "label": entry.label,
             "severity": entry.severity,
+            "region": entry.region,
             "note": (entry.gdpr_note or "").strip(),
         }
 

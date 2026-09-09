@@ -86,8 +86,15 @@ def test_a_signal_that_did_not_apply_still_says_why_on_its_document(report):
 
 
 def test_one_entry_per_distinct_tokenizer_note(report):
-    """Three models sharing a note should not produce three near-identical entries."""
-    assert len(entries(report, "Token counting")) == 1
+    """Models sharing a note get one entry between them, not one each."""
+    notes = entries(report, "Token counting")
+    assert notes
+    statements = [n.statement for n in notes]
+    assert len(statements) == len(set(statements)), "the same note was emitted twice"
+    # Anthropic ships three models with identical wording; they must share an entry.
+    anthropic = [n for n in notes if "Anthropic" in n.statement]
+    assert len(anthropic) == 1
+    assert len(anthropic[0].affected) >= 3
 
 
 def test_an_unopenable_document_reports_no_table_count(loader, config):

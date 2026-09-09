@@ -7,14 +7,14 @@
 </div>
 
 <div align="center">
-  <h3>Offline document audit for LLM cost, extraction difficulty, and UK GDPR identifiers.</h3>
+  <h3>Offline document audit for LLM cost, extraction difficulty, and GDPR identifiers.</h3>
 </div>
 
 <div align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-249-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-272-4f5d75" alt="Tests">
   <img src="https://img.shields.io/badge/mypy-strict-4f5d75" alt="mypy strict">
 </div>
 
@@ -38,10 +38,31 @@ It makes no network calls at runtime. `complydoc/offline.py` replaces the standa
 
 ```bash
 uv sync
-uv run complydoc audit ./invoices --monthly-volume 2500 --out reports
+uv tool install .          # puts complydoc on your PATH
 ```
 
-That writes `reports/complydoc.json` and `reports/complydoc.html`.
+Then stand in any folder and run it:
+
+```bash
+cd ~/invoices
+complydoc
+```
+
+That audits the folder you are in and writes `.complydoc/complydoc.html` and
+`.complydoc/complydoc.json`, printing both paths as clickable links. The output
+directory is hidden so a second run does not pick up the first run's reports.
+
+For anything more specific there are subcommands:
+
+```bash
+complydoc audit ./invoices --monthly-volume 2500 --out reports
+```
+
+If `complydoc: command not found`, `uv` installs to `~/.local/bin`; add it to your shell:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && exec zsh
+```
 
 Each component also runs on its own:
 
@@ -150,6 +171,17 @@ placement. On a two-column page the extraction order crosses the gutter, and a b
 from that would point at the wrong place.
 
 ### Sensitive information
+
+Detection is not UK-only. Categories carry a `region`, shown in the report, and every
+national identifier is checksum-validated so enabling them all does not flood the output:
+
+| Region | Identifiers |
+| --- | --- |
+| UK | National Insurance, sort code, account number, postcode, address, phone, VAT, UTR |
+| US | Social Security number, EIN, ABA routing number |
+| IE · NL · PT · ES · FR · DE | PPS, BSN, NIF, DNI/NIE, NIR, Steuer-ID |
+| EU | VAT numbers, checked against each country's length rules |
+| International | IBAN, payment cards, email, dates of birth, person and organisation names |
 
 National Insurance numbers, sort codes, bank account numbers, IBANs, payment cards, postcodes, street addresses, emails, phone numbers, dates of birth, VAT numbers, UTRs, and person and organisation names from a local NER model.
 

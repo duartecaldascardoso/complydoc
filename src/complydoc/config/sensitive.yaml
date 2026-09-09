@@ -29,6 +29,7 @@ categories:
   ni_number:
     enabled: true
     label: National Insurance number
+    region: UK
     detector: regex
     severity: high
     patterns:
@@ -42,6 +43,7 @@ categories:
   sort_code:
     enabled: true
     label: UK sort code
+    region: UK
     detector: regex
     severity: high
     patterns:
@@ -57,6 +59,7 @@ categories:
   bank_account_number:
     enabled: true
     label: UK bank account number
+    region: UK
     detector: regex
     severity: high
     context_patterns:
@@ -70,6 +73,7 @@ categories:
   iban:
     enabled: true
     label: IBAN
+    region: international
     detector: regex
     severity: high
     patterns:
@@ -83,6 +87,7 @@ categories:
   card_number:
     enabled: true
     label: Payment card number
+    region: international
     detector: regex
     severity: high
     patterns:
@@ -96,6 +101,7 @@ categories:
   uk_postcode:
     enabled: true
     label: UK postcode
+    region: UK
     detector: regex
     severity: medium
     patterns:
@@ -109,6 +115,7 @@ categories:
   street_address:
     enabled: true
     label: Street address
+    region: UK
     detector: regex
     severity: medium
     patterns:
@@ -121,6 +128,7 @@ categories:
   email_address:
     enabled: true
     label: Email address
+    region: international
     detector: regex
     severity: medium
     patterns:
@@ -132,6 +140,7 @@ categories:
   phone_number:
     enabled: true
     label: Phone number
+    region: UK
     detector: regex
     severity: medium
     patterns:
@@ -145,6 +154,7 @@ categories:
   date_of_birth:
     enabled: true
     label: Date of birth
+    region: international
     detector: regex
     severity: high
     context_patterns:
@@ -159,6 +169,7 @@ categories:
   vat_number:
     enabled: true
     label: UK VAT number
+    region: UK
     detector: regex
     severity: low
     patterns:
@@ -172,6 +183,7 @@ categories:
   utr:
     enabled: true
     label: Unique Taxpayer Reference
+    region: UK
     detector: regex
     severity: high
     context_patterns:
@@ -184,6 +196,7 @@ categories:
   person_name:
     enabled: true
     label: Person name
+    region: international
     detector: ner
     severity: medium
     min_confidence: 0.5
@@ -197,6 +210,7 @@ categories:
   organisation_name:
     enabled: true
     label: Organisation name
+    region: international
     detector: ner
     severity: low
     min_confidence: 0.5
@@ -206,3 +220,150 @@ categories:
     gdpr_note: >
       Not personal data on its own. Reported because organisation names are often
       what makes an otherwise anonymous document re-identifiable.
+
+  # ---------------------------------------------------------------------
+  # Other jurisdictions. A UK finance team routinely holds records for
+  # suppliers, staff and customers elsewhere, and an identifier that is not
+  # British is not therefore harmless. Each of these carries a checksum, so
+  # enabling them all does not flood the report with false positives.
+  # ---------------------------------------------------------------------
+
+  us_ssn:
+    enabled: true
+    label: US Social Security number
+    region: US
+    detector: regex
+    severity: high
+    context_patterns:
+      - '\b\d{3}-\d{2}-\d{4}\b'
+      - '\b\d{9}\b'
+    validators: [us_ssn]
+    context_terms: ["ssn", "social security", "soc sec"]
+    gdpr_note: >
+      Direct identifier. Validated against the Social Security Administration's
+      published exclusions, so runs like 000-xx-xxxx are discarded.
+
+  us_ein:
+    enabled: true
+    label: US Employer Identification Number
+    region: US
+    detector: regex
+    severity: medium
+    context_patterns:
+      - '\b\d{2}-\d{7}\b'
+    validators: [us_ein]
+    context_terms: ["ein", "employer identification", "federal tax id", "fein"]
+    gdpr_note: >
+      Business tax identifier. Carries no checksum, so only the shape and a valid
+      campus prefix are checked; a nearby label is required.
+
+  us_routing_number:
+    enabled: true
+    label: US bank routing number
+    region: US
+    detector: regex
+    severity: high
+    context_patterns:
+      - '\b\d{9}\b'
+    validators: [aba_routing]
+    context_terms: ["routing", "aba", "wire", "ach"]
+    gdpr_note: >
+      Financial identifier, validated with the ABA checksum. With an account
+      number it is enough to originate a debit.
+
+  ie_pps:
+    enabled: true
+    label: Irish PPS number
+    region: IE
+    detector: regex
+    severity: high
+    patterns:
+      - '\b\d{7}[A-W][A-IW]?\b'
+    validators: [ie_pps]
+    context_terms: ["pps", "ppsn", "personal public service"]
+    gdpr_note: >
+      Direct identifier under Irish data protection law, validated with its
+      check letter.
+
+  nl_bsn:
+    enabled: true
+    label: Dutch BSN
+    region: NL
+    detector: regex
+    severity: high
+    context_patterns:
+      - '\b\d{9}\b'
+    validators: [nl_bsn]
+    context_terms: ["bsn", "burgerservicenummer", "sofinummer"]
+    gdpr_note: >
+      Direct identifier, validated with the eleven-proof. Dutch law restricts who
+      may process it at all.
+
+  pt_nif:
+    enabled: true
+    label: Portuguese NIF
+    region: PT
+    detector: regex
+    severity: high
+    context_patterns:
+      - '\b\d{9}\b'
+    validators: [pt_nif]
+    context_terms: ["nif", "contribuinte", "número fiscal", "numero fiscal"]
+    gdpr_note: >
+      Tax identifier for individuals and companies, validated with its mod-11
+      check digit.
+
+  es_dni:
+    enabled: true
+    label: Spanish DNI or NIE
+    region: ES
+    detector: regex
+    severity: high
+    patterns:
+      - '\b[XYZ]?\d{7,8}[-]?[A-HJ-NP-TV-Z]\b'
+    validators: [es_dni]
+    context_terms: ["dni", "nie", "documento nacional"]
+    gdpr_note: >
+      Direct identifier, validated by the letter derived from the number mod 23.
+
+  fr_nir:
+    enabled: true
+    label: French social security number
+    region: FR
+    detector: regex
+    severity: high
+    patterns:
+      - '\b[12]\s?\d{2}\s?\d{2}\s?\d{2,3}\s?\d{2,3}\s?\d{3}\s?\d{2}\b'
+    validators: [fr_nir]
+    context_terms: ["nir", "sécurité sociale", "securite sociale", "insee"]
+    gdpr_note: >
+      Direct identifier encoding sex, birth date and birthplace, validated with
+      its mod-97 key. Treated as especially sensitive in France.
+
+  de_steuer_id:
+    enabled: true
+    label: German tax identification number
+    region: DE
+    detector: regex
+    severity: high
+    context_patterns:
+      - '\b\d{11}\b'
+    validators: [de_steuer_id]
+    context_terms: ["steuer", "steuer-id", "steueridentifikationsnummer", "idnr"]
+    gdpr_note: >
+      Lifelong personal tax identifier, validated with its ISO 7064 check digit
+      and its distinctive repeated-digit rule.
+
+  eu_vat_number:
+    enabled: true
+    label: EU VAT number
+    region: EU
+    detector: regex
+    severity: low
+    patterns:
+      - '\b(?:AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK)[ ]?[A-Z0-9]{8,12}\b'
+    validators: [eu_vat]
+    context_terms: ["vat", "btw", "tva", "ust", "iva", "moms"]
+    gdpr_note: >
+      Business identifier, checked against the per-country length rules. Personal
+      data only where the business is a sole trader.

@@ -175,5 +175,24 @@ def test_selecting_an_unknown_model_is_an_error(config):
 
 
 def test_selecting_an_unpriced_template_is_an_error(config):
+    """A model present in the config but carrying no price cannot be costed."""
+    raw = config.pricing.model_dump()
+    raw["models"].append(
+        {
+            "id": "priceless",
+            "provider": "nobody",
+            "display_name": "Priceless",
+            "enabled": True,
+            "input_per_mtok_usd": None,
+            "output_per_mtok_usd": None,
+            "supports_vision": False,
+            "vision_formula": None,
+            "tokenizer": {"encoding": "o200k_base", "fidelity": "exact"},
+            "last_verified": None,
+            "source_url": None,
+            "notes": None,
+        }
+    )
+    pricing = PricingConfig.model_validate(raw)
     with pytest.raises(UnknownModelError, match="no price"):
-        resolve_models(config.pricing, ["openai-vision-model"])
+        resolve_models(pricing, ["priceless"])

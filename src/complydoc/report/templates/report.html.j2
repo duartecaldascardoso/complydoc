@@ -512,11 +512,13 @@ to produce, which this tool cannot know.</p>
 {% if agg.sensitive_by_category %}
 <h3>By category</h3>
 <div class="scroll"><table>
-  <thead><tr><th>Category</th><th>Severity</th><th class="n">Count</th><th>Note</th></tr></thead>
+  <thead><tr><th>Category</th><th>Region</th><th>Severity</th><th class="n">Count</th>
+    <th>Note</th></tr></thead>
   <tbody>
   {% for cat, count in agg.sensitive_by_category | dictsort(by='value', reverse=true) %}
     {% set m = category_meta(cat) %}
-    <tr><td>{{ m.label }}</td><td>{{ severity_badge(m.severity) | safe }}</td>
+    <tr><td>{{ m.label }}</td><td><span class="flag">{{ m.region }}</span></td>
+        <td>{{ severity_badge(m.severity) | safe }}</td>
         <td class="n">{{ count }}</td><td class="why">{{ m.note }}</td></tr>
   {% endfor %}
   </tbody>

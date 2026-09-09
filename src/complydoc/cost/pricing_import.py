@@ -39,7 +39,15 @@ _VISION_FORMULA = {
     "gemini": "flat_then_tiled",
     "vertex_ai-language-models": "flat_then_tiled",
     "vertex_ai": "flat_then_tiled",
+    # These serve an OpenAI-compatible vision API, so the tiling convention is
+    # assumed to match. It is an assumption, and the generated entry says so.
+    "deepseek": "tiled_512",
+    "moonshot": "tiled_512",
+    "zai": "tiled_512",
 }
+
+_ASSUMED_FORMULA = frozenset({"deepseek", "moonshot", "zai"})
+"""Providers whose vision formula is inferred rather than documented."""
 
 # Providers whose text tokenizer complydoc can count exactly with a vendored encoding.
 _EXACT_TOKENIZER = {"openai", "azure", "azure_ai"}
@@ -181,6 +189,14 @@ def to_yaml(models: list[ImportedModel], today: dt.date | None = None) -> str:
             f"    last_verified: {stamp}",
             f"    source_url: {_SOURCE_URL}",
         ]
+        if model.provider in _ASSUMED_FORMULA:
+            lines.append(
+                "    notes: >\n"
+                "      Token prices are from the litellm table. The vision token formula is\n"
+                "      assumed to follow the OpenAI tiling convention because this provider\n"
+                "      serves an OpenAI-compatible API; confirm it before relying on the\n"
+                "      vision figures."
+            )
         if formula is None and model.supports_vision:
             lines.append(
                 "    notes: >\n"

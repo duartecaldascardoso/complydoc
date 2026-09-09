@@ -131,6 +131,153 @@ def plausible_dob(value: str) -> bool:
     return False
 
 
+# --- other jurisdictions ---------------------------------------------------
+
+
+def _weighted_mod(digits: str, weights: tuple[int, ...], modulus: int) -> int:
+    return sum(int(d) * w for d, w in zip(digits, weights, strict=True)) % modulus
+
+
+def us_ssn(value: str) -> bool:
+    """US Social Security number, by the SSA's published exclusions."""
+    digits = _digits(value)
+    if len(digits) != 9:
+        return False
+    area, group, serial = digits[:3], digits[3:5], digits[5:]
+    if area in {"000", "666"} or area.startswith("9"):
+        return False
+    return group != "00" and serial != "0000"
+
+
+def us_ein(value: str) -> bool:
+    digits = _digits(value)
+    # Only the shape and a valid campus prefix; the EIN carries no checksum.
+    return len(digits) == 9 and digits[:2] not in {"00", "07", "08", "09", "17", "18", "19"}
+
+
+def aba_routing(value: str) -> bool:
+    """US bank routing number, ABA checksum."""
+    digits = _digits(value)
+    if len(digits) != 9:
+        return False
+    return _weighted_mod(digits, (3, 7, 1, 3, 7, 1, 3, 7, 1), 10) == 0
+
+
+def nl_bsn(value: str) -> bool:
+    """Dutch citizen number, the eleven-proof."""
+    digits = _digits(value)
+    if len(digits) != 9 or digits == "0" * 9:
+        return False
+    total = sum(int(d) * w for d, w in zip(digits, (9, 8, 7, 6, 5, 4, 3, 2, -1), strict=True))
+    return total % 11 == 0
+
+
+def pt_nif(value: str) -> bool:
+    """Portuguese tax number, mod-11 check digit."""
+    digits = _digits(value)
+    if len(digits) != 9 or digits[0] not in "125689":
+        return False
+    total = sum(int(d) * (9 - i) for i, d in enumerate(digits[:8]))
+    check = 11 - (total % 11)
+    return int(digits[8]) == (0 if check >= 10 else check)
+
+
+def es_dni(value: str) -> bool:
+    """Spanish DNI or NIE, letter derived from the number mod 23."""
+    cleaned = "".join(value.split()).upper().replace("-", "")
+    if len(cleaned) != 9:
+        return False
+    body, letter = cleaned[:8], cleaned[8]
+    prefix = {"X": "0", "Y": "1", "Z": "2"}
+    if body[0] in prefix:
+        body = prefix[body[0]] + body[1:]
+    if not body.isdigit() or not letter.isalpha():
+        return False
+    return "TRWAGMYFPDXBNJZSQVHLCKE"[int(body) % 23] == letter
+
+
+def ie_pps(value: str) -> bool:
+    """Irish PPS number: seven digits, a check letter, optionally a second letter."""
+    cleaned = "".join(value.split()).upper()
+    if len(cleaned) not in (8, 9) or not cleaned[:7].isdigit():
+        return False
+    total = sum(int(d) * (8 - i) for i, d in enumerate(cleaned[:7]))
+    if len(cleaned) == 9 and cleaned[8].isalpha():
+        total += (ord(cleaned[8]) - 64) * 9
+    return "WABCDEFGHIJKLMNOPQRSTUV"[total % 23] == cleaned[7]
+
+
+def fr_nir(value: str) -> bool:
+    """French social security number, mod-97 check on the first thirteen digits."""
+    cleaned = "".join(value.split()).upper()
+    body = cleaned[:13].replace("2A", "19").replace("2B", "18")
+    check = cleaned[13:15]
+    if not body.isdigit() or not check.isdigit():
+        return False
+    return int(check) == 97 - (int(body) % 97)
+
+
+def de_steuer_id(value: str) -> bool:
+    """German tax identification number: eleven digits, ISO 7064 check digit."""
+    digits = _digits(value)
+    if len(digits) != 11:
+        return False
+    # Exactly one digit repeats in the first ten, which is what distinguishes a
+    # real Steuer-ID from an arbitrary eleven-digit run.
+    counts = {d: digits[:10].count(d) for d in set(digits[:10])}
+    if sorted(counts.values(), reverse=True)[0] not in (2, 3):
+        return False
+    product = 10
+    for digit in digits[:10]:
+        total = (int(digit) + product) % 10 or 10
+        product = (2 * total) % 11
+    check = (11 - product) % 10
+    return check == int(digits[10])
+
+
+def eu_vat(value: str) -> bool:
+    """Any EU or UK VAT number by country prefix and length."""
+    cleaned = "".join(value.split()).upper().replace("-", "")
+    if len(cleaned) < 4 or not cleaned[:2].isalpha():
+        return False
+    country, body = cleaned[:2], cleaned[2:]
+    lengths = {
+        "AT": (9,),
+        "BE": (10,),
+        "BG": (9, 10),
+        "CY": (9,),
+        "CZ": (8, 9, 10),
+        "DE": (9,),
+        "DK": (8,),
+        "EE": (9,),
+        "EL": (9,),
+        "ES": (9,),
+        "FI": (8,),
+        "FR": (11,),
+        "GB": (9, 12),
+        "HR": (11,),
+        "HU": (8,),
+        "IE": (8, 9),
+        "IT": (11,),
+        "LT": (9, 12),
+        "LU": (8,),
+        "LV": (11,),
+        "MT": (8,),
+        "NL": (12,),
+        "PL": (10,),
+        "PT": (9,),
+        "RO": tuple(range(2, 11)),
+        "SE": (12,),
+        "SI": (8,),
+        "SK": (10,),
+    }
+    if country not in lengths or len(body) not in lengths[country]:
+        return False
+    if country == "GB":
+        return vat_mod97(body)
+    return any(c.isdigit() for c in body)
+
+
 VALIDATORS: dict[str, Callable[[str], bool]] = {
     "luhn": luhn,
     "iban_mod97": iban_mod97,
@@ -140,6 +287,16 @@ VALIDATORS: dict[str, Callable[[str], bool]] = {
     "uk_postcode": uk_postcode,
     "uk_phone": uk_phone,
     "plausible_dob": plausible_dob,
+    "us_ssn": us_ssn,
+    "us_ein": us_ein,
+    "aba_routing": aba_routing,
+    "nl_bsn": nl_bsn,
+    "pt_nif": pt_nif,
+    "es_dni": es_dni,
+    "ie_pps": ie_pps,
+    "fr_nir": fr_nir,
+    "de_steuer_id": de_steuer_id,
+    "eu_vat": eu_vat,
 }
 
 

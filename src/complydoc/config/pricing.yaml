@@ -120,31 +120,39 @@ models:
     last_verified: 2026-06-24
     source_url: https://docs.anthropic.com/en/docs/about-claude/pricing
 
-  # ---- Templates. Prices not sourced. Fill in before enabling. ----
+  # Imported from the litellm price table on 2026-09-09.
+  # Prices are per million tokens, USD. Check anything that matters before
+  # relying on it; complydoc records the import date, not an audit.
 
-  - id: openai-vision-model
-    provider: openai
-    display_name: "OpenAI model (price not configured)"
-    enabled: false
-    input_per_mtok_usd: null
-    output_per_mtok_usd: null
+  - id: deepseek-v4-flash-vision-exp
+    provider: deepseek
+    display_name: "deepseek-v4-flash-vision-exp"
+    enabled: true
+    input_per_mtok_usd: 0.44
+    output_per_mtok_usd: 1.32
     supports_vision: true
     vision_formula: tiled_512
     tokenizer:
       encoding: o200k_base
-      fidelity: exact
-    last_verified: null
-    source_url: null
+      fidelity: approximate
+      approximate_ratio: 1.0
+      approximation_note: >
+        deepseek does not publish an offline tokenizer; token counts are
+        approximated with the o200k_base encoding.
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
     notes: >
-      Template. Set id, display_name, prices and last_verified from the provider's
-      current pricing page, then set enabled: true.
+      Token prices are from the litellm table. The vision token formula is
+      assumed to follow the OpenAI tiling convention because this provider
+      serves an OpenAI-compatible API; confirm it before relying on the
+      vision figures.
 
-  - id: google-vision-model
-    provider: google
-    display_name: "Google model (price not configured)"
-    enabled: false
-    input_per_mtok_usd: null
-    output_per_mtok_usd: null
+  - id: gemini/gemini-2.0-flash
+    provider: gemini
+    display_name: "gemini/gemini-2.0-flash"
+    enabled: true
+    input_per_mtok_usd: 0.1
+    output_per_mtok_usd: 0.4
     supports_vision: true
     vision_formula: flat_then_tiled
     tokenizer:
@@ -152,8 +160,82 @@ models:
       fidelity: approximate
       approximate_ratio: 1.0
       approximation_note: >
-        Google does not publish an offline tokenizer; approximated with o200k_base.
-    last_verified: null
-    source_url: null
+        gemini does not publish an offline tokenizer; token counts are
+        approximated with the o200k_base encoding.
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
+
+  - id: moonshot/kimi-k2.5
+    provider: moonshot
+    display_name: "moonshot/kimi-k2.5"
+    enabled: true
+    input_per_mtok_usd: 0.6
+    output_per_mtok_usd: 3.0
+    supports_vision: true
+    vision_formula: tiled_512
+    tokenizer:
+      encoding: o200k_base
+      fidelity: approximate
+      approximate_ratio: 1.0
+      approximation_note: >
+        moonshot does not publish an offline tokenizer; token counts are
+        approximated with the o200k_base encoding.
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
     notes: >
-      Template. Set id, display_name, prices and last_verified before enabling.
+      Token prices are from the litellm table. The vision token formula is
+      assumed to follow the OpenAI tiling convention because this provider
+      serves an OpenAI-compatible API; confirm it before relying on the
+      vision figures.
+
+  - id: gpt-4o-mini
+    provider: openai
+    display_name: "gpt-4o-mini"
+    enabled: true
+    input_per_mtok_usd: 0.15
+    output_per_mtok_usd: 0.6
+    supports_vision: true
+    vision_formula: tiled_512
+    tokenizer:
+      encoding: o200k_base
+      fidelity: exact
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
+
+  - id: gpt-4o
+    provider: openai
+    display_name: "gpt-4o"
+    enabled: true
+    input_per_mtok_usd: 2.5
+    output_per_mtok_usd: 10.0
+    supports_vision: true
+    vision_formula: tiled_512
+    tokenizer:
+      encoding: o200k_base
+      fidelity: exact
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
+
+  - id: zai/glm-4.5v
+    provider: zai
+    display_name: "zai/glm-4.5v"
+    enabled: true
+    input_per_mtok_usd: 0.6
+    output_per_mtok_usd: 1.8
+    supports_vision: true
+    vision_formula: tiled_512
+    tokenizer:
+      encoding: o200k_base
+      fidelity: approximate
+      approximate_ratio: 1.0
+      approximation_note: >
+        zai does not publish an offline tokenizer; token counts are
+        approximated with the o200k_base encoding.
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
+    notes: >
+      Token prices are from the litellm table. The vision token formula is
+      assumed to follow the OpenAI tiling convention because this provider
+      serves an OpenAI-compatible API; confirm it before relying on the
+      vision figures.
+

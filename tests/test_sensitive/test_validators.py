@@ -102,3 +102,60 @@ def test_unknown_validator_name_is_ignored_not_fatal():
     ok, passed = validate("anything", ["no_such_validator"])
     assert ok is True
     assert passed == []
+
+
+# --- other jurisdictions ---------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("checker", "good", "bad"),
+    [
+        ("us_ssn", "219-09-9999", "666-12-3456"),
+        ("us_ssn", "219-09-9999", "000-12-3456"),
+        ("aba_routing", "111000025", "111000026"),
+        ("nl_bsn", "111222333", "111222334"),
+        ("pt_nif", "501442600", "501442601"),
+        ("es_dni", "12345678Z", "12345678A"),
+        ("es_dni", "X1234567L", "X1234567A"),
+        ("ie_pps", "1234567FA", "1234567XX"),
+        ("de_steuer_id", "02476291358", "02476291359"),
+    ],
+)
+def test_national_identifier_checksums(checker, good, bad):
+    """Each of these carries a checksum, which is what keeps the scan usable."""
+    from complydoc.sensitive.validators import VALIDATORS
+
+    assert VALIDATORS[checker](good) is True, f"{checker} rejected a valid value"
+    assert VALIDATORS[checker](bad) is False, f"{checker} accepted an invalid value"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("DE123456789", True),
+        ("GB123456782", True),
+        ("GB123456789", False),
+        ("NL123456789B01", True),
+        ("XX123", False),
+        ("FR1234567890", False),
+    ],
+)
+def test_eu_vat_country_rules(value, expected):
+    from complydoc.sensitive.validators import eu_vat
+
+    assert eu_vat(value) is expected
+
+
+def test_every_configured_validator_exists(config):
+    """A typo in the config would otherwise silently disable a checksum."""
+    from complydoc.sensitive.validators import VALIDATORS
+
+    for name, category in config.sensitive.categories.items():
+        for validator in category.validators:
+            assert validator in VALIDATORS, f"{name} names unknown validator {validator!r}"
+
+
+def test_categories_cover_more_than_one_jurisdiction(config):
+    regions = {c.region for c in config.sensitive.enabled_categories.values()}
+    assert {"UK", "US", "international"} <= regions
+    assert len(regions) >= 6

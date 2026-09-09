@@ -190,7 +190,7 @@ def _table_shape(table: Any) -> TableInfo | None:
     )
 
 
-def _aligned_tables(plumber_page: Any) -> list[TableInfo]:
+def _aligned_tables(plumber_page: Any, words: list[Any]) -> list[TableInfo]:
     """Tables held together by whitespace rather than ruling lines.
 
     Most invoices align their columns with spacing and draw no rules at all, so
@@ -198,13 +198,18 @@ def _aligned_tables(plumber_page: Any) -> list[TableInfo]:
     worse than useless — it finds a thirteen-column "table" in a page of prose —
     so a candidate is only accepted when its column edges fall in the gutters.
     A boundary that cuts through words is not a column.
+
+    The words are passed in because the page has already been asked for them;
+    clustering its characters into words a second time is one of the most
+    expensive things this loader does.
     """
+    if not words:
+        return []
     try:
         candidates = plumber_page.find_tables(table_settings=_ALIGNED_TABLE_SETTINGS)
-        words = plumber_page.extract_words() or []
     except Exception:
         return []
-    if not candidates or not words:
+    if not candidates:
         return []
 
     found: list[TableInfo] = []
@@ -390,8 +395,10 @@ class PdfLoader:
             page.text = ""
         page.text_source = "native" if page.text.strip() else "none"
 
+        words: list[Any] = []
         try:
-            for word in plumber_page.extract_words() or []:
+            words = plumber_page.extract_words() or []
+            for word in words:
                 page.text_blocks.append(
                     TextBlock(text=str(word.get("text", "")), bbox=_rect_from(word))
                 )
@@ -426,7 +433,7 @@ class PdfLoader:
                     if info is not None:
                         page.tables.append(info)
                 if not page.tables:
-                    page.tables.extend(_aligned_tables(plumber_page))
+                    page.tables.extend(_aligned_tables(plumber_page, words))
             except Exception as exc:
                 page.notes.append(f"table detection failed: {exc}")
                 document.load_warnings.append(

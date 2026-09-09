@@ -135,3 +135,27 @@ def test_a_vertical_merge_is_counted_too(tmp_path):
     # Twelve grid positions; the header cell absorbs two and the vertical one.
     assert info.merged_cells == 3
     assert (info.rows, info.cols) == (4, 3)
+
+
+def test_alignment_tables_reuse_the_words_already_extracted(loader):
+    """Clustering characters into words is one of the loader's biggest costs.
+
+    The page has already been asked for its words by the time tables are looked
+    for, so they are handed over rather than derived a second time.
+    """
+    import inspect
+
+    from complydoc.ingest.pdf import _aligned_tables
+
+    assert "words" in inspect.signature(_aligned_tables).parameters
+
+    class Unopened:
+        def find_tables(self, **kwargs):
+            raise AssertionError("a page with no words needs no table search")
+
+    assert _aligned_tables(Unopened(), []) == []
+
+
+def test_the_whitespace_table_is_still_found(loader):
+    tables = [t for page in loader("whitespace_table.pdf").pages for t in page.tables]
+    assert tables and all(t.detected_by == "alignment" for t in tables)

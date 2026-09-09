@@ -38,9 +38,13 @@ def _load(model_name: str) -> Any:
     try:
         return spacy.load(model_name, disable=["lemmatizer", "textcat"])
     except OSError as exc:
+        # `spacy download` shells out to pip, which a uv tool environment does
+        # not have, so the instruction that works in a checkout does nothing for
+        # anyone who installed complydoc as a tool. The README carries that one.
         raise DetectorUnavailableError(
-            f"the local spaCy model {model_name!r} is not installed. Install it once with: "
-            f"uv run python -m spacy download {model_name}"
+            f"the local spaCy model {model_name!r} is not installed. In a checkout: "
+            f"uv run python -m spacy download {model_name}. For a tool install, see "
+            f"Install in the README"
         ) from exc
 
 

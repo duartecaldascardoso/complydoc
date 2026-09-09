@@ -50,6 +50,21 @@ If `complydoc: command not found`, add uv's bin directory to your shell:
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && exec zsh
 ```
 
+OCR and local name detection are optional extras, because they are a large download
+and a diagnostic run is still useful without them. `complydoc doctor` says which of
+them are present. To install both:
+
+```bash
+uv tool install --force --with rapidocr-onnxruntime --with spacy \
+  git+https://github.com/duartecaldascardoso/complydoc
+uv pip install --python "$(which complydoc)" \
+  https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+```
+
+The second line installs the spaCy model into the tool's own environment;
+`spacy download` cannot, because it shells out to pip and a uv tool environment has
+none. In a checkout, `make install-all` does both.
+
 ## Use
 
 ```bash

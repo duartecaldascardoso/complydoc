@@ -14,7 +14,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-306-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-407-4f5d75" alt="Tests">
 </div>
 
 <br>
@@ -50,9 +50,8 @@ If `complydoc: command not found`, add uv's bin directory to your shell:
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && exec zsh
 ```
 
-OCR and local name detection are optional extras, because they are a large download
-and a diagnostic run is still useful without them. `complydoc doctor` says which of
-them are present. To install both:
+OCR and local name detection are optional extras — a large download, and a diagnostic
+run is still useful without them. To install both:
 
 ```bash
 uv tool install --force --reinstall --with rapidocr-onnxruntime --with spacy \
@@ -61,15 +60,9 @@ uv pip install --python "$(uv tool dir)/complydoc/bin/python" \
   https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 ```
 
-The second line installs the spaCy model into the tool's own environment;
-`spacy download` cannot, because it shells out to pip and a uv tool environment has
+The second line puts the spaCy model inside the tool's own environment, which
+`spacy download` cannot do because it shells out to pip and a uv tool environment has
 none. `complydoc doctor` says which extras it can see.
-
-`uv tool install` copies the source as it stands, so a global `complydoc` does not
-follow this repository — re-run the install to pick up changes, and pass
-`--reinstall` as well as `--force`, or uv reuses the wheel it already built for this
-version number and the update does nothing. From a checkout, `make tool` does all of
-it and puts the extras back.
 
 ## Use
 
@@ -83,82 +76,88 @@ That audits the folder you are standing in and writes `.complydoc/complydoc.html
 hidden so a second run does not pick up the first run's reports.
 
 ```bash
-complydoc audit ~/invoices --monthly-volume 2500   # extrapolate to a monthly bill
-complydoc sensitive ~/invoices                     # only the identifier scan
-complydoc audit ~/invoices --page-images           # add a picture of each page
-complydoc audit ~/invoices --no-extracted-text    # a report carrying no document content
-complydoc models                                   # which models can be priced against
-complydoc doctor                                   # what is installed
+complydoc audit ~/invoices --monthly-volume 2500  # extrapolate to a monthly bill
+complydoc audit ~/invoices --save-text ./text     # keep the text it read, one file per document
+complydoc sensitive ~/invoices                    # only the identifier scan
+complydoc readiness ~/invoices                    # only the extraction signals
+complydoc cost ~/invoices                         # only the price estimate
+complydoc models --new 15                         # the newest models it can price against
+complydoc doctor                                  # what is installed
 ```
 
-Inputs: PDF (native and scanned), PNG, JPG, TIFF, BMP, DOCX, XLSX. Folders are recursed.
-Anything that cannot be opened is skipped and reported. OCR is on by default so scanned
-pages are still readable; `--no-ocr` is faster.
+Inputs: PDF (native and scanned), PNG, JPG, TIFF, BMP, DOCX, XLSX. Folders are recursed and
+anything that cannot be opened is skipped and reported rather than failing the run.
 
-On a large folder:
+### Options worth knowing
 
-```bash
-complydoc audit ~/invoices --jobs 1        # one process, for a reproducible profile
-complydoc audit ~/invoices --sample 200    # 200 documents, keeping each file type's share
-complydoc audit ~/invoices --password s3cret   # try this on encrypted PDFs
-```
+| Flag | What it does |
+| --- | --- |
+| `--monthly-volume N` | Extrapolates the folder's cost to a monthly and annual bill |
+| `--model <id>` | Prices one model instead of the default set; repeatable |
+| `--save-text <dir>` | Writes the extracted text out, one file per document |
+| `--sample N` | Audits N documents instead of all of them, keeping each file type's share |
+| `--password <pw>` | Tried on encrypted PDFs |
+| `--reveal` | Prints identifiers in full instead of masked, and stamps the report |
+| `--no-ocr` | Skips reading scanned pages. Faster, and finds less |
+| `--no-page-images` / `--no-extracted-text` | Leave the document content out of the report |
+| `--jobs N` | Fixes the worker count. The default reads the folder size and decides |
+| `--print-json` | Puts the JSON on stdout and nothing else |
 
-A folder large enough to be worth it is spread across the machine already: the run
-reads how many documents there are and picks a worker count, and small folders stay
-in one process because a worker costs more to start than a few documents take to
-read. `--jobs N` overrides that. It changes how long the run takes and nothing about
-what it finds. `--sample` does
-change what it finds, so the report says on its front page that it read a sample and how
-many documents it skipped. The choice is deterministic — two runs of the same folder pick
+`--sample` changes what the report finds, so it says on its front page that it read a sample
+and how many documents it skipped. The choice is deterministic: two runs of one folder pick
 the same documents, so their reports compare.
+
+> [!IMPORTANT]
+> The report carries the text read off each page, and a picture of each page, so that you can
+> check what was extracted against what was there. That means the file holds the identifiers
+> it masks elsewhere. Treat it as you would treat the documents. `--no-extracted-text` and
+> `--no-page-images` produce a report with no document content in it.
 
 ## The report
 
-One self-contained HTML file, four pages behind a tab bar.
+One self-contained HTML file — no server, no network, no assets to load — behind a tab bar.
 
 | Page | Answers |
 | --- | --- |
-| **Summary** | Cost per 1,000 documents, average quality, preparation time, sensitive items per document |
+| **Summary** | Cost per 1,000 documents, AI readiness, how long processing takes, sensitive items per document |
 | **Cost** | Every model across three processing architectures, filterable by provider |
-| **Security** | What personal data is in there, by category and by occurrence |
+| **Security** | What personal data is in there, by category and by occurrence, sortable by severity |
 | **Documents** | A file browser: every page beside the text read off it, with its signals a tab away |
 
-The JSON is sorted and stable, so two runs can be compared with `diff`. It carries a schema
-version and a digest of the config that produced it.
+The JSON alongside it is sorted and stable, so two runs can be compared with `diff`. It
+carries a schema version and a digest of the config that produced it.
 
 ## What it measures
 
 **Cost.** Page count, dimensions, DPI, text layer coverage, text tokens from a real
 tokenizer, and vision tokens at each resolution. Vision formulas differ by provider — some
 tile the image, some use width by height, some charge a flat count — so all three shapes live
-in `pricing.yaml`, not in code.
+in configuration, not in code.
 
 Three architectures are compared: the **text layer** alone, **text plus local OCR**, and
 **vision**. Cost alone favours the text layer, but it only reaches documents that have one,
-so the number of documents each approach can serve is shown beside every figure.
+so the number of documents each approach can serve is shown beside every figure. Where a
+provider publishes a batch price, that is shown too.
 
-Input cost only. Output depends on your prompt. Prices carry a `last_verified` date and the
-report warns past 90 days.
+Input cost only — output depends on your prompt, which complydoc cannot know. Prices are
+either verified against the provider's own page or imported from a catalogue, and the report
+says which; an imported price is never presented as a checked one.
 
-**Time.** Reading and analysing a document is measured on the machine that runs the audit, so
-the report quotes a rate it observed rather than one it assumed — per document, per page, and
-the OCR throughput that dominates a folder of scans. That is the work before anything reaches
-a model. Time *on* the model is not estimated by default: complydoc cannot benchmark a hosted
-endpoint offline. Add `input_tokens_per_second` to a model in `pricing.yaml` from your own
-benchmark and it will.
+**Time.** Reading and analysing is measured on the machine that runs the audit, so the report
+quotes a rate it observed rather than one it assumed: a breakdown by stage, per document, per
+page, and the OCR throughput that dominates a folder of scans — then what that rate means for
+100, 1,000, 10,000 and 100,000 documents. That is the work before anything reaches a model.
+Time *on* the model is not estimated, because complydoc cannot benchmark a hosted endpoint
+offline; add `input_tokens_per_second` to a model from your own benchmark and it will.
 
 **Readiness.** Nineteen signals, each with a measured value, a rating, and one sentence on
 why it matters. Text layer and coverage, image proportion, garbled characters, tables and
 merged cells, columns, rotation and skew, scan DPI, fonts, date consistency, page sizes,
-language, encryption, and form fields — which count as a *positive* signal.
+language, encryption, and form fields — which count as a *positive* signal. A high score
+means a document that is ready to process as it stands.
 
-A weighted score is produced only because every weight is visible in `readiness.yaml` and
-printed beside its row. Signals that cannot be measured are excluded rather than counted as
-failures.
-
-> [!WARNING]
-> Tables are found from their ruling lines, so a whitespace-aligned invoice table is not
-> detected. A count of zero means "no ruled tables", not "no tabular data".
+The weighted score exists only because every weight is visible in configuration and printed
+beside its row. Signals that cannot be measured are excluded rather than counted as failures.
 
 **Personal data.** Detection is not tied to one jurisdiction. Every national identifier is
 checksum-validated, so enabling them all does not flood the report:
@@ -172,36 +171,34 @@ checksum-validated, so enabling them all does not flood the report:
 | International | IBAN, payment cards, email, dates of birth, names and organisations |
 
 Pages with no readable text are listed by number and excluded from the counts, so a page
-nobody could read is distinguishable from a page with nothing on it.
+nobody could read stays distinguishable from a page with nothing on it. Every mark on the
+page layout explains, on hover, what was found and why it matters.
 
 > [!IMPORTANT]
-> Values are masked by default — at most the last four characters. `--reveal` unmasks them
-> and stamps the report; categories under `masking.never_reveal` stay masked even then.
-> Detectors return character spans, not strings, and `sensitive/masking.py` holds the only
-> function that turns one into readable text.
+> Values are masked in the findings — at most the last four characters. `--reveal` unmasks
+> them and stamps the report; categories configured as `never_reveal` stay masked even then.
 
 ## Configuration
 
-Three files under `src/complydoc/config/`, overridable with `--config-dir`:
+Everything a reader might want to disagree with — a price, a token formula, a signal weight,
+a rating threshold, a detection pattern — lives in YAML, not in code. Point `--config-dir` at
+a copy to change any of it.
 
 | File | Contents |
 | --- | --- |
-| `pricing.yaml` | Curated model prices, how many to compare per provider, vision formulas, `last_verified` dates |
-| `model_prices.json` | The current first-party models from models.dev, available to `--model` |
+| `pricing.yaml` | Model prices, how many to compare per provider, vision formulas |
+| `model_prices.json` | The current first-party models, available to `--model` |
 | `readiness.yaml` | Signal weights, rating thresholds, scoring rules |
 | `sensitive.yaml` | Patterns, validators, regions, severities, masking rules |
 
-Every number in a report comes from these files. To add models with current prices:
+Three providers are compared by default, three models each, chosen from the newest the
+catalogue knows about. To reach any of the others:
 
 ```bash
-complydoc models --new 15               # the most recently released models
-complydoc models gpt                    # or search the catalogue
-complydoc models --provider openai      # or list one provider
-complydoc pricing-import -m gpt-4.1-mini  # generate an entry to verify and paste
+complydoc models --new 15                     # the most recently released
+complydoc models gpt                          # or search
+complydoc audit ~/invoices -m gpt-6-astra     # and price against one by name
 ```
-
-That reads litellm's price table and prints YAML to paste under `models:`, stamped with the
-date you ran it. litellm is never imported at run time — only its data file is read.
 
 ## From an agent
 
@@ -209,87 +206,18 @@ date you ran it. litellm is never imported at run time — only its data file is
 complydoc audit ./invoices --print-json | jq '.aggregate'
 ```
 
-`--print-json` puts the report on stdout and nothing else. complydoc ships an agent skill, so
-one install gives you the tool and the instructions for driving it:
+`--print-json` puts the report on stdout and nothing else; progress goes to stderr. complydoc
+ships an agent skill, so one install gives you the tool and the instructions for driving it:
 
 ```bash
 complydoc skill --install     # → ~/.claude/skills/complydoc/SKILL.md
 ```
 
-## Adding a signal
+## Contributing
 
-One file under `readiness/signals/` with an `@signal` decorated class, and a weight block in
-`readiness.yaml`. The package is walked at import time, so there is no central list to
-update. Detectors work the same way with `@detector`, loaders with `register`.
-
-```python
-@signal
-class ScanDpiSignal:
-    id = "scan_dpi"
-    name = "Scan resolution"
-    unit = "DPI"
-    why = "Below about 200 DPI, OCR starts confusing digits in amounts and accounts."
-    applies_to = frozenset({DocumentFormat.PDF, DocumentFormat.IMAGE})
-
-    def measure(self, document: Document) -> Measurement: ...
-```
-
-A signal that cannot measure its property returns `Measurement.na(reason)`, and the reason is
-carried into the report.
-
-## Development
-
-```bash
-make            # list targets
-make check      # lint, types, tests
-make audit DOCS=~/invoices VOLUME=2500
-make fixtures   # rebuild the committed test fixtures
-```
-
-Fixtures include a scanned page, a three-row merged header table, a two-column layout, a scan
-both skewed and rotated, an encrypted PDF, one with a corrupted ToUnicode map, mixed page
-sizes, a fillable form, and a file that is not a valid PDF. Every identifier in the synthetic
-PII fixture is fake: a published test card number, the IBAN from the ISO 13616 specification,
-an Ofcom fiction-range phone number, and invented names.
-
-## Branches and releases
-
-`main` holds released code and nothing else. Work lands on `development` first and reaches
-`main` as one merge per release; both branches run the full check suite on every push.
-
-Versions are semantic, and what each number means is decided by what a reader of an old
-report would notice:
-
-| Change | Bump |
-| --- | --- |
-| The JSON shape breaks, or a config key changes meaning | Major |
-| A signal, detector, model or flag is added | Minor |
-| A measurement, threshold or price is corrected | Patch |
-
-The JSON carries its own `schema_version`, which is the field to branch on when reading
-reports programmatically — it moves only when the shape does.
-
-Releases are cut by tagging `main`:
-
-```bash
-make release-check       # version, changelog and working tree agree
-git tag -a v0.2.0 -m "complydoc v0.2.0"
-git push origin v0.2.0
-```
-
-The tag builds the wheel and sdist, writes a CycloneDX SBOM from the lockfile, records
-checksums, signs build provenance for each artefact, and opens a draft release. The tag
-has to match `complydoc.__version__` and the changelog has to have an entry for it, or
-the build stops before it produces anything — a report that names a version the artefact
-does not carry would be worse than no release. Verify a downloaded artefact with:
-
-```bash
-gh attestation verify complydoc-0.2.0-py3-none-any.whl --repo duartecaldascardoso/complydoc
-```
-
-GitHub does not store attestations for a user-owned private repository, so while this
-repository is private the release ships `SHA256SUMS` and the SBOM without a signed
-provenance statement, and says so in its notes.
+Architecture, how to add a signal, the test fixtures, and the release process are in
+[CONTRIBUTING.md](CONTRIBUTING.md). The changelog ships with the package, at
+[`src/complydoc/CHANGELOG.md`](src/complydoc/CHANGELOG.md).
 
 ## Licence
 

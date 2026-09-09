@@ -41,8 +41,8 @@ jobs:
           echo "${tag} matches the packaged version"
       - name: the changelog mentions this version
         run: |
-          grep -q "^## \[${{ steps.version.outputs.version }}\]" CHANGELOG.md \
-            || { echo "CHANGELOG.md has no entry for ${{ steps.version.outputs.version }}" >&2; exit 1; }
+          grep -q "^## \[${{ steps.version.outputs.version }}\]" src/complydoc/CHANGELOG.md \
+            || { echo "src/complydoc/CHANGELOG.md has no entry for ${{ steps.version.outputs.version }}" >&2; exit 1; }
 
   checks:
     name: full check suite
@@ -119,7 +119,7 @@ jobs:
           fi
           gh release create "${{ github.ref_name }}" dist/* \
             --title "${{ github.ref_name }}" \
-            --notes "See CHANGELOG.md for what changed.
+            --notes "See the changelog for what changed.
 
           ${provenance}
 

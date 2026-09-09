@@ -123,8 +123,8 @@ dist: build sbom ## Build everything a release ships, with checksums
 .PHONY: release-check
 release-check: ## Confirm the version, the changelog and the tree agree before tagging
 	@version=$$($(PYTHON) python -c "import complydoc; print(complydoc.__version__)"); \
-	grep -q "^## \[$$version\]" CHANGELOG.md \
-		|| { echo "CHANGELOG.md has no entry for $$version"; exit 1; }; \
+	grep -q "^## \[$$version\]" src/complydoc/CHANGELOG.md \
+		|| { echo "src/complydoc/CHANGELOG.md has no entry for $$version"; exit 1; }; \
 	test -z "$$(git status --porcelain)" || { echo "the working tree is dirty"; exit 1; }; \
 	echo "ready to tag: git tag -a v$$version -m 'complydoc v$$version' && git push origin v$$version"
 

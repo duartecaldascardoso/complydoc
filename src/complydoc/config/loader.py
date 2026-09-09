@@ -126,12 +126,22 @@ def _with_imported(pricing: PricingConfig) -> PricingConfig:
     ]
 
     merged = [*pricing.models, *usable]
+    wanted = [p.lower() for p in pricing.compare.providers]
+    if wanted:
+        # A curated entry for a provider outside the default set stays in the
+        # catalogue, reachable by name, rather than in the comparison.
+        merged = [
+            m.model_copy(update={"enabled": False}) if m.provider.lower() not in wanted else m
+            for m in merged
+        ]
     if pricing.compare.top_up_from_catalogue:
-        merged = _top_up(merged, pricing.compare.per_provider)
+        merged = _top_up(merged, pricing.compare.per_provider, wanted)
     return pricing.model_copy(update={"models": merged})
 
 
-def _top_up(models: list[ModelPricing], per_provider: int) -> list[ModelPricing]:
+def _top_up(
+    models: list[ModelPricing], per_provider: int, providers: list[str]
+) -> list[ModelPricing]:
     """Bring every provider up to `per_provider` models in the comparison.
 
     Newest first, and only models that take images: the comparison prices a page
@@ -146,6 +156,8 @@ def _top_up(models: list[ModelPricing], per_provider: int) -> list[ModelPricing]
     counts = Counter(m.provider for m in models if m.enabled and m.is_priced)
     candidates: dict[str, list[ModelPricing]] = defaultdict(list)
     for model in models:
+        if providers and model.provider.lower() not in providers:
+            continue
         if not model.enabled and model.is_priced and model.supports_vision:
             candidates[model.provider].append(model)
 

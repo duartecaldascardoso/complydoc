@@ -155,6 +155,13 @@ class CompareConfig(_Base):
     rather than a file somebody has to remember to edit.
     """
 
+    providers: list[str] = ["anthropic", "openai", "gemini"]
+    """Which providers the default comparison covers.
+
+    Three, because a chart of eight is a chart nobody reads. Every other model
+    stays one `--model` away, and the report's provider filter still works on
+    whatever was compared.
+    """
     per_provider: int = 3
     top_up_from_catalogue: bool = True
 

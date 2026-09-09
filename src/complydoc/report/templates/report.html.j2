@@ -510,6 +510,50 @@
   {% endif %}
   </div>
 </details>
+
+{% if agg.projected_seconds %}
+<h3>How long this takes</h3>
+<p class="note">Measured on this machine, reading and analysing the documents. This is the
+work before anything reaches a model; time on the model itself is not estimated unless a
+throughput is configured for it.</p>
+<div class="scroll"><table>
+  <thead><tr><th>Stage</th><th class="n">This folder</th><th>What it covers</th></tr></thead>
+  <tbody>
+    <tr><td>Reading</td><td class="n">{{ duration(agg.read_seconds) }}</td>
+      <td class="why">Opening each file and pulling out its text, words and geometry.</td></tr>
+    {% if agg.ocr_seconds %}
+    <tr><td>OCR</td><td class="n">{{ duration(agg.ocr_seconds) }}</td>
+      <td class="why">Reading {{ plural(agg.ocr_pages, "page") }} that carried no text layer,
+        at {{ agg.ocr_pages_per_second }} a second.</td></tr>
+    {% endif %}
+    <tr><td>Readiness signals</td><td class="n">{{ duration(agg.analyse_seconds) }}</td>
+      <td class="why">Measuring the signals on every page.</td></tr>
+    <tr><td>Identifier scan</td><td class="n">{{ duration(agg.scan_seconds) }}</td>
+      <td class="why">Searching the text for personal and financial identifiers.</td></tr>
+    <tr class="d-head"><td>Total</td><td class="n">{{ duration(agg.total_seconds) }}</td>
+      <td class="why">{{ duration(agg.seconds_per_document) }} a document,
+        {{ duration(agg.seconds_per_page) }} a page{% if report.run.jobs > 1 %}, measured
+        across {{ report.run.jobs }} processes{% endif %}.</td></tr>
+  </tbody>
+</table></div>
+
+<h4 class="sec">At other volumes <span class="tag">projected</span></h4>
+<p class="note">The measured rate applied to a larger backlog — documents like these ones.
+A folder of longer or heavier scans takes longer.</p>
+<div class="scroll"><table>
+  <thead><tr><th class="n">Documents</th><th class="n">Preparation time</th></tr></thead>
+  <tbody>
+  {% for size, seconds in agg.projected_seconds.items() %}
+    <tr><td class="n">{{ "{:,}".format(size | int) }}</td>
+      <td class="n">{{ duration(seconds) }}</td></tr>
+  {% endfor %}
+  {% if report.run.monthly_volume %}
+    <tr class="d-head"><td class="n">{{ "{:,}".format(report.run.monthly_volume) }} a month</td>
+      <td class="n">{{ duration(agg.seconds_per_document * report.run.monthly_volume) }}</td></tr>
+  {% endif %}
+  </tbody>
+</table></div>
+{% endif %}
 </section>
 
 {# =============================================================== COST #}
@@ -1012,28 +1056,50 @@ before reading that as an all-clear.</p>
     // the column, which also carries the filename and the page bar above them.
     var aside = root.querySelector(".files");
     function alignFiles() {
-      if (!aside || window.innerWidth <= 860) {
-        if (aside) aside.style.marginTop = "";
-        return;
-      }
+      if (!aside) return;
+      if (window.innerWidth <= 860) { aside.style.marginTop = ""; return; }
+
       var doc = root.querySelector(".viewer > .doc:not([hidden])");
-      if (!doc) return;
-      // A document nobody could open has no panels, only the line saying so.
-      var target = doc.querySelector(".spread:not([hidden])") ||
-        doc.querySelector("[data-view]:not([hidden]):not(button)");
-      if (!target) { aside.style.marginTop = ""; return; }
+      // Centred on the panels, and only on the panels. Note the offsetParent
+      // check: a panel is hidden along with the whole Pages view when the
+      // signals tab is showing, and `:not([hidden])` still matches it because
+      // the attribute is on its container. Measuring that ghost is what moved
+      // the list about depending on which tab you were on.
+      var panels = null;
+      var candidates = doc ? doc.querySelectorAll(".spread:not([hidden])") : [];
+      for (var i = 0; i < candidates.length; i++) {
+        if (candidates[i].offsetParent !== null) { panels = candidates[i]; break; }
+      }
+      if (!panels) { aside.style.marginTop = ""; return; }
+
       aside.style.marginTop = "0px";
       var top = root.getBoundingClientRect().top;
-      var box = target.getBoundingClientRect();
+      var box = panels.getBoundingClientRect();
       var offset = box.top + box.height / 2 - top - aside.getBoundingClientRect().height / 2;
       aside.style.marginTop = Math.max(0, Math.round(offset)) + "px";
     }
+
+    // Anything that changes the height of the workspace has to re-run this.
+    // Watching the element covers the cases nobody thought to fire an event for:
+    // a page image finishing its decode, a tab, a font, a window.
     root.addEventListener("aligned", alignFiles);
     window.addEventListener("resize", alignFiles);
-    // Page images arrive after layout, so the panels change height under us.
-    Array.prototype.forEach.call(root.querySelectorAll(".viewer img"), function (image) {
-      image.addEventListener("load", alignFiles);
-    });
+    // The first paint happens before the page images have their size, and a
+    // resize settles a frame after the event. Both would otherwise leave the
+    // list sitting slightly off until the reader touched something.
+    window.addEventListener("load", alignFiles);
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () { alignFiles(); });
+    }
+    if (window.ResizeObserver) {
+      var watcher = new ResizeObserver(function () { alignFiles(); });
+      var viewer = root.querySelector(".viewer");
+      if (viewer) watcher.observe(viewer);
+    } else {
+      Array.prototype.forEach.call(root.querySelectorAll(".viewer img"), function (image) {
+        image.addEventListener("load", alignFiles);
+      });
+    }
 
     function firstVisible() {
       var li = items.filter(function (x) { return !x.hidden; })[0];
@@ -1081,6 +1147,7 @@ before reading that as an all-clear.</p>
             b.setAttribute("aria-selected", String(b === button));
           });
           views.forEach(function (v) { v.hidden = v.getAttribute("data-view") !== want; });
+          root.dispatchEvent(new Event("aligned"));
         });
       });
       pageviewer(doc);
@@ -1292,6 +1359,10 @@ before reading that as an all-clear.</p>
         else a.removeAttribute("aria-current");
       });
       window.scrollTo(0, 0);
+      // The documents page cannot be measured while it is hidden, so anything
+      // laid out against its contents is told the moment it is shown.
+      var explorer = document.getElementById("explorer");
+      if (explorer) explorer.dispatchEvent(new Event("aligned"));
     }
     // The click is the mechanism; the hash is a convenience on top of it. Some
     // viewers — a data: URL, a sandboxed mail preview — never report a hash, and

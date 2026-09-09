@@ -10,6 +10,14 @@ branch on when reading reports programmatically.
 
 ### Added
 
+- `--save-text <dir>` keeps the text complydoc read, one file per document. Reading a
+  scanned folder is the slow part of an audit and it was being thrown away, so the next
+  tool to want the text ran OCR over the same pages again.
+- The summary says how long the work took by stage — reading, OCR, signals, identifier
+  scan — and what the measured rate means for 100, 1,000, 10,000 and 100,000 documents.
+
+### Added
+
 - A vendored model catalogue from models.dev: every current model from the eight
   first-party providers, so `--model` reaches one without anyone having hand-written an
   entry for it. `complydoc models --new N` lists the most recently released, because an
@@ -29,6 +37,11 @@ branch on when reading reports programmatically.
 
 ### Fixed
 
+- The file list sat in the right place only some of the time. `.spread:not([hidden])` also
+  matched a panel hidden along with the whole Pages view, because the attribute sits on the
+  container, so the list was being centred on a zero-height ghost whenever the signals tab
+  was showing. It also now re-aligns when a page is first shown, which it could not do while
+  it was hidden.
 - An imported price is no longer reported as a verification that went stale. It was
   never claimed to be verified, and warning once per model buried the run's real
   limitations under a dozen copies of what the provenance entry says once.
@@ -51,6 +64,13 @@ branch on when reading reports programmatically.
   carries `readiness` where it carried `difficulty`, and `schema_version` is 2. The
   score bands read the same way round as the number now: ready, workable, needs work,
   not ready. Signal directions are `higher_is_better` and `lower_is_better`.
+
+### Documentation
+
+- The README is written for someone running the tool: what it does, how to run it, what the
+  flags mean. Architecture, adding a signal, fixtures and the release process moved to
+  CONTRIBUTING.md, and this changelog now ships inside the package, so an installed copy can
+  say what changed in the version you have.
 
 ### Performance
 

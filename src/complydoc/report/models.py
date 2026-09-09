@@ -159,6 +159,18 @@ class Aggregate:
     ocr_seconds: float = 0.0
     ocr_pages_per_second: float | None = None
     hours_per_1000_documents: float | None = None
+    read_seconds: float = 0.0
+    """Opening the file and pulling text, words and geometry out of it."""
+    analyse_seconds: float = 0.0
+    """Measuring the readiness signals."""
+    scan_seconds: float = 0.0
+    """Searching the text for identifiers."""
+    projected_seconds: dict[str, float] = field(default_factory=dict)
+    """Wall clock for a backlog of a given size, at the rate this run measured.
+
+    Extrapolated from documents like these ones. A folder of longer or heavier
+    scans takes longer, and this says nothing about time spent on the model.
+    """
 
 
 @dataclass(slots=True)
@@ -247,6 +259,17 @@ def build_aggregate(
         ocr_pages_per_second=(round(ocr_pages / ocr_seconds, 2) if ocr_seconds > 0 else None),
         hours_per_1000_documents=(
             round(measured_seconds / len(timings) * 1000 / 3600, 2) if timings else None
+        ),
+        read_seconds=round(sum(t.read_seconds for t in timings), 3),
+        analyse_seconds=round(sum(t.analyse_seconds for t in timings), 3),
+        scan_seconds=round(sum(t.scan_seconds for t in timings), 3),
+        projected_seconds=(
+            {
+                str(size): round(measured_seconds / len(timings) * size, 1)
+                for size in (100, 1_000, 10_000, 100_000)
+            }
+            if timings
+            else {}
         ),
     )
 

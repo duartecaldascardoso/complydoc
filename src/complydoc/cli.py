@@ -87,9 +87,10 @@ NameOpt = Annotated[str, typer.Option("--name", help="Base filename for the repo
 PageImagesOpt = Annotated[
     bool,
     typer.Option(
-        "--page-images",
+        "--page-images/--no-page-images",
         help="Embed a picture of each page beside what was extracted from it. "
-        "Off by default: it puts real document content into the report.",
+        "On by default; --no-page-images leaves the pictures out and makes the "
+        "report considerably smaller.",
     ),
 ]
 ExtractedTextOpt = Annotated[
@@ -107,6 +108,15 @@ OcrCompareOpt = Annotated[
         "--ocr-compare",
         help="Also OCR pages that already have a text layer, so the text layer and "
         "what OCR reads can be compared. Implies --extracted-text.",
+    ),
+]
+SaveTextOpt = Annotated[
+    Path | None,
+    typer.Option(
+        "--save-text",
+        help="Also write the text read off each document into this folder, one file "
+        "per document. Reading a scanned folder is the slow part; this keeps the "
+        "result so nothing has to OCR it again.",
     ),
 ]
 PrintJsonOpt = Annotated[
@@ -163,9 +173,23 @@ def _load(config_dir: Path | None) -> object:
         raise typer.Exit(code=2) from exc
 
 
-def _emit(report: AuditReport, config: object, out: Path, name: str, quiet: bool) -> None:
+def _emit(
+    report: AuditReport,
+    config: object,
+    out: Path,
+    name: str,
+    quiet: bool,
+    save_text: Path | None = None,
+) -> None:
     json_path = write_json(report, out / f"{name}.json").resolve()
     html_path = write_html(report, config, out / f"{name}.html").resolve()  # type: ignore[arg-type]
+
+    written: list[Path] = []
+    if save_text is not None:
+        from complydoc.report.text_writer import write_text
+
+        written = write_text(report, save_text)
+
     if quiet:
         return
     # file:// URLs, so terminals that support hyperlinks open these on a click.
@@ -176,6 +200,15 @@ def _emit(report: AuditReport, config: object, out: Path, name: str, quiet: bool
     console.print(
         f"[bold]Data[/]    [link=file://{json_path}]{json_path}[/link]", no_wrap=True, crop=False
     )
+    if save_text is not None:
+        folder = save_text.expanduser().resolve()
+        console.print(
+            f"[bold]Text[/]    [link=file://{folder}]{folder}[/link]  "
+            f"[dim]{count(len(written), 'file')} — these are the documents, "
+            f"identifiers and all[/]",
+            no_wrap=True,
+            crop=False,
+        )
 
 
 def _summary(report: AuditReport) -> None:
@@ -232,13 +265,14 @@ def _run(
     monthly_volume: int | None = None,
     resolution: str = "medium",
     select_models: list[str] | None = None,
-    page_images: bool = False,
+    page_images: bool = True,
     extracted_text: bool = True,
     ocr_compare: bool = False,
     print_json: bool = False,
     password: str = "",
     jobs: int = 0,
     sample: int | None = None,
+    save_text: Path | None = None,
 ) -> None:
     offline.arm()
     # stdout has to stay pure JSON when a caller is parsing it.
@@ -256,11 +290,6 @@ def _run(
         errors.print(
             "[bold yellow]--reveal is set.[/] The reports will contain unmasked sensitive "
             "values. Treat them as sensitive documents in their own right."
-        )
-    if page_images:
-        errors.print(
-            "[bold yellow]--page-images is set.[/] The HTML report will contain a picture "
-            "of every page, so it carries the document content itself."
         )
 
     def progress(index: int, total: int, path: Path) -> None:
@@ -291,7 +320,7 @@ def _run(
         raise typer.Exit(code=2) from exc
     if not quiet:
         _summary(report)
-    _emit(report, config, out, name, quiet)
+    _emit(report, config, out, name, quiet, save_text)
     if print_json:
         import json as _json
 
@@ -322,7 +351,7 @@ def audit(
         ),
     ] = False,
     model: ModelOpt = None,
-    page_images: PageImagesOpt = False,
+    page_images: PageImagesOpt = True,
     extracted_text: ExtractedTextOpt = True,
     ocr_compare: OcrCompareOpt = False,
     password: PasswordOpt = "",
@@ -331,6 +360,7 @@ def audit(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
+    save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
@@ -352,6 +382,7 @@ def audit(
         extracted_text=extracted_text,
         ocr_compare=ocr_compare,
         print_json=print_json,
+        save_text=save_text,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -377,6 +408,7 @@ def cost(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
+    save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
@@ -394,6 +426,7 @@ def cost(
         resolution=resolution,
         select_models=model,
         print_json=print_json,
+        save_text=save_text,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -413,6 +446,7 @@ def readiness(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
+    save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
@@ -429,6 +463,7 @@ def readiness(
         extracted_text=extracted_text,
         ocr_compare=ocr_compare,
         print_json=print_json,
+        save_text=save_text,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -447,7 +482,7 @@ def sensitive(
             help="Print sensitive values in full. Off by default, and the report says so.",
         ),
     ] = False,
-    page_images: PageImagesOpt = False,
+    page_images: PageImagesOpt = True,
     extracted_text: ExtractedTextOpt = True,
     password: PasswordOpt = "",
     jobs: JobsOpt = 0,
@@ -455,6 +490,7 @@ def sensitive(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
+    save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
@@ -472,6 +508,7 @@ def sensitive(
         page_images=page_images,
         extracted_text=extracted_text,
         print_json=print_json,
+        save_text=save_text,
         password=password,
         jobs=jobs,
         sample=sample,

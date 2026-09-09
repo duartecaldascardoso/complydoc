@@ -15,7 +15,6 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import escape
 
 from complydoc.config.schema import Config
-from complydoc.difficulty.registry import signal_by_id
 from complydoc.report.charts import SERIES, build_comparison, grouped_bars_svg
 from complydoc.report.models import AuditReport, DocumentReport
 from complydoc.report.preview import PagePreview
@@ -240,18 +239,6 @@ def render_html(report: AuditReport, config: Config) -> str:
             "note": (entry.gdpr_note or "").strip(),
         }
 
-    def signal_name(signal_id: str) -> str:
-        found = signal_by_id(signal_id)
-        return found.name if found else signal_id
-
-    def signal_why(signal_id: str) -> str:
-        """The configured wording wins, so difficulty.yaml can override a signal."""
-        settings = config.difficulty.signals.get(signal_id)
-        if settings is not None and settings.why:
-            return settings.why
-        found = signal_by_id(signal_id)
-        return found.why if found else ""
-
     def severity_class(severity: str) -> str:
         return {"high": "r-poor", "medium": "r-fair", "low": "r-na"}.get(severity, "r-na")
 
@@ -319,8 +306,6 @@ def render_html(report: AuditReport, config: Config) -> str:
         sensitive_rows=sensitive_rows,
         money=lambda v: _money(v, currency),
         category_meta=category_meta,
-        signal_name=signal_name,
-        signal_why=signal_why,
         duration=duration,
         severity_class=severity_class,
         severity_badge=severity_badge,

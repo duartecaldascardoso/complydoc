@@ -394,11 +394,17 @@ def test_colour_marks_the_exception_rather_than_every_category(html):
 
 
 def test_every_signal_carries_its_explanation(html):
-    """A distribution of ratings means nothing without saying what each measures."""
-    table = html.split("Difficulty signals across the whole folder")[1].split("</table>")[0]
-    assert "Why it matters" in table
+    """A rating means nothing without saying what it measures.
+
+    The folder-wide distribution used to lead the Documents page. It has been
+    removed — the page is about one document at a time — so the guarantee now
+    applies to the per-document signals table, which is where it always
+    mattered most.
+    """
     import re
 
+    table = html.split('data-view="signals"', 2)[2].split("</table>")[0]
+    assert "Why it matters" in table
     explanations = re.findall(r'<td class="why">([^<]{10,})</td>', table)
     assert len(explanations) >= 18
 

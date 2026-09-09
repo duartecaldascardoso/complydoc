@@ -110,7 +110,7 @@ One self-contained HTML file, four pages behind a tab bar.
 | **Summary** | Cost per 1,000 documents, average quality, preparation time, sensitive items per document |
 | **Cost** | Every model across three processing architectures, filterable by provider |
 | **Security** | What personal data is in there, by category and by occurrence |
-| **Documents** | A file browser: every page beside the text read off it, and what makes it hard |
+| **Documents** | A file browser: every page beside the text read off it, with its signals a tab away |
 
 The JSON is sorted and stable, so two runs can be compared with `diff`. It carries a schema
 version and a digest of the config that produced it.

@@ -61,6 +61,7 @@
   h1 .of::before { content: " \2014 "; color: var(--faint); }
   h2 { font-size: 1rem; font-weight: 600; margin: 2.75rem 0 0.75rem;
        padding-top: 0.75rem; border-top: 1px solid var(--line-2); }
+  section[data-page] > h2:first-child { margin-top: 1.5rem; }
   h3 { font-size: 0.9375rem; font-weight: 600; margin: 1.75rem 0 0.5rem; }
   h4 { font-size: 0.8125rem; font-weight: 600; margin: 1.5rem 0 0.375rem; color: var(--ink-2); }
   p  { margin: 0 0 0.75rem; }
@@ -144,7 +145,7 @@
                          letter-spacing: 0.06em; margin-bottom: 0.375rem; }
   .spread .face { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
   .spread .face[hidden] { display: none; }
-  .spread .body { flex: 1 1 auto; min-height: 24rem; max-height: min(78vh, 58rem);
+  .spread .body { flex: 1 1 auto; min-height: 28rem; max-height: min(84vh, 68rem);
                   overflow: auto; background: var(--panel); border: 1px solid var(--line-2); }
   .spread .body > .note { margin: 0; padding: 0.75rem; }
   /* Zero the paragraph's default bottom margin: it is what made one side end
@@ -166,8 +167,8 @@
                 font-size: 0.75rem; line-height: 1.5; white-space: pre-wrap;
                 word-break: break-word; }
   @media (max-width: 720px) { .spread { flex-direction: column; } }
-  .key { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: var(--muted);
-         margin: 0 0 1rem; align-items: center; }
+  .key { display: flex; flex-wrap: wrap; gap: 0.875rem; font-size: 0.6875rem;
+         color: var(--faint); margin: 0.375rem 0 0; align-items: center; }
   .key span { display: inline-flex; align-items: center; gap: 0.3125rem; }
   .sw { width: 11px; height: 11px; display: inline-block; border: 1px solid var(--line-2); }
   .filter { display: flex; gap: 0.5rem; align-items: baseline; margin: 0 0 0.75rem; }
@@ -239,7 +240,9 @@
   .files .sc { flex: 0 0 auto; font-size: 0.6875rem; }
   .viewer { flex: 1 1 0; min-width: 0; }
   .viewer > .doc[hidden] { display: none; }
-  .doc h3 { margin-top: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  .docbar { display: flex; align-items: baseline; justify-content: space-between;
+            gap: 1.5rem; border-bottom: 1px solid var(--line); margin-bottom: 0.875rem; }
+  .doc h3 { margin: 0 0 0.5rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             font-size: 0.9375rem; }
   .doc-meta { font-size: 0.8125rem; color: var(--muted); margin: 0.25rem 0 0.375rem; }
   .doc-meta .attn { color: var(--attn); font-weight: 600; }
@@ -250,8 +253,7 @@
   .flag.bad { color: var(--attn); }
   .flag.warn { color: var(--fair); }
   .flag.ok { color: var(--good); }
-  .subtabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--line);
-             margin: 0 0 0.875rem; }
+  .subtabs { display: flex; gap: 0.25rem; margin: 0; }
   .subtabs button { font: inherit; font-size: 0.8125rem; font-weight: 600;
                     padding: 0.375rem 0.75rem; background: none; border: none;
                     border-bottom: 2px solid transparent; color: var(--muted);
@@ -498,7 +500,6 @@
 
 {# =============================================================== COST #}
 <section data-page id="cost" hidden>
-<h2>Cost</h2>
 {% if comparisons %}
 <div class="legend">
   {% for key, label, colour in series %}
@@ -590,29 +591,6 @@ before reading that as an all-clear.</p>
 
 {# ========================================================== DOCUMENTS #}
 <section data-page id="documents" hidden>
-<h2>Documents</h2>
-
-{% if agg.signal_distribution %}
-<details class="more">
-  <summary>Difficulty signals across the whole folder</summary>
-  <div class="scroll"><table>
-    <thead><tr><th>Signal</th>{% if report.signal_weights %}<th class="n">Weight</th>{% endif %}
-      <th class="n">Good</th><th class="n">Fair</th><th class="n">Poor</th><th class="n">N/A</th>
-      <th>Why it matters</th></tr></thead>
-    <tbody>
-    {% for sid, d in agg.signal_distribution | dictsort %}
-      <tr><td>{{ signal_name(sid) }}</td>
-        {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(report.signal_weights.get(sid, 0)) }}</td>{% endif %}
-        <td class="n">{% if d.good %}{{ d.good }}{% endif %}</td>
-        <td class="n">{% if d.fair %}{{ d.fair }}{% endif %}</td>
-        <td class="n">{% if d.poor %}<span class="poor">{{ d.poor }}</span>{% endif %}</td>
-        <td class="n">{% if d.not_applicable %}<span style="color:var(--na)">{{ d.not_applicable }}</span>{% endif %}</td>
-        <td class="why">{{ signal_why(sid) }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table></div>
-</details>
-{% endif %}
 
 <div class="explorer" id="explorer">
   <aside class="files">
@@ -643,32 +621,20 @@ before reading that as an all-clear.</p>
   <div class="viewer" id="viewer">
   {% for doc in report.documents %}
     <div class="doc" data-doc="{{ loop.index0 }}" hidden>
-      <h3>{{ doc.relative_path }}</h3>
-      <p class="doc-meta">{{ doc.format }} · {{ plural(doc.page_count, "page") }}{% if not doc.page_count_known %}, not fixed{% endif %}{% if doc.difficulty and doc.difficulty.score %} ·
-        <span class="{{ 'attn' if score_band(doc.difficulty.score.value) == 'poor' else '' }}">{{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>{% endif %}{% if doc.timing %} ·
-        {{ duration(doc.timing.total_seconds) }} to read and analyse{% endif %}</p>
-      {% set concerns = doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty else [] %}
-      {% if concerns or (doc.sensitive and doc.sensitive.unreadable_pages) %}
-      <p class="concerns">
-        {%- for s in concerns %}<span title="{{ s.why }}">{{ s.name | lower }} — {{ s.display }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
-        {%- if doc.sensitive and doc.sensitive.unreadable_pages %}{% if concerns %} · {% endif %}<span>{{ plural(doc.sensitive.unreadable_pages | length, "page") }} not read</span>{% endif -%}
-      </p>
-      {% endif %}
-      {% if doc.sensitive and doc.sensitive.unreadable_pages %}
-        <p class="note">Page {{ doc.sensitive.unreadable_pages | join(", ") }} carried no readable
-        text and {{ "was" if doc.sensitive.unreadable_pages | length == 1 else "were" }} not
-        searched. Nothing was found there because nothing looked.</p>
-      {% endif %}
-
+      {# The page is the subject. What kind of file it is, how long it took and
+         which signals rated poor are all answers to questions asked on the
+         signals tab, so they are asked there. #}
+      <div class="docbar">
+        <h3>{{ doc.relative_path }}</h3>
+        <div class="subtabs" role="tablist">
+          <button type="button" data-view="pages" aria-selected="true">Pages</button>
+          <button type="button" data-view="signals" aria-selected="false">Signals</button>
+        </div>
+      </div>
       {% if doc.load_warnings %}
         <div class="notice"><strong>Reading this document was incomplete.</strong>
           <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
       {% endif %}
-
-      <div class="subtabs" role="tablist">
-        <button type="button" data-view="pages" aria-selected="true">Pages</button>
-        <button type="button" data-view="signals" aria-selected="false">All signals</button>
-      </div>
 
       <div data-view="pages">
         {% set rows = page_rows(doc) %}
@@ -709,6 +675,13 @@ before reading that as an all-clear.</p>
               {% if row.preview %}
                 <div class="face" data-face="svg" {% if row.image_data_uri %}hidden{% endif %}>
                   <div class="body">{{ page_preview_svg(row.preview) | safe }}</div>
+                  {# The key explains the layout's colours, so it appears with it. #}
+                  <div class="key">
+                    <span><i class="sw" style="background:var(--pv-text);border-color:var(--pv-text)"></i> text</span>
+                    <span><i class="sw" style="background:var(--pv-image);border-color:var(--pv-image)"></i> image</span>
+                    <span><i class="sw" style="background:transparent;border-color:var(--poor)"></i> sensitive, high</span>
+                    <span><i class="sw" style="background:transparent;border-color:var(--fair)"></i> sensitive, other</span>
+                  </div>
                 </div>
               {% else %}
                 <div class="body"><p class="note">This page could not be read.</p></div>
@@ -760,12 +733,6 @@ before reading that as an all-clear.</p>
         {% endfor %}
         </div>
 
-        <div class="key">
-          <span><i class="sw" style="background:var(--pv-text);border-color:var(--pv-text)"></i> text</span>
-          <span><i class="sw" style="background:var(--pv-image);border-color:var(--pv-image)"></i> image, needs OCR or vision</span>
-          <span><i class="sw" style="background:transparent;border-color:var(--poor)"></i> sensitive, high</span>
-          <span><i class="sw" style="background:transparent;border-color:var(--fair)"></i> sensitive, other</span>
-        </div>
         {% set imaged = rows | selectattr("image_data_uri") | list | length %}
         {% if report.run.page_images_used and imaged and imaged < rows | length %}
           <p class="note">{{ imaged }} of {{ rows | length }} pages were rendered as pictures;
@@ -776,6 +743,21 @@ before reading that as an all-clear.</p>
       </div>
 
       <div data-view="signals" hidden>
+        <p class="doc-meta">{{ doc.format }} · {{ plural(doc.page_count, "page") }}{% if not doc.page_count_known %}, not fixed{% endif %}{% if doc.difficulty and doc.difficulty.score %} ·
+          <span class="{{ 'attn' if score_band(doc.difficulty.score.value) == 'poor' else '' }}">{{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>{% endif %}{% if doc.timing %} ·
+          {{ duration(doc.timing.total_seconds) }} to read and analyse{% endif %}</p>
+        {% set concerns = doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty else [] %}
+        {% if concerns or (doc.sensitive and doc.sensitive.unreadable_pages) %}
+        <p class="concerns">
+          {%- for s in concerns %}<span title="{{ s.why }}">{{ s.name | lower }} — {{ s.display }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
+          {%- if doc.sensitive and doc.sensitive.unreadable_pages %}{% if concerns %} · {% endif %}<span>{{ plural(doc.sensitive.unreadable_pages | length, "page") }} not read</span>{% endif -%}
+        </p>
+        {% endif %}
+        {% if doc.sensitive and doc.sensitive.unreadable_pages %}
+          <p class="note">Page {{ doc.sensitive.unreadable_pages | join(", ") }} carried no readable
+          text and {{ "was" if doc.sensitive.unreadable_pages | length == 1 else "were" }} not
+          searched. Nothing was found there because nothing looked.</p>
+        {% endif %}
         {% if doc.difficulty %}
         <div class="scroll"><table>
           <thead><tr><th>Signal</th><th>Measured</th><th>Rating</th>

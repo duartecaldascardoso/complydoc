@@ -7,6 +7,8 @@ and the page was never next to its own text. These pin the replacement.
 
 from __future__ import annotations
 
+import base64
+import io
 import re
 
 import pytest
@@ -118,3 +120,68 @@ def test_page_rows_survives_a_document_with_no_text(config):
 def test_an_unreadable_document_yields_no_pages(report):
     document = next(d for d in report.documents if d.relative_path == "encrypted.pdf")
     assert page_rows(document) == []
+
+
+def test_both_halves_share_one_framed_row(html):
+    """Alignment is structural: every view of a page is framed the same way.
+
+    The two frames are laid out as one row of equal height, so the page and the
+    text it produced end at the same line and each scrolls inside its own box.
+    """
+    block = document_section(html).split(f"<h3>{MULTIPAGE}</h3>")[1].split("<h3>")[0]
+    first = block.split('data-page="1"')[1].split('data-page="2"')[0]
+    assert first.count('class="side"') == 2
+    # One frame per switchable view: the page, its layout, and the text.
+    assert first.count('class="face"') == first.count('class="body"') == 3
+
+
+def test_provenance_lives_in_the_footer_only(html, report):
+    """The page carried a heading repeating the path, the time and the version.
+
+    None of it told a reader anything they had not just decided for themselves,
+    and it pushed the actual content down the screen. It is recorded once, in
+    the footer, where provenance belongs.
+    """
+    # The <title> still names the folder — that is how a browser tab is
+    # identified — so only what is drawn on the page is checked here.
+    above_the_tabs = html.split("</head>")[1].split('id="tabs"')[0]
+    assert report.run.target not in above_the_tabs
+    assert report.run.finished_at not in above_the_tabs
+    assert "Document audit" not in above_the_tabs
+
+    footer = html.split("<footer>")[1]
+    assert report.run.target in footer
+    assert report.run.finished_at in footer
+    assert report.run.tool_version in footer
+
+
+def test_the_page_image_declares_its_size(html):
+    """Without it the frame is the wrong height until the image decodes.
+
+    The panel beside it is laid out against that height, so it jumped every time
+    a document was opened.
+    """
+    block = document_section(html).split(f"<h3>{MULTIPAGE}</h3>")[1].split("<h3>")[0]
+    first = block.split('data-page="1"')[1].split('data-page="2"')[0]
+    tag = first.split("<img")[1].split(">")[0]
+    assert 'width="' in tag and 'height="' in tag
+
+
+def test_the_recorded_size_is_the_size_it_was_encoded_at(report):
+    from PIL import Image
+
+    document = next(d for d in report.documents if d.relative_path == MULTIPAGE)
+    for row in page_rows(document):
+        assert row.image_width_px and row.image_height_px
+        raw = base64.b64decode(row.image_data_uri.split(",", 1)[1])
+        with Image.open(io.BytesIO(raw)) as decoded:
+            assert (decoded.width, decoded.height) == (row.image_width_px, row.image_height_px)
+
+
+def test_the_page_bar_is_one_control(html):
+    """Three controls sitting near each other read as three controls."""
+    block = document_section(html).split(f"<h3>{MULTIPAGE}</h3>")[1].split("<h3>")[0]
+    nav = block.split('class="pnav"')[1].split("</div>")[0]
+    assert nav.count('class="pstep"') == 2
+    assert 'class="pjump"' in nav
+    assert 'class="pof"' in nav

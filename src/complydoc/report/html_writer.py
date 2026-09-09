@@ -21,7 +21,46 @@ from complydoc.report.models import AuditReport, DocumentReport
 from complydoc.report.preview import PagePreview
 from complydoc.text import count, duration
 
-__all__ = ["PageRow", "page_preview_svg", "page_rows", "render_html", "write_html"]
+__all__ = [
+    "PageRow",
+    "page_preview_svg",
+    "page_rows",
+    "render_html",
+    "sensitive_rows",
+    "write_html",
+]
+
+_SEVERITY_RANK = {"high": 3, "medium": 2, "low": 1}
+
+
+def severity_rank(severity: str) -> int:
+    """Sort weight. Alphabetical would file high between low and medium."""
+    return _SEVERITY_RANK.get(severity, 0)
+
+
+def sensitive_rows(report: AuditReport) -> list[tuple[DocumentReport, Any]]:
+    """Every match in the folder, most serious first.
+
+    On a security page the question is almost always what the worst of it is,
+    not what came first in the folder, so the table arrives ordered by severity
+    and ties break by document and position rather than arbitrarily.
+    """
+    rows = [
+        (document, match)
+        for document in report.documents
+        if document.sensitive
+        for match in document.sensitive.matches
+    ]
+    rows.sort(
+        key=lambda row: (
+            -severity_rank(row[1].severity),
+            row[0].relative_path,
+            row[1].page,
+            row[1].line,
+        )
+    )
+    return rows
+
 
 # The mark, inlined so the report stays a single file: a document inside the
 # network guard boundary, with one line redacted.
@@ -72,6 +111,8 @@ class PageRow:
     number: int
     preview: PagePreview | None = None
     image_data_uri: str | None = None
+    image_width_px: int = 0
+    image_height_px: int = 0
     text: str = ""
     ocr_text: str = ""
     source: str = ""
@@ -97,6 +138,8 @@ def page_rows(document: DocumentReport) -> list[PageRow]:
                 number=number,
                 preview=preview,
                 image_data_uri=preview.image_data_uri if preview is not None else None,
+                image_width_px=preview.image_width_px if preview is not None else 0,
+                image_height_px=preview.image_height_px if preview is not None else 0,
                 text=text.text if text else "",
                 ocr_text=text.ocr_text if text else "",
                 source=text.source if text else "",
@@ -273,6 +316,7 @@ def render_html(report: AuditReport, config: Config) -> str:
         logo_svg=_LOGO_SVG,
         favicon_uri=_FAVICON_URI,
         page_rows=page_rows,
+        sensitive_rows=sensitive_rows,
         money=lambda v: _money(v, currency),
         category_meta=category_meta,
         signal_name=signal_name,
@@ -280,6 +324,7 @@ def render_html(report: AuditReport, config: Config) -> str:
         duration=duration,
         severity_class=severity_class,
         severity_badge=severity_badge,
+        severity_rank=severity_rank,
         hard_drivers=lambda d, n=3: _drivers(d, "poor", n),
         easy_drivers=lambda d, n=3: _drivers(d, "good", n),
         score_band=score_band,

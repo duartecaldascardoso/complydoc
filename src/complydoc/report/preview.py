@@ -20,8 +20,13 @@ from complydoc.sensitive.scanner import ScanResult
 
 __all__ = ["Box", "PagePreview", "build_previews"]
 
-_IMAGE_WIDTH_PX = 560
-"""Rendered width of an embedded page image. Twice the display width, for sharpness."""
+_IMAGE_WIDTH_PX = 1060
+"""Rendered width of an embedded page image.
+
+Twice the width the viewer gives it, so the page is sharp on a high-density
+screen and legible when the reader zooms in. This is the single biggest
+contributor to the size of a report built with --page-images.
+"""
 _IMAGE_QUALITY = 72
 
 _MIN_WORDS_FOR_COLUMNS = 25
@@ -71,6 +76,9 @@ class PagePreview:
     This is real document content. Everything else in a preview is geometry, and
     the default report contains no page images at all.
     """
+    image_width_px: int = 0
+    image_height_px: int = 0
+    """Size the page image was encoded at, so the layout can reserve its space."""
     unlocated_sensitive: int = 0
     """Matches the scan found but could not be placed on the page."""
     unreadable: bool = False
@@ -215,8 +223,13 @@ def _gutters(page: Page) -> list[Box]:
     return found
 
 
-def _encode_page(raster: object) -> str | None:
-    """A page raster as a JPEG data URI, downscaled to preview size."""
+def _encode_page(raster: object) -> tuple[str, int, int] | None:
+    """A page raster as a JPEG data URI, with the size it was encoded at.
+
+    The size travels with the image so the report can declare it on the `img`
+    element. Without that the browser does not know how tall the page will be
+    until it has decoded it, and the panel beside it jumps when it arrives.
+    """
     import base64
     import io
 
@@ -232,7 +245,15 @@ def _encode_page(raster: object) -> str | None:
         )
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG", quality=_IMAGE_QUALITY, optimize=True)
-    return "data:image/jpeg;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+    uri = "data:image/jpeg;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+    return uri, image.width, image.height
+
+
+def _attach_image(preview: PagePreview, raster: object) -> None:
+    encoded = _encode_page(raster)
+    if encoded is None:
+        return
+    preview.image_data_uri, preview.image_width_px, preview.image_height_px = encoded
 
 
 def build_previews(
@@ -263,7 +284,7 @@ def build_previews(
         )
         if width <= 0 or height <= 0:
             if page_images and page.raster is not None:
-                preview.image_data_uri = _encode_page(page.raster)
+                _attach_image(preview, page.raster)
             previews.append(preview)
             continue
 
@@ -293,7 +314,7 @@ def build_previews(
             coverage_fraction([b.bbox for b in page.image_blocks], width, height) * 100, 1
         )
         if page_images and page.raster is not None:
-            preview.image_data_uri = _encode_page(page.raster)
+            _attach_image(preview, page.raster)
 
         previews.append(preview)
 

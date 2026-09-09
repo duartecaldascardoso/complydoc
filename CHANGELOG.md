@@ -13,6 +13,13 @@ branch on when reading reports programmatically.
 - The Documents page is a page viewer rather than a grid of the first twelve pages.
   Every page of a document is reachable, by stepping or by typing a page number, and
   the page sits beside the text that was read off it instead of in a separate tab.
+  The two halves are one row of equal height and each scrolls inside its own frame.
+- The report is laid out to the width of the window rather than a 60rem reading
+  column, so the page and its text get the room.
+- Findings on the security page arrive ordered by severity, and every column there
+  can be sorted.
+- The page heading repeating the folder path, the timestamp and the version is gone.
+  All of it is recorded once, in the footer.
 
 ### Fixed
 

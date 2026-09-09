@@ -61,7 +61,6 @@
   h1 .of::before { content: " \2014 "; color: var(--faint); }
   h2 { font-size: 1rem; font-weight: 600; margin: 2.75rem 0 0.75rem;
        padding-top: 0.75rem; border-top: 1px solid var(--line-2); }
-  section[data-page] > h2:first-child { margin-top: 1.5rem; }
   h3 { font-size: 0.9375rem; font-weight: 600; margin: 1.75rem 0 0.5rem; }
   h4 { font-size: 0.8125rem; font-weight: 600; margin: 1.5rem 0 0.375rem; color: var(--ink-2); }
   p  { margin: 0 0 0.75rem; }
@@ -122,15 +121,18 @@
            cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .pstep:hover:not(:disabled) { background: var(--na-bg); color: var(--ink); }
   .pstep:disabled { color: var(--faint); cursor: default; }
-  .pjump { font: inherit; font-size: 0.8125rem; width: 3rem; text-align: right;
-           color: var(--ink); padding: 0 0.125rem;
-           border-left: 1px solid var(--line-2) !important;
+  /* The counter is one centred segment between the arrows. Sizing the input to
+     a fixed width and right-aligning it left a hole on its left instead. */
+  .pmid { display: flex; align-items: center; justify-content: center; gap: 0.25rem;
+          min-width: 5rem; padding: 0 0.5rem; font-variant-numeric: tabular-nums;
+          border-left: 1px solid var(--line-2); border-right: 1px solid var(--line-2); }
+  .pjump { font: inherit; font-size: 0.8125rem; width: 2.25rem; text-align: right;
+           color: var(--ink); padding: 0;
            -moz-appearance: textfield; appearance: textfield; }
   .pjump::-webkit-outer-spin-button, .pjump::-webkit-inner-spin-button {
     -webkit-appearance: none; margin: 0; }
-  .pjump:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
-  .pof { display: flex; align-items: center; padding: 0 0.625rem 0 0.25rem; color: var(--faint);
-         border-right: 1px solid var(--line-2) !important; font-variant-numeric: tabular-nums; }
+  .pjump:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
+  .pof { color: var(--faint); }
   .pmiss { color: var(--attn); }
   /* The two halves are one row of equal height. The page sets that height, the
      text side stretches to match it, and each scrolls inside its own box rather
@@ -221,8 +223,12 @@
   #theme:hover { color: var(--ink); }
 
   /* --- documents explorer -------------------------------------------- */
+  /* The list is centred on the panels, not on the column that holds them —
+     the filename and the page bar sit above those, so centring on the column
+     leaves the list riding high. Script sets the offset; without it the list
+     starts at the top, which is correct if plainer. */
   .explorer { display: flex; gap: 1.5rem; align-items: flex-start; margin-top: 0.75rem; }
-  .files { flex: 0 0 15rem; max-width: 15rem; position: sticky; top: 1rem; }
+  .files { flex: 0 0 15rem; max-width: 15rem; }
   .files ul { list-style: none; margin: 0.5rem 0 0; padding: 0;
               border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
               max-height: 34rem; overflow-y: auto; background: var(--panel); }
@@ -262,7 +268,7 @@
   .pcap { font-size: 0.6875rem; color: var(--na); margin-top: 0.25rem; line-height: 1.5; }
   @media (max-width: 860px) {
     .explorer { flex-direction: column; }
-    .files { flex: 1 1 auto; max-width: none; position: static; width: 100%; }
+    .files { flex: 1 1 auto; max-width: none; width: 100%; margin-top: 0 !important; }
   }
   .drivers { display: flex; flex-wrap: wrap; gap: 2rem; margin: 0.25rem 0 1.25rem; }
   .driver { flex: 1 1 22rem; min-width: 0; }
@@ -316,7 +322,10 @@
   nav.tabs a[aria-current="page"] { color: var(--ink); background: var(--paper);
                                     border-color: var(--line-2); }
   nav.tabs .n { font-weight: 400; color: var(--faint); margin-left: 0.3125rem; }
-  section[data-page] > h2:first-child { border-top: none; margin-top: 1.5rem; padding-top: 0; }
+  section[data-page] > h2:first-child { border-top: none; padding-top: 0; }
+  /* Two of the four pages open on a heading and two do not, so the spacing
+     below the tab bar is set on whatever comes first. */
+  section[data-page] > :first-child { margin-top: 2rem; }
   .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: var(--muted);
             margin: 0 0 0.5rem; }
   .legend span { display: inline-flex; align-items: center; gap: 0.375rem; }
@@ -642,10 +651,12 @@ before reading that as an all-clear.</p>
         <div class="pagebar">
           <div class="pnav">
             <button type="button" class="pstep" data-step="-1" aria-label="Previous page">&lsaquo;</button>
-            <input type="number" class="pjump" min="{{ rows[0].number }}"
-                   max="{{ rows[-1].number }}" value="{{ rows[0].number }}"
-                   aria-label="Go to page number">
-            <span class="pof">/ {{ rows[-1].number }}</span>
+            <span class="pmid">
+              <input type="number" class="pjump" min="{{ rows[0].number }}"
+                     max="{{ rows[-1].number }}" value="{{ rows[0].number }}"
+                     aria-label="Go to page number">
+              <span class="pof">/ {{ rows[-1].number }}</span>
+            </span>
             <button type="button" class="pstep" data-step="1" aria-label="Next page">&rsaquo;</button>
           </div>
           <span class="pmiss" hidden>no page with that number</span>
@@ -917,6 +928,7 @@ before reading that as an all-clear.</p>
 
     function select(index) {
       docs.forEach(function (d) { d.hidden = d.getAttribute("data-doc") !== index; });
+      root.dispatchEvent(new Event("aligned"));
       items.forEach(function (li) {
         var button = li.querySelector("button");
         if (button.getAttribute("data-doc") === index) button.setAttribute("aria-current", "true");
@@ -928,6 +940,33 @@ before reading that as an all-clear.</p>
       li.querySelector("button").addEventListener("click", function () {
         select(li.querySelector("button").getAttribute("data-doc"));
       });
+    });
+
+    // Sit the file list at the height of the panels rather than the height of
+    // the column, which also carries the filename and the page bar above them.
+    var aside = root.querySelector(".files");
+    function alignFiles() {
+      if (!aside || window.innerWidth <= 860) {
+        if (aside) aside.style.marginTop = "";
+        return;
+      }
+      var doc = root.querySelector(".viewer > .doc:not([hidden])");
+      if (!doc) return;
+      // A document nobody could open has no panels, only the line saying so.
+      var target = doc.querySelector(".spread:not([hidden])") ||
+        doc.querySelector("[data-view]:not([hidden]):not(button)");
+      if (!target) { aside.style.marginTop = ""; return; }
+      aside.style.marginTop = "0px";
+      var top = root.getBoundingClientRect().top;
+      var box = target.getBoundingClientRect();
+      var offset = box.top + box.height / 2 - top - aside.getBoundingClientRect().height / 2;
+      aside.style.marginTop = Math.max(0, Math.round(offset)) + "px";
+    }
+    root.addEventListener("aligned", alignFiles);
+    window.addEventListener("resize", alignFiles);
+    // Page images arrive after layout, so the panels change height under us.
+    Array.prototype.forEach.call(root.querySelectorAll(".viewer img"), function (image) {
+      image.addEventListener("load", alignFiles);
     });
 
     function firstVisible() {
@@ -980,6 +1019,7 @@ before reading that as an all-clear.</p>
       });
       pageviewer(doc);
     });
+    alignFiles();
   }
 
   // One page at a time, the page beside the text read off it. Every page of the
@@ -1005,6 +1045,8 @@ before reading that as an all-clear.</p>
       });
       if (jump && document.activeElement !== jump) jump.value = String(numbers[at]);
       if (missing) missing.hidden = true;
+      var explorer = doc.closest("#explorer");
+      if (explorer) explorer.dispatchEvent(new Event("aligned"));
     }
 
     steps.forEach(function (button) {
@@ -1043,6 +1085,8 @@ before reading that as an all-clear.</p>
           var want = option.getAttribute("data-face");
           options.forEach(function (o) { o.setAttribute("aria-selected", String(o === option)); });
           faces.forEach(function (f) { f.hidden = f.getAttribute("data-face") !== want; });
+          var explorer = doc.closest("#explorer");
+          if (explorer) explorer.dispatchEvent(new Event("aligned"));
         });
       });
     });

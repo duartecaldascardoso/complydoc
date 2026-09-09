@@ -20,6 +20,9 @@ branch on when reading reports programmatically.
   can be sorted.
 - The page heading repeating the folder path, the timestamp and the version is gone.
   All of it is recorded once, in the footer.
+- The file list sits at the height of the panels, not the column that holds them.
+- Every page starts the same distance below the tab bar, whether or not it opens on
+  a heading.
 - The Documents page is the file list and the two panels, and nothing else. The
   folder-wide table of difficulty signals, the per-document summary line and the list
   of poorly rated signals moved to that document's own Signals tab, where they answer

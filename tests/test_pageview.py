@@ -183,8 +183,11 @@ def test_the_page_bar_is_one_control(html):
     block = document_section(html).split(f"<h3>{MULTIPAGE}</h3>")[1].split("<h3>")[0]
     nav = block.split('class="pnav"')[1].split("</div>")[0]
     assert nav.count('class="pstep"') == 2
-    assert 'class="pjump"' in nav
-    assert 'class="pof"' in nav
+    # The counter is one segment between the arrows, so it sits centred rather
+    # than pinned to the left of a fixed-width box.
+    counter = nav.split('class="pmid"')[1]
+    assert 'class="pjump"' in counter
+    assert 'class="pof"' in counter
 
 
 def test_the_page_is_the_first_thing_on_the_page(html):

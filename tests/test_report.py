@@ -470,3 +470,13 @@ def test_the_footer_records_the_observed_rates(html):
     footer = html.split("<footer>")[1]
     assert "Took" in footer
     assert "a page" in footer
+
+
+def test_every_page_starts_the_same_distance_below_the_tabs(html):
+    """Two of the four open on a heading and two do not.
+
+    The spacing used to hang off the heading, so the pages without one began
+    hard against the tab bar.
+    """
+    styles = html.split("<style>")[1].split("</style>")[0]
+    assert "section[data-page] > :first-child { margin-top:" in styles.replace("\n", " ")

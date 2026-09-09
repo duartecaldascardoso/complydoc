@@ -12,10 +12,9 @@
     --paper: #fbfbfa; --panel: #fff; --ink: #111; --ink-2: #333;
     --muted: #666; --faint: #999; --line: #e8e8e6; --line-2: #d8d8d4;
     --accent: #1a7f4b;
-    --good: #1a7f4b; --good-bg: #e8f3ec;
-    --fair: #8a5a00; --fair-bg: #fbf1de;
-    --poor: #b3261e; --poor-bg: #fbeae8;
-    --na:   #6b7280; --na-bg:   #f0f1f3;
+    --attn: #a4402f;
+    --good: #6b7280; --fair: #55606d; --poor: #a4402f;
+    --na: #8b939c; --na-bg: #f1f1ef;
     --series-1: #2a78d6; --series-2: #4a3aa7; --series-3: #e87ba4;
     --pv-page: #fff; --pv-edge: #bbb; --pv-text: #dcdcdc;
     --pv-image: #f4dfae; --pv-gutter: #f4f4f2;
@@ -29,10 +28,9 @@
       --paper: #16181a; --panel: #1d2023; --ink: #e9e9e7; --ink-2: #c9c9c6;
       --muted: #9aa0a6; --faint: #71767b; --line: #2b2f33; --line-2: #3a3f45;
       --accent: #4cc38a;
-      --good: #4cc38a; --good-bg: #12291f;
-      --fair: #d9a441; --fair-bg: #2c2415;
-      --poor: #f2726a; --poor-bg: #2e1a19;
-      --na:   #9aa0a6; --na-bg:   #24282c;
+      --attn: #e08a72;
+      --good: #8b939c; --fair: #a7b0b8; --poor: #e08a72;
+      --na: #7d858d; --na-bg: #23272b;
       --series-1: #3987e5; --series-2: #d55181; --series-3: #c98500;
       --pv-page: #24282c; --pv-edge: #4a5058; --pv-text: #4d545c;
       --pv-image: #6d5a2f; --pv-gutter: #1f2225;
@@ -43,10 +41,9 @@
     --paper: #16181a; --panel: #1d2023; --ink: #e9e9e7; --ink-2: #c9c9c6;
     --muted: #9aa0a6; --faint: #71767b; --line: #2b2f33; --line-2: #3a3f45;
     --accent: #4cc38a;
-    --good: #4cc38a; --good-bg: #12291f;
-    --fair: #d9a441; --fair-bg: #2c2415;
-    --poor: #f2726a; --poor-bg: #2e1a19;
-    --na:   #9aa0a6; --na-bg:   #24282c;
+    --attn: #e08a72;
+    --good: #8b939c; --fair: #a7b0b8; --poor: #e08a72;
+    --na: #7d858d; --na-bg: #23272b;
     --series-1: #3987e5; --series-2: #d55181; --series-3: #c98500;
     --pv-page: #24282c; --pv-edge: #4a5058; --pv-text: #4d545c;
     --pv-image: #6d5a2f; --pv-gutter: #1f2225;
@@ -77,15 +74,15 @@
   .scroll { overflow-x: auto; }
   /* Ratings and severities are the two things a reader scans for, so they get
      the colour. Everything else stays monochrome. */
-  .r { display: inline-block; padding: 0.0625rem 0.375rem; border-radius: 2px;
-       font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-  .r-good { background: var(--good-bg); color: var(--good); }
-  .r-fair { background: var(--fair-bg); color: var(--fair); }
-  .r-poor { background: var(--poor-bg); color: var(--poor); }
-  .r-na   { background: var(--na-bg);   color: var(--na); font-weight: 400; }
-  .poor { color: var(--poor); font-weight: 600; }
+  /* Colour marks the exception. A rating that needs nothing from the reader is
+     set in a lighter ink; only the ones that do are coloured. */
+  .r { font-size: 0.8125rem; white-space: nowrap; }
+  .r-good { color: var(--good); }
+  .r-fair { color: var(--fair); }
+  .r-poor { color: var(--attn); font-weight: 600; }
+  .r-na   { color: var(--na); }
+  .poor { color: var(--attn); font-weight: 600; }
   .fair { color: var(--fair); }
-  td.n .poor { font-weight: 600; }
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
   .why { color: var(--muted); font-size: 0.8125rem; }
 
@@ -139,10 +136,8 @@
            border-top: 1px solid var(--line); }
   h4.sec .tag { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.07em;
                 font-weight: 600; padding: 0.125rem 0.375rem; border-radius: 2px; }
-  .sec-diff .tag { background: var(--na-bg); color: var(--na); }
-  .sec-cost .tag { background: var(--good-bg); color: var(--good); }
-  .sec-pii  .tag { background: var(--poor-bg); color: var(--poor); }
-  .sec-text .tag { background: var(--na-bg); color: var(--na); }
+  /* The eyebrow names the subject; it is not a status, so it takes no colour. */
+  h4.sec .tag { background: var(--na-bg); color: var(--na); }
   details.text { border-bottom: 1px solid var(--line); }
   details.text > summary { font-weight: 400; font-size: 0.8125rem; color: var(--muted);
                            padding: 0.375rem 0; }
@@ -189,15 +184,15 @@
   .viewer > .doc[hidden] { display: none; }
   .doc h3 { margin-top: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             font-size: 0.9375rem; }
-  .flags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem;
-           margin: 0.5rem 0 1.25rem; }
-  .flag { display: inline-block; flex: 0 0 auto; font-size: 0.6875rem; line-height: 1.5;
-          padding: 0.125rem 0.5rem; border-radius: 3px; white-space: nowrap;
-          max-width: 100%; overflow: hidden; text-overflow: ellipsis;
-          background: var(--na-bg); color: var(--na); }
-  .flag.bad { background: var(--poor-bg); color: var(--poor); }
-  .flag.warn { background: var(--fair-bg); color: var(--fair); }
-  .flag.ok { background: var(--good-bg); color: var(--good); }
+  .doc-meta { font-size: 0.8125rem; color: var(--muted); margin: 0.25rem 0 0.375rem; }
+  .doc-meta .attn { color: var(--attn); font-weight: 600; }
+  .concerns { font-size: 0.8125rem; color: var(--attn); margin: 0 0 1.25rem;
+              line-height: 1.6; max-width: 68ch; }
+  .concerns span { cursor: help; border-bottom: 1px dotted currentColor; }
+  .flag { font-size: 0.6875rem; color: var(--na); }
+  .flag.bad { color: var(--attn); }
+  .flag.warn { color: var(--fair); }
+  .flag.ok { color: var(--good); }
   .subtabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--line);
              margin: 0 0 0.875rem; }
   .subtabs button { font: inherit; font-size: 0.8125rem; font-weight: 600;
@@ -205,8 +200,7 @@
                     border-bottom: 2px solid transparent; color: var(--muted);
                     cursor: pointer; margin-bottom: -1px; }
   .subtabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
-  .pcap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem;
-          margin-top: 0.375rem; }
+  .pcap { font-size: 0.6875rem; color: var(--na); margin-top: 0.25rem; line-height: 1.5; }
   @media (max-width: 860px) {
     .explorer { flex-direction: column; }
     .files { flex: 1 1 auto; max-width: none; position: static; width: 100%; }
@@ -224,9 +218,12 @@
                     font-size: 0.8125rem; text-align: right; width: 42%; }
   table.bare td.n { width: 3rem; }
   .wt { font-size: 0.6875rem; color: var(--faint); }
-  .warn { border: 1px solid var(--fair); border-left-width: 3px; background: var(--fair-bg);
-          padding: 0.625rem 0.875rem; margin: 0.75rem 0; font-size: 0.8125rem; }
-  .warn ul { margin: 0.25rem 0 0; }
+  /* Named for what it is, not how it feels: ".warn" collided with the ".flag warn"
+     level and gave every page caption a border and 14px of padding. */
+  .notice { border: 1px solid var(--line-2); border-left: 3px solid var(--attn);
+            background: var(--panel); padding: 0.625rem 0.875rem; margin: 0.75rem 0;
+            font-size: 0.8125rem; }
+  .notice ul { margin: 0.25rem 0 0; }
   details.more { border: none; margin: 0.5rem 0 0; }
   details.more > summary { font-weight: 400; font-size: 0.8125rem; color: var(--muted);
                            padding: 0.375rem 0; }
@@ -534,15 +531,17 @@ before reading that as an all-clear.</p>
   <summary>Difficulty signals across the whole folder</summary>
   <div class="scroll"><table>
     <thead><tr><th>Signal</th>{% if report.signal_weights %}<th class="n">Weight</th>{% endif %}
-      <th class="n">Good</th><th class="n">Fair</th><th class="n">Poor</th><th class="n">N/A</th></tr></thead>
+      <th class="n">Good</th><th class="n">Fair</th><th class="n">Poor</th><th class="n">N/A</th>
+      <th>Why it matters</th></tr></thead>
     <tbody>
     {% for sid, d in agg.signal_distribution | dictsort %}
       <tr><td>{{ signal_name(sid) }}</td>
         {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(report.signal_weights.get(sid, 0)) }}</td>{% endif %}
-        <td class="n">{% if d.good %}<span style="color:var(--good)">{{ d.good }}</span>{% endif %}</td>
-        <td class="n">{% if d.fair %}<span style="color:var(--fair)">{{ d.fair }}</span>{% endif %}</td>
+        <td class="n">{% if d.good %}{{ d.good }}{% endif %}</td>
+        <td class="n">{% if d.fair %}{{ d.fair }}{% endif %}</td>
         <td class="n">{% if d.poor %}<span class="poor">{{ d.poor }}</span>{% endif %}</td>
-        <td class="n">{% if d.not_applicable %}<span style="color:var(--na)">{{ d.not_applicable }}</span>{% endif %}</td></tr>
+        <td class="n">{% if d.not_applicable %}<span style="color:var(--na)">{{ d.not_applicable }}</span>{% endif %}</td>
+        <td class="why">{{ signal_why(sid) }}</td></tr>
     {% endfor %}
     </tbody>
   </table></div>
@@ -579,29 +578,23 @@ before reading that as an all-clear.</p>
   {% for doc in report.documents %}
     <div class="doc" data-doc="{{ loop.index0 }}" hidden>
       <h3>{{ doc.relative_path }}</h3>
-      <div class="flags">
-        <span class="flag">{{ doc.format }}</span>
-        <span class="flag">{{ doc.page_count }} page{{ "" if doc.page_count == 1 else "s" }}{% if not doc.page_count_known %}, not fixed{% endif %}</span>
-        {% if doc.difficulty and doc.difficulty.score %}
-          <span class="flag {{ 'ok' if score_band(doc.difficulty.score.value) == 'good' else ('warn' if score_band(doc.difficulty.score.value) == 'fair' else 'bad') }}">
-            {{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>
-        {% endif %}
-        {% for s in doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty %}
-          <span class="flag bad" title="{{ s.why }}">{{ s.name | lower }}: {{ s.display }}</span>
-        {% endfor %}
-        {% if doc.sensitive and doc.sensitive.unreadable_pages %}
-          <span class="flag bad">{{ plural(doc.sensitive.unreadable_pages | length, "page") }}
-            not read</span>
-        {% endif %}
-      </div>
+      <p class="doc-meta">{{ doc.format }} · {{ plural(doc.page_count, "page") }}{% if not doc.page_count_known %}, not fixed{% endif %}{% if doc.difficulty and doc.difficulty.score %} ·
+        <span class="{{ 'attn' if score_band(doc.difficulty.score.value) == 'poor' else '' }}">{{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>{% endif %}</p>
+      {% set concerns = doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty else [] %}
+      {% if concerns or (doc.sensitive and doc.sensitive.unreadable_pages) %}
+      <p class="concerns">
+        {%- for s in concerns %}<span title="{{ s.why }}">{{ s.name | lower }} — {{ s.display }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
+        {%- if doc.sensitive and doc.sensitive.unreadable_pages %}{% if concerns %} · {% endif %}<span>{{ plural(doc.sensitive.unreadable_pages | length, "page") }} not read</span>{% endif -%}
+      </p>
+      {% endif %}
       {% if doc.sensitive and doc.sensitive.unreadable_pages %}
-        <p class="note"><strong>Page {{ doc.sensitive.unreadable_pages | join(", ") }} carried no
-        readable text and {{ "was" if doc.sensitive.unreadable_pages | length == 1 else "were" }}
-        not searched.</strong> Nothing was found there because nothing looked.</p>
+        <p class="note">Page {{ doc.sensitive.unreadable_pages | join(", ") }} carried no readable
+        text and {{ "was" if doc.sensitive.unreadable_pages | length == 1 else "were" }} not
+        searched. Nothing was found there because nothing looked.</p>
       {% endif %}
 
       {% if doc.load_warnings %}
-        <div class="warn"><strong>Reading this document was incomplete.</strong>
+        <div class="notice"><strong>Reading this document was incomplete.</strong>
           <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
       {% endif %}
 
@@ -633,7 +626,7 @@ before reading that as an all-clear.</p>
             </div>
             <div class="cap">page {{ pv.number }}</div>
             <div class="pcap">
-              {% for level, label in pv.flags %}<span class="flag {{ level }}">{{ label }}</span>{% endfor %}
+              {%- for level, label in pv.flags %}<span class="flag {{ level }}">{{ label }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
             </div>
           </div>
         {% endfor %}

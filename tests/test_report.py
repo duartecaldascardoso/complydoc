@@ -379,8 +379,28 @@ def test_documents_page_carries_no_security_table(html):
 
 def test_difficulty_is_flagged_on_the_document_itself(html):
     documents = html.split('id="documents"')[1].split("</main>")[0]
-    assert 'class="flags"' in documents
-    assert 'class="flag' in documents
+    assert 'class="doc-meta"' in documents
+    assert 'class="concerns"' in documents, "poor signals belong on the document"
+    assert 'class="pcap"' in documents, "and the per-page facts on the page"
+
+
+def test_colour_marks_the_exception_rather_than_every_category(html):
+    """Green, amber and red on every rating is what made it look generated."""
+    styles = html.split("<style>")[1].split("</style>")[0]
+    assert "--attn:" in styles
+    for gone in ("--good-bg", "--fair-bg", "--poor-bg"):
+        assert gone not in styles, f"{gone} is still defined"
+    assert "background: var(--good-bg)" not in styles
+
+
+def test_every_signal_carries_its_explanation(html):
+    """A distribution of ratings means nothing without saying what each measures."""
+    table = html.split("Difficulty signals across the whole folder")[1].split("</table>")[0]
+    assert "Why it matters" in table
+    import re
+
+    explanations = re.findall(r'<td class="why">([^<]{10,})</td>', table)
+    assert len(explanations) >= 18
 
 
 def test_report_does_not_explain_its_own_flags(html):

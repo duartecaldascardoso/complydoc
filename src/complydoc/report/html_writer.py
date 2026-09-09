@@ -153,6 +153,14 @@ def render_html(report: AuditReport, config: Config) -> str:
         found = signal_by_id(signal_id)
         return found.name if found else signal_id
 
+    def signal_why(signal_id: str) -> str:
+        """The configured wording wins, so difficulty.yaml can override a signal."""
+        settings = config.difficulty.signals.get(signal_id)
+        if settings is not None and settings.why:
+            return settings.why
+        found = signal_by_id(signal_id)
+        return found.why if found else ""
+
     def severity_class(severity: str) -> str:
         return {"high": "r-poor", "medium": "r-fair", "low": "r-na"}.get(severity, "r-na")
 
@@ -215,6 +223,7 @@ def render_html(report: AuditReport, config: Config) -> str:
         money=lambda v: _money(v, currency),
         category_meta=category_meta,
         signal_name=signal_name,
+        signal_why=signal_why,
         severity_class=severity_class,
         severity_badge=severity_badge,
         hard_drivers=lambda d, n=3: _drivers(d, "poor", n),

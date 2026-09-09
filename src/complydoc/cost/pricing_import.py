@@ -76,13 +76,43 @@ def find_litellm_table() -> Path | None:
     return candidate if candidate.is_file() else None
 
 
+def _from_vendored() -> dict[str, dict[str, object]]:
+    """The package's own table, put back into the upstream shape.
+
+    complydoc vendors a normalised subset so that a run needs nothing installed.
+    Reading it back through the same code path keeps one selection routine
+    rather than two that drift.
+    """
+    from complydoc.cost.price_table import TABLE_PATH
+
+    if not TABLE_PATH.is_file():  # pragma: no cover - the file ships with the package
+        return {}
+    table = json.loads(TABLE_PATH.read_text(encoding="utf-8"))
+    return {
+        name: {
+            "litellm_provider": entry["provider"],
+            "mode": "chat",
+            "supports_vision": True,
+            "input_cost_per_token": entry["input_per_mtok_usd"] / 1_000_000,
+            "output_cost_per_token": (
+                entry["output_per_mtok_usd"] / 1_000_000 if entry.get("output_per_mtok_usd") else 0
+            ),
+        }
+        for name, entry in table.get("models", {}).items()
+    }
+
+
 def load_table(path: Path | None = None) -> dict[str, dict[str, object]]:
     source = path or find_litellm_table()
     if source is None:
+        # The vendored table is the normal case: it ships with complydoc, so this
+        # works with nothing installed. --from still reads a raw upstream file.
+        vendored = _from_vendored()
+        if vendored:
+            return vendored
         raise PricingImportError(
-            "litellm is not installed and no --from path was given. Either install it "
-            "(uv pip install litellm) or point --from at a copy of "
-            f"{_FILENAME}."
+            "no price table was found. complydoc ships one; if it is missing, "
+            f"point --from at a copy of {_FILENAME}."
         )
     if not source.is_file():
         raise PricingImportError(f"no such file: {source}")
@@ -185,8 +215,13 @@ def to_yaml(models: list[ImportedModel], today: dt.date | None = None) -> str:
                 f"        {model.provider} does not publish an offline tokenizer; token counts are",
                 "        approximated with the o200k_base encoding.",
             ]
+        # Deliberately not last_verified: nothing was verified. Stamping the
+        # import date into that field would make the report say a person checked
+        # the price, and the staleness warning would then count down from a
+        # check that never happened.
         lines += [
-            f"    last_verified: {stamp}",
+            "    price_source: imported",
+            f"    imported_on: {stamp}",
             f"    source_url: {_SOURCE_URL}",
         ]
         if model.provider in _ASSUMED_FORMULA:

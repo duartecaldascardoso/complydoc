@@ -186,14 +186,17 @@ Three files under `src/complydoc/config/`, overridable with `--config-dir`:
 
 | File | Contents |
 | --- | --- |
-| `pricing.yaml` | Model prices, vision formulas, resolution presets, `last_verified` dates |
+| `pricing.yaml` | Curated model prices, vision formulas, resolution presets, `last_verified` dates |
+| `model_prices.json` | ~240 more models imported from litellm, available to `--model` |
 | `readiness.yaml` | Signal weights, rating thresholds, scoring rules |
 | `sensitive.yaml` | Patterns, validators, regions, severities, masking rules |
 
 Every number in a report comes from these files. To add models with current prices:
 
 ```bash
-complydoc pricing-import --provider openai --limit 5
+complydoc models gpt                    # search the price table
+complydoc models --provider openai      # or list one provider
+complydoc pricing-import -m gpt-4.1-mini  # generate an entry to verify and paste
 ```
 
 That reads litellm's price table and prints YAML to paste under `models:`, stamped with the

@@ -46,6 +46,27 @@ def build_limitations(
             )
         )
 
+    # --- Prices nobody checked --------------------------------------------
+    priced = next((d.cost.models for d in documents if d.cost), [])
+    imported = sorted({m.display_name for m in priced if m.price_source == "imported"})
+    if imported:
+        taken = next((m.imported_on for m in priced if m.imported_on), None)
+        limitations.append(
+            Limitation(
+                area="Price provenance",
+                statement=(
+                    f"{count(len(imported), 'model')} "
+                    f"{'is' if len(imported) == 1 else 'are'} priced from a maintained "
+                    f"third-party table{f' taken on {taken.isoformat()}' if taken else ''} rather "
+                    f"than from the provider's own page. Nobody has checked "
+                    f"{'that number' if len(imported) == 1 else 'those numbers'} against the "
+                    f"provider, and a price that has moved since is a figure that moved with it."
+                ),
+                affected=imported,
+                severity="important",
+            )
+        )
+
     # --- Files that were never opened -------------------------------------
     if skipped:
         by_reason: dict[str, list[str]] = defaultdict(list)

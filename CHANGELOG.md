@@ -8,8 +8,23 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Added
+
+- A vendored price table: about 240 models across the eight first-party providers, so
+  `--model` reaches a model without anyone having hand-written an entry for it, and
+  `complydoc models` can search them. It is data on disk — a run still reaches no
+  network — and `make prices` refreshes it. Imported prices are marked as imported, kept
+  apart from the handful someone verified against a provider's page, and a report that
+  prices against one says so in its limitations.
+- Batch pricing, where the provider publishes one. The cost page shows what the same
+  tokens cost through a batch endpoint beside the interactive price. Never inferred from
+  the customary half price: a discount nobody can check does not belong in a budget.
+
 ### Changed
 
+- `complydoc pricing-import` reads the vendored table, so it works without litellm
+  installed, and the entry it generates is marked `price_source: imported` rather than
+  being stamped with a `last_verified` date nobody earned.
 - The text read off each page is in the report by default. Reading a page beside what
   was extracted from it is the point of the tool, and it was behind a flag. The report
   says on its security page that the masking covers the findings table and not the file,

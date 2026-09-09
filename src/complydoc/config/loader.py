@@ -89,7 +89,7 @@ def load_config(config_dir: Path | None = None) -> Config:
 
     try:
         return Config(
-            pricing=PricingConfig.model_validate(parsed["pricing.yaml"]),
+            pricing=_with_imported(PricingConfig.model_validate(parsed["pricing.yaml"])),
             readiness=ReadinessConfig.model_validate(parsed["readiness.yaml"]),
             sensitive=SensitiveConfig.model_validate(parsed["sensitive.yaml"]),
             source_dir=str(directory),
@@ -97,6 +97,28 @@ def load_config(config_dir: Path | None = None) -> Config:
         )
     except ValueError as exc:
         raise ConfigError(f"configuration in {directory} is invalid:\n{exc}") from exc
+
+
+def _with_imported(pricing: PricingConfig) -> PricingConfig:
+    """Add the vendored table's models behind the curated ones.
+
+    They arrive switched off, so the default comparison is still the short list
+    someone has actually checked. What they add is reach: `--model` can name any
+    of them, and `complydoc models` can show what there is to name.
+
+    A curated entry always wins. Nothing here overwrites a price a person
+    verified with one nobody did.
+    """
+    from complydoc.cost.price_table import imported_models
+
+    known = {model.id for model in pricing.models}
+    extra = [model for model in imported_models() if model.id not in known]
+    if not extra:
+        return pricing
+    usable = [
+        m for m in extra if m.vision_formula is None or m.vision_formula in pricing.vision_formulas
+    ]
+    return pricing.model_copy(update={"models": [*pricing.models, *usable]})
 
 
 def check_staleness(pricing: PricingConfig, today: dt.date | None = None) -> list[StalenessWarning]:

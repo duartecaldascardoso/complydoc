@@ -146,8 +146,19 @@ def test_generated_yaml_validates_against_the_real_schema(config):
 
 def test_import_stamps_the_date_it_was_run():
     fragment = to_yaml(select(TABLE), today=dt.date(2026, 9, 8))
-    assert "last_verified: 2026-09-08" in fragment
+    assert "imported_on: 2026-09-08" in fragment
     assert "litellm" in fragment
+
+
+def test_an_import_is_never_stamped_as_a_verification():
+    """It used to write the import date into last_verified.
+
+    That made the report say a person had checked the price, and made the
+    staleness warning count down from a check that never happened.
+    """
+    fragment = to_yaml(select(TABLE), today=dt.date(2026, 9, 8))
+    assert "last_verified" not in fragment
+    assert "price_source: imported" in fragment
 
 
 def test_openai_tokenizer_is_marked_exact_and_others_approximate():

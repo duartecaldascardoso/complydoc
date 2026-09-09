@@ -536,6 +536,32 @@
 {{ annual_chart | safe }}
 {% endif %}
 
+{% set batched = comparisons | selectattr("batch_per_1000_usd") | list %}
+{% if batched %}
+<h3>Through a batch endpoint</h3>
+<p class="note">The same text tokens, sent to the provider's batch API instead of its
+interactive one. Shown only for models that publish a batch price — a discount that is
+customary but unpublished is not a number this report will put in a budget.</p>
+<div class="scroll"><table data-sortable>
+  <thead><tr><th data-sort="text">Model</th>
+    <th class="n" data-sort="num">Interactive / 1,000</th>
+    <th class="n" data-sort="num" data-sort-default="desc">Batch / 1,000</th>
+    <th class="n" data-sort="num">Saving</th></tr></thead>
+  <tbody>
+  {% for c in batched %}
+    {% set standard = c.by_key("text_ocr") %}
+    {% if standard and standard.per_1000_usd %}
+    <tr><td>{{ c.display_name }}</td>
+      <td class="n">{{ money(standard.per_1000_usd) }}</td>
+      <td class="n">{{ money(c.batch_per_1000_usd) }}</td>
+      <td class="n" data-value="{{ (1 - c.batch_per_1000_usd / standard.per_1000_usd) * 100 }}">
+        {{ "%.0f%%"|format((1 - c.batch_per_1000_usd / standard.per_1000_usd) * 100) }}</td></tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+
 <h3>Per document</h3>
 {% set cheapest = comparisons | last %}
 <div class="scroll"><table data-paginate="20">

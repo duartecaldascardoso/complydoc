@@ -68,6 +68,11 @@ class ModelComparison:
     display_name: str
     provider: str = ""
     architectures: list[ArchitectureCost] = field(default_factory=list)
+    batch_per_1000_usd: float | None = None
+    """The same text tokens through the provider's batch endpoint, per 1,000
+    documents. None where the provider publishes no batch price; it is never
+    inferred from the customary discount."""
+    price_source: str = "verified"
 
     def by_key(self, key: str) -> ArchitectureCost | None:
         return next((a for a in self.architectures if a.key == key), None)
@@ -88,10 +93,14 @@ def build_comparison(report: AuditReport) -> list[ModelComparison]:
         display = report.cost.documents[0].models[index].display_name
         buckets: dict[str, tuple[float, int]] = {k: (0.0, 0) for k, _, _ in SERIES}
 
+        batch_total, batch_served = 0.0, 0
         for estimate in report.cost.documents:
             model = estimate.models[index]
             text = model.text_path_input_usd
             vision = model.vision_input_usd_by_resolution.get(resolution)
+            if model.batch_text_path_input_usd is not None:
+                batch_total += model.batch_text_path_input_usd
+                batch_served += 1
 
             if text is not None:
                 total, served = buckets["text_ocr"]
@@ -128,6 +137,8 @@ def build_comparison(report: AuditReport) -> list[ModelComparison]:
                 display_name=display,
                 provider=report.cost.documents[0].models[index].provider,
                 architectures=architectures,
+                batch_per_1000_usd=(batch_total / batch_served * 1000 if batch_served else None),
+                price_source=report.cost.documents[0].models[index].price_source,
             )
         )
     return comparisons

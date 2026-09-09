@@ -89,6 +89,13 @@ class ModelPricing(_Base):
     enabled: bool = True
     input_per_mtok_usd: float | None = None
     output_per_mtok_usd: float | None = None
+    batch_input_per_mtok_usd: float | None = None
+    """Input price on the provider's batch endpoint, where it publishes one.
+
+    Never inferred from the usual half-price convention. A discount nobody can
+    check does not belong in a budget, so a model without a published batch
+    price simply has none here and the report says so.
+    """
     supports_vision: bool = True
     vision_formula: str | None = None
     tokenizer: TokenizerSpec
@@ -102,10 +109,23 @@ class ModelPricing(_Base):
     last_verified: dt.date | None = None
     source_url: str | None = None
     notes: str | None = None
+    price_source: Literal["verified", "imported"] = "verified"
+    """Where the number came from.
+
+    "verified" means a person read it off the provider's own page and stamped
+    `last_verified`. "imported" means it was taken from a maintained third-party
+    table on `imported_on` and nobody has checked it since. The report keeps the
+    two apart rather than presenting an import as a verification.
+    """
+    imported_on: dt.date | None = None
 
     @property
     def is_priced(self) -> bool:
         return self.input_per_mtok_usd is not None
+
+    @property
+    def has_batch_price(self) -> bool:
+        return self.batch_input_per_mtok_usd is not None
 
     def days_since_verified(self, today: dt.date) -> int | None:
         if self.last_verified is None:

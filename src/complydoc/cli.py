@@ -598,45 +598,91 @@ def doctor(config_dir: ConfigOpt = None) -> None:
 
 
 @app.command()
-def models(config_dir: ConfigOpt = None) -> None:
-    """List the models available to price against, and how current each price is."""
+def models(
+    match: Annotated[
+        str | None,
+        typer.Argument(help="Show only models whose id contains this."),
+    ] = None,
+    provider: Annotated[
+        str | None, typer.Option("--provider", help="Show only one provider's models.")
+    ] = None,
+    show_all: Annotated[
+        bool, typer.Option("--all", help="Include every model in the vendored price table.")
+    ] = False,
+    config_dir: ConfigOpt = None,
+) -> None:
+    """List the models available to price against, and where each price came from.
+
+    The compared-by-default set is short on purpose: those are the prices someone
+    has checked against the provider's own page. Behind them sits a table of
+    several hundred more, any of which can be named with --model.
+    """
     import datetime as dt
+
+    from complydoc.cost.price_table import table_provenance
 
     config = _load(config_dir)
     pricing = config.pricing  # type: ignore[attr-defined]
     today = dt.date.today()
 
+    chosen = list(pricing.models)
+    filtered = bool(match or provider)
+    if match:
+        chosen = [m for m in chosen if match.lower() in m.id.lower()]
+    if provider:
+        chosen = [m for m in chosen if m.provider.lower() == provider.lower()]
+    if not filtered and not show_all:
+        chosen = [m for m in chosen if m.enabled]
+
+    if not chosen:
+        errors.print("[yellow]No model matches.[/] Try [bold]complydoc models --all[/].")
+        raise typer.Exit(code=1)
+
     table = Table(box=None, pad_edge=False)
     table.add_column("Model id")
     table.add_column("Provider")
     table.add_column("Input $/Mtok", justify="right")
+    table.add_column("Batch", justify="right")
     table.add_column("Vision formula")
-    table.add_column("Verified")
+    table.add_column("Price from")
 
-    for entry in pricing.models:
-        if not entry.enabled:
-            state = "[dim]disabled, no price[/]"
-        elif not entry.is_priced:
+    for entry in chosen:
+        if not entry.is_priced:
             state = "[yellow]no price[/]"
+        elif entry.price_source == "imported":
+            when = entry.imported_on.isoformat() if entry.imported_on else "unknown date"
+            state = f"[dim]imported {when}[/]"
         else:
             age = entry.days_since_verified(today)
             if age is None:
-                state = "[red]never[/]"
+                state = "[red]never verified[/]"
             elif age > pricing.staleness_warn_days:
-                state = f"[red]{entry.last_verified} ({age}d)[/]"
+                state = f"[red]verified {entry.last_verified} ({age}d)[/]"
             else:
-                state = f"{entry.last_verified}"
+                state = f"verified {entry.last_verified}"
         table.add_row(
             entry.id if entry.enabled else f"[dim]{entry.id}[/]",
             entry.provider,
-            f"{entry.input_per_mtok_usd:g}" if entry.is_priced else "—",
-            entry.vision_formula or "—",
+            f"{entry.input_per_mtok_usd:g}" if entry.is_priced else "\u2014",
+            f"{entry.batch_input_per_mtok_usd:g}" if entry.has_batch_price else "\u2014",
+            entry.vision_formula or "\u2014",
             state,
         )
     console.print(table)
+
+    source, imported_on, total = table_provenance()
+    enabled = sum(1 for m in pricing.models if m.enabled)
+    if not filtered and not show_all:
+        console.print(
+            f"\n[dim]Showing the {enabled} compared by default. "
+            f"{total} more are in the price table — [/][bold]complydoc models --all[/][dim], "
+            f"or search: [/][bold]complydoc models gpt[/][dim].[/]"
+        )
     console.print(
-        "\nPrice one model with [bold]--model <id>[/], repeat the flag for several. "
-        "Add more with [bold]complydoc pricing-import[/]."
+        f"\n[dim]Price one model with [/][bold]--model <id>[/][dim], repeat for several. "
+        f"Imported prices come from {source} as of "
+        f"{imported_on.isoformat() if imported_on else 'an unknown date'}; refresh with "
+        f"[/][bold]make prices[/][dim].[/]"
     )
 
 

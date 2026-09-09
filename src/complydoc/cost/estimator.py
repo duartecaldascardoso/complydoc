@@ -77,6 +77,12 @@ class ModelCostEstimate:
     text_path_seconds: float | None
     """Only set when the model carries a measured throughput in pricing.yaml."""
     vision_formula: str | None
+    batch_input_per_mtok_usd: float | None = None
+    """The provider's published batch price, where there is one."""
+    batch_text_path_input_usd: float | None = None
+    batch_vision_input_usd_by_resolution: dict[str, float] = field(default_factory=dict)
+    price_source: str = "verified"
+    imported_on: dt.date | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -213,6 +219,17 @@ def _model_estimate(
     throughput = model.input_tokens_per_second
     text_seconds = token_count.tokens / throughput if throughput and text_cost is not None else None
 
+    # The same tokens through the provider's batch endpoint. Only where one is
+    # published: assuming the customary half price would put a discount nobody
+    # can check into a budget.
+    batch = model.batch_input_per_mtok_usd
+    batch_text = None if text_cost is None or batch is None else token_count.tokens / 1e6 * batch
+    batch_vision = (
+        {name: total / 1e6 * batch for name, total in vision_tokens_by.items()}
+        if batch is not None
+        else {}
+    )
+
     age = model.days_since_verified(today)
     return ModelCostEstimate(
         model_id=model.id,
@@ -232,6 +249,11 @@ def _model_estimate(
         vision_path_unavailable_reason=vision_unavailable,
         text_path_seconds=round(text_seconds, 2) if text_seconds else None,
         vision_formula=model.vision_formula,
+        batch_input_per_mtok_usd=batch,
+        batch_text_path_input_usd=batch_text,
+        batch_vision_input_usd_by_resolution=batch_vision,
+        price_source=model.price_source,
+        imported_on=model.imported_on,
     )
 
 

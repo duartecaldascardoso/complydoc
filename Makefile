@@ -97,6 +97,11 @@ models: ## List the models available to price against
 fixtures: ## Rebuild the committed test fixtures
 	$(PYTHON) python $(TESTS)/generate_fixtures.py
 
+.PHONY: prices
+prices: ## Refresh the vendored model price table from litellm
+	$(PYTHON) python scripts/build_price_table.py
+	@echo "Review the diff: every entry it writes is imported, not verified."
+
 .PHONY: diagrams
 diagrams: ## Re-export the README architecture diagrams to SVG
 	$(PYTHON) python scripts/build_diagram.py

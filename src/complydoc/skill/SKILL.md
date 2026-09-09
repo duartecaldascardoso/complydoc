@@ -28,7 +28,7 @@ Run `complydoc` with no arguments to audit the current directory.
 | `complydoc cost <path>` | Cost only |
 | `complydoc readiness <path>` | Extraction readiness only |
 | `complydoc sensitive <path>` | Identifiers only |
-| `complydoc models` | Which models can be priced against |
+| `complydoc models` | Which models can be priced against (`--all` for every one) |
 | `complydoc doctor` | What is installed |
 
 Flags worth knowing: `--monthly-volume N` extrapolates cost, `--model <id>` (repeatable)
@@ -80,6 +80,12 @@ page by default, so the file itself holds those values in full whether or not
 `--reveal` was passed — treat it as you would treat the documents. `--no-extracted-text`
 produces a report with no document content in it. Only pass `--reveal` if the user
 explicitly asks for unmasked values in the findings table.
+
+**A price is either verified or imported, and the report says which.** Ten or so models
+carry a price someone read off the provider's page; a few hundred more come from a
+third-party table and nobody has checked them. Naming one of those with `--model` puts a
+`Price provenance` entry in `limitations[]` — repeat it rather than quoting the figure
+as if it were checked.
 
 **Costs are input tokens only.** Output cost depends on the prompt, which complydoc
 cannot know, so the real bill is higher. Prices carry `last_verified`; report a stale

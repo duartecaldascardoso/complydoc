@@ -8,15 +8,52 @@
 <style>
   html { -webkit-text-size-adjust: 100%; }
   :root {
-    --accent: #1a7f4b; --paper: #fbfbfa; --line: #e8e8e6;
+    color-scheme: light;
+    --paper: #fbfbfa; --panel: #fff; --ink: #111; --ink-2: #333;
+    --muted: #666; --faint: #999; --line: #e8e8e6; --line-2: #d8d8d4;
+    --accent: #1a7f4b;
     --good: #1a7f4b; --good-bg: #e8f3ec;
     --fair: #8a5a00; --fair-bg: #fbf1de;
     --poor: #b3261e; --poor-bg: #fbeae8;
     --na:   #6b7280; --na-bg:   #f0f1f3;
+    --series-1: #2a78d6; --series-2: #4a3aa7; --series-3: #e87ba4;
+    --pv-page: #fff; --pv-edge: #bbb; --pv-text: #dcdcdc;
+    --pv-image: #f4dfae; --pv-gutter: #f4f4f2;
+  }
+  /* Dark is selected, not flipped: the chart steps were validated against the dark
+     surface on their own, and the middle series changes hue because violet and blue
+     are indistinguishable to a protanope there. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #16181a; --panel: #1d2023; --ink: #e9e9e7; --ink-2: #c9c9c6;
+      --muted: #9aa0a6; --faint: #71767b; --line: #2b2f33; --line-2: #3a3f45;
+      --accent: #4cc38a;
+      --good: #4cc38a; --good-bg: #12291f;
+      --fair: #d9a441; --fair-bg: #2c2415;
+      --poor: #f2726a; --poor-bg: #2e1a19;
+      --na:   #9aa0a6; --na-bg:   #24282c;
+      --series-1: #3987e5; --series-2: #d55181; --series-3: #c98500;
+      --pv-page: #24282c; --pv-edge: #4a5058; --pv-text: #4d545c;
+      --pv-image: #6d5a2f; --pv-gutter: #1f2225;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #16181a; --panel: #1d2023; --ink: #e9e9e7; --ink-2: #c9c9c6;
+    --muted: #9aa0a6; --faint: #71767b; --line: #2b2f33; --line-2: #3a3f45;
+    --accent: #4cc38a;
+    --good: #4cc38a; --good-bg: #12291f;
+    --fair: #d9a441; --fair-bg: #2c2415;
+    --poor: #f2726a; --poor-bg: #2e1a19;
+    --na:   #9aa0a6; --na-bg:   #24282c;
+    --series-1: #3987e5; --series-2: #d55181; --series-3: #c98500;
+    --pv-page: #24282c; --pv-edge: #4a5058; --pv-text: #4d545c;
+    --pv-image: #6d5a2f; --pv-gutter: #1f2225;
   }
   body {
     margin: 0 auto; padding: 2.5rem 1.5rem 6rem; max-width: 60rem;
-    background: var(--paper); color: #111;
+    background: var(--paper); color: var(--ink);
     font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     font-variant-numeric: tabular-nums;
   }
@@ -24,18 +61,18 @@
   .head { border-bottom: 2px solid var(--accent); padding-bottom: 0.875rem; margin-bottom: 0.5rem; }
   h1 { font-size: 1.375rem; font-weight: 600; margin: 0 0 0.25rem; }
   h2 { font-size: 1rem; font-weight: 600; margin: 2.75rem 0 0.75rem;
-       padding-top: 0.75rem; border-top: 1px solid #111; }
+       padding-top: 0.75rem; border-top: 1px solid var(--line-2); }
   h3 { font-size: 0.9375rem; font-weight: 600; margin: 1.75rem 0 0.5rem; }
-  h4 { font-size: 0.8125rem; font-weight: 600; margin: 1.5rem 0 0.375rem; color: #444; }
+  h4 { font-size: 0.8125rem; font-weight: 600; margin: 1.5rem 0 0.375rem; color: var(--ink-2); }
   p  { margin: 0 0 0.75rem; }
-  .meta { color: #666; font-size: 0.8125rem; margin: 0; }
-  .note { color: #555; font-size: 0.8125rem; max-width: 46rem; }
+  .meta { color: var(--muted); font-size: 0.8125rem; margin: 0; }
+  .note { color: var(--muted); font-size: 0.8125rem; max-width: 46rem; }
   code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.875em; }
 
   table { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1rem; font-size: 0.875rem; }
   th, td { text-align: left; padding: 0.375rem 0.75rem 0.375rem 0; vertical-align: top;
            border-bottom: 1px solid var(--line); }
-  th { font-weight: 600; border-bottom: 1px solid #111; white-space: nowrap; }
+  th { font-weight: 600; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
   td.n, th.n { text-align: right; white-space: nowrap; padding-right: 1.25rem; }
   .scroll { overflow-x: auto; }
   /* Ratings and severities are the two things a reader scans for, so they get
@@ -50,16 +87,16 @@
   .fair { color: var(--fair); }
   td.n .poor { font-weight: 600; }
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
-  .why { color: #666; font-size: 0.8125rem; }
+  .why { color: var(--muted); font-size: 0.8125rem; }
 
-  .box { border: 1px solid #111; border-left: 3px solid var(--accent);
-         background: #fff; padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.875rem; }
+  .box { border: 1px solid var(--line-2); border-left: 3px solid var(--accent);
+         background: var(--panel); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.875rem; }
   .box p:last-child { margin-bottom: 0; }
   .box strong { display: block; }
 
   details { margin: 0; border-bottom: 1px solid var(--line); }
   summary { cursor: pointer; padding: 0.625rem 0; font-weight: 600; font-size: 0.9375rem; }
-  summary span { font-weight: 400; color: #666; font-size: 0.8125rem; }
+  summary span { font-weight: 400; color: var(--muted); font-size: 0.8125rem; }
   details > div { padding: 0 0 1.5rem; }
 
   ul { margin: 0.25rem 0 0.75rem; padding-left: 1.125rem; }
@@ -69,75 +106,131 @@
   .lim.important { border-left-color: var(--fair); }
   .lim .h { font-weight: 600; font-size: 0.8125rem; }
   .ok { color: var(--accent); }
-  .lim .files { color: #666; font-size: 0.75rem; margin-top: 0.25rem;
+  .lim .files { color: var(--muted); font-size: 0.75rem; margin-top: 0.25rem;
                 font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
                 word-break: break-all; }
   .pages { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 0.75rem 0 1rem; }
   .page { }
   .pair { display: flex; gap: 0.5rem; }
   .half { }
-  .half > .lbl { font-size: 0.625rem; color: #999; text-transform: uppercase;
+  .half > .lbl { font-size: 0.625rem; color: var(--faint); text-transform: uppercase;
                  letter-spacing: 0.06em; margin-bottom: 0.1875rem; }
-  .pv, .pg { display: block; width: 240px; height: auto; background: #fff;
-             border: 1px solid #ccc; }
-  .page .cap { font-size: 0.6875rem; color: #666; margin-top: 0.375rem; line-height: 1.3; }
-  .key { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: #666;
+  .pv, .pg { display: block; width: 240px; height: auto; background: var(--pv-page);
+             border: 1px solid var(--line-2); }
+  .page .cap { font-size: 0.6875rem; color: var(--muted); margin-top: 0.375rem; line-height: 1.3; }
+  .key { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: var(--muted);
          margin: 0 0 1rem; align-items: center; }
   .key span { display: inline-flex; align-items: center; gap: 0.3125rem; }
-  .sw { width: 11px; height: 11px; display: inline-block; border: 1px solid #bbb; }
+  .sw { width: 11px; height: 11px; display: inline-block; border: 1px solid var(--line-2); }
   .filter { display: flex; gap: 0.5rem; align-items: baseline; margin: 0 0 0.75rem; }
   .filter input { font: inherit; font-size: 0.875rem; padding: 0.3125rem 0.5rem;
-                  border: 1px solid #ccc; background: #fff; color: inherit;
+                  border: 1px solid var(--line-2); background: var(--panel); color: inherit;
                   border-radius: 0; min-width: 18rem; }
   .filter input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-  .filter .count { font-size: 0.8125rem; color: #666; }
+  .filter .count { font-size: 0.8125rem; color: var(--muted); }
   .pager { display: flex; gap: 0.5rem; align-items: baseline; margin: -0.5rem 0 1rem;
-           font-size: 0.8125rem; color: #666; }
-  .pager button { font: inherit; padding: 0.125rem 0.5rem; border: 1px solid #ccc;
-                  background: #fff; color: inherit; cursor: pointer; }
-  .pager button:disabled { color: #bbb; cursor: default; }
+           font-size: 0.8125rem; color: var(--muted); }
+  .pager button { font: inherit; padding: 0.125rem 0.5rem; border: 1px solid var(--line-2);
+                  background: var(--panel); color: inherit; cursor: pointer; }
+  .pager button:disabled { color: var(--faint); cursor: default; }
   @media print { .filter, .pager { display: none; } }
   h4.sec { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.9375rem;
-           color: #111; margin: 1.75rem 0 0.5rem; padding-top: 0.75rem;
+           color: var(--ink); margin: 1.75rem 0 0.5rem; padding-top: 0.75rem;
            border-top: 1px solid var(--line); }
   h4.sec .tag { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.07em;
                 font-weight: 600; padding: 0.125rem 0.375rem; border-radius: 2px; }
-  .sec-diff .tag { background: #eceef2; color: #4f5d75; }
+  .sec-diff .tag { background: var(--na-bg); color: var(--na); }
   .sec-cost .tag { background: var(--good-bg); color: var(--good); }
   .sec-pii  .tag { background: var(--poor-bg); color: var(--poor); }
-  .sec-text .tag { background: #eceef2; color: #4f5d75; }
+  .sec-text .tag { background: var(--na-bg); color: var(--na); }
   details.text { border-bottom: 1px solid var(--line); }
-  details.text > summary { font-weight: 400; font-size: 0.8125rem; color: #555;
+  details.text > summary { font-weight: 400; font-size: 0.8125rem; color: var(--muted);
                            padding: 0.375rem 0; }
-  details.text pre { margin: 0 0 0.75rem; padding: 0.75rem; background: #fff;
+  details.text pre { margin: 0 0 0.75rem; padding: 0.75rem; background: var(--panel);
                      border: 1px solid var(--line); max-height: 26rem; overflow: auto;
                      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
                      font-size: 0.75rem; line-height: 1.45; white-space: pre-wrap;
                      word-break: break-word; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0 1.75rem; }
+  .tile { flex: 1 1 15rem; background: var(--panel); border: 1px solid var(--line);
+          border-radius: 5px; padding: 0.875rem 1rem; }
+  .tile .k { font-size: 0.75rem; color: var(--muted); }
+  .tile .v { font-size: 1.875rem; font-weight: 600; letter-spacing: -0.02em;
+             margin: 0.1875rem 0 0.25rem; }
+  .tile .v .u { font-size: 0.9375rem; font-weight: 400; color: var(--faint); }
+  .tile .s { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
+  .topline { display: flex; align-items: center; justify-content: space-between;
+             gap: 1rem; margin-bottom: 1.25rem; }
+  .logo { display: block; margin: 0 0 0 -6px; }
+  #theme { font: inherit; font-size: 0.75rem; padding: 0.25rem 0.625rem;
+           border: 1px solid var(--line-2); background: var(--panel); color: var(--muted);
+           cursor: pointer; border-radius: 3px; }
+  #theme:hover { color: var(--ink); }
+
+  /* --- documents explorer -------------------------------------------- */
+  .explorer { display: flex; gap: 1.25rem; align-items: flex-start; margin-top: 0.75rem; }
+  .files { flex: 0 0 20rem; max-width: 20rem; position: sticky; top: 1rem; }
+  .files ul { list-style: none; margin: 0.5rem 0 0; padding: 0;
+              border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
+              max-height: 34rem; overflow-y: auto; background: var(--panel); }
+  .files li { border-bottom: 1px solid var(--line); }
+  .files li:last-child { border-bottom: none; }
+  .files button { display: flex; width: 100%; gap: 0.5rem; align-items: baseline;
+                  text-align: left; font: inherit; font-size: 0.8125rem;
+                  padding: 0.5rem 0.625rem; background: none; border: none;
+                  color: inherit; cursor: pointer; }
+  .files button:hover { background: var(--na-bg); }
+  .files button[aria-current="true"] { background: var(--na-bg); font-weight: 600;
+                                       box-shadow: inset 3px 0 0 var(--accent); }
+  .files .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+               white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .files .sc { flex: 0 0 auto; font-size: 0.6875rem; }
+  .viewer { flex: 1 1 0; min-width: 0; }
+  .viewer > .doc[hidden] { display: none; }
+  .doc h3 { margin-top: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.9375rem; }
+  .flags { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0.375rem 0 1rem; }
+  .flag { font-size: 0.6875rem; padding: 0.125rem 0.4375rem; border-radius: 2px;
+          background: var(--na-bg); color: var(--na); }
+  .flag.bad { background: var(--poor-bg); color: var(--poor); }
+  .flag.warn { background: var(--fair-bg); color: var(--fair); }
+  .flag.ok { background: var(--good-bg); color: var(--good); }
+  .subtabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--line);
+             margin: 0 0 0.875rem; }
+  .subtabs button { font: inherit; font-size: 0.8125rem; font-weight: 600;
+                    padding: 0.375rem 0.75rem; background: none; border: none;
+                    border-bottom: 2px solid transparent; color: var(--muted);
+                    cursor: pointer; margin-bottom: -1px; }
+  .subtabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+  .pcap { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.375rem; }
+  @media (max-width: 860px) {
+    .explorer { flex-direction: column; }
+    .files { flex: 1 1 auto; max-width: none; position: static; width: 100%; }
+  }
   .drivers { display: flex; flex-wrap: wrap; gap: 2rem; margin: 0.25rem 0 1.25rem; }
   .driver { flex: 1 1 22rem; min-width: 0; }
   .driver > .lbl { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.06em;
-                   color: #888; margin-bottom: 0.375rem;
+                   color: var(--faint); margin-bottom: 0.375rem;
                    border-bottom: 1px solid var(--line); padding-bottom: 0.25rem; }
   table.bare { margin: 0; table-layout: fixed; }
   table.bare td { border-bottom: none; padding: 0.25rem 0.5rem 0 0; }
   table.bare tr.d-head td { font-weight: 600; font-size: 0.8125rem; padding-top: 0.5rem; }
-  table.bare tr.d-why td { padding: 0 0 0.5rem; border-bottom: 1px solid #f0f0ee; }
-  table.bare td.v { white-space: normal; font-weight: 400; color: #444;
+  table.bare tr.d-why td { padding: 0 0 0.5rem; border-bottom: 1px solid var(--line); }
+  table.bare td.v { white-space: normal; font-weight: 400; color: var(--ink-2);
                     font-size: 0.8125rem; text-align: right; width: 42%; }
   table.bare td.n { width: 3rem; }
-  .wt { font-size: 0.6875rem; color: #999; }
+  .wt { font-size: 0.6875rem; color: var(--faint); }
   .warn { border: 1px solid var(--fair); border-left-width: 3px; background: var(--fair-bg);
           padding: 0.625rem 0.875rem; margin: 0.75rem 0; font-size: 0.8125rem; }
   .warn ul { margin: 0.25rem 0 0; }
   details.more { border: none; margin: 0.5rem 0 0; }
-  details.more > summary { font-weight: 400; font-size: 0.8125rem; color: #666;
+  details.more > summary { font-weight: 400; font-size: 0.8125rem; color: var(--muted);
                            padding: 0.375rem 0; }
-  details.more > summary::marker { color: #bbb; }
+  details.more > summary::marker { color: var(--faint); }
   footer { margin-top: 3rem; padding-top: 0.75rem; border-top: 1px solid var(--line);
-           color: #888; font-size: 0.75rem; }
+           color: var(--faint); font-size: 0.75rem; }
   @media print {
-    body { padding: 0; max-width: none; font-size: 10.5pt; background: #fff; }
+    body { padding: 0; max-width: none; font-size: 10.5pt; background: #fff; color: #000; }
     details > div { display: block !important; }
     summary { list-style: none; }
     h2 { break-after: avoid; }
@@ -145,17 +238,17 @@
   }
 
   /* --- page chrome --------------------------------------------------- */
-  nav.tabs { display: flex; gap: 0.25rem; margin: 1.25rem 0 0; border-bottom: 1px solid #d8d8d4;
+  nav.tabs { display: flex; gap: 0.25rem; margin: 1.25rem 0 0; border-bottom: 1px solid var(--line-2);
              flex-wrap: wrap; }
   nav.tabs a { padding: 0.5rem 0.875rem; font-size: 0.875rem; font-weight: 600;
-               color: #666; text-decoration: none; border: 1px solid transparent;
+               color: var(--muted); text-decoration: none; border: 1px solid transparent;
                border-bottom: none; margin-bottom: -1px; border-radius: 3px 3px 0 0; }
-  nav.tabs a:hover { color: #111; }
-  nav.tabs a[aria-current="page"] { color: #111; background: #fff;
-                                    border-color: #d8d8d4; }
-  nav.tabs .n { font-weight: 400; color: #999; margin-left: 0.3125rem; }
+  nav.tabs a:hover { color: var(--ink); }
+  nav.tabs a[aria-current="page"] { color: var(--ink); background: var(--paper);
+                                    border-color: var(--line-2); }
+  nav.tabs .n { font-weight: 400; color: var(--faint); margin-left: 0.3125rem; }
   section[data-page] > h2:first-child { border-top: none; margin-top: 1.5rem; padding-top: 0; }
-  .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: #555;
+  .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.75rem; color: var(--muted);
             margin: 0 0 0.5rem; }
   .legend span { display: inline-flex; align-items: center; gap: 0.375rem; }
   .legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
@@ -163,7 +256,7 @@
   .lims { max-height: none; }
   .pair-text { display: flex; gap: 0.75rem; }
   .pair-text .half-text { flex: 1 1 0; min-width: 0; }
-  .pair-text .lbl { font-size: 0.625rem; color: #999; text-transform: uppercase;
+  .pair-text .lbl { font-size: 0.625rem; color: var(--faint); text-transform: uppercase;
                     letter-spacing: 0.06em; margin: 0 0 0.25rem; }
   @media print { nav.tabs { display: none; } section[data-page] { display: block !important; } }
 </style>
@@ -196,7 +289,10 @@
 </table></div>
 {% endmacro %}
 
-{{ logo_svg | safe }}
+<div class="topline">
+  {{ logo_svg | safe }}
+  <button type="button" id="theme" hidden aria-pressed="false">Dark</button>
+</div>
 <div class="head">
   <h1>Document audit</h1>
   <p class="meta">{{ report.run.target }}</p>
@@ -230,44 +326,73 @@
 
 {# ============================================================ SUMMARY #}
 <section data-page id="summary">
-<h2>Summary</h2>
-<table><tbody>
-  <tr><td>Documents audited</td><td class="n">{{ agg.documents_audited }}</td>
-      <td class="why">{{ agg.pages_total }} page(s){% if agg.documents_skipped %},
-        {{ agg.documents_skipped }} file(s) skipped{% endif %}</td></tr>
-  {% if agg.total_text_path_usd is not none %}
-  <tr><td>Text path, this folder</td><td class="n">{{ money(agg.total_text_path_usd) }}</td>
-      <td class="why">input tokens only</td></tr>{% endif %}
-  {% if agg.total_vision_path_usd is not none %}
-  <tr><td>Vision path, this folder</td><td class="n">{{ money(agg.total_vision_path_usd) }}</td>
-      <td class="why">at {{ report.cost.headline_resolution }} resolution</td></tr>{% endif %}
-  {% if agg.mean_difficulty_score is not none %}
-  <tr><td>Mean difficulty score</td><td class="n">{{ agg.mean_difficulty_score }} / 100</td>
-      <td class="why">higher is easier</td></tr>{% endif %}
-  {% if "sensitive" in report.run.components_run %}
-  <tr><td>Sensitive items found</td><td class="n">{{ agg.sensitive_total }}</td>
-      <td class="why">in {{ agg.documents_with_sensitive_data }} of
-        {{ agg.documents_audited }} document(s)</td></tr>{% endif %}
-  {% if agg.pages_unreadable %}
-  <tr><td>Pages not read</td><td class="n">{{ agg.pages_unreadable }}</td>
-      <td class="why">not searched for sensitive data</td></tr>{% endif %}
-  <tr><td>Network guard</td>
-      <td class="n">{% if report.run.offline_guard == "armed" %}<span class="ok">armed</span>{% else %}<span class="poor">{{ report.run.offline_guard }}</span>{% endif %}</td>
-      <td class="why">no document content left this machine</td></tr>
-</tbody></table>
+<h2>What this folder looks like</h2>
+
+{% set cheapest = comparisons | map(attribute="architectures") | map("first") | list %}
+<div class="tiles">
+  <div class="tile">
+    <div class="k">Cost per 1,000 documents</div>
+    {% if comparisons %}
+      {% set best = comparisons | last %}
+      {% set ocr = best.by_key("text_ocr") %}
+      {% set vis = best.by_key("vision") %}
+      <div class="v">{{ money(ocr.per_1000_usd) if ocr.per_1000_usd is not none else "—" }}</div>
+      <div class="s">reading the text, on {{ best.display_name }}.
+        {% if vis.per_1000_usd is not none %}Up to {{ money(vis.per_1000_usd) }} if every page
+        is sent as an image.{% endif %}</div>
+    {% else %}<div class="v">—</div><div class="s">cost was not part of this run</div>{% endif %}
+  </div>
+
+  <div class="tile">
+    <div class="k">Average quality</div>
+    {% if agg.mean_difficulty_score is not none %}
+      <div class="v">{{ agg.mean_difficulty_score | round | int }}<span class="u">/100</span></div>
+      <div class="s">
+        {% set bands = agg.difficulty_bands %}
+        {{ bands.get("straightforward", 0) + bands.get("workable", 0) }} of
+        {{ agg.documents_audited }} document(s) are workable or better. Higher is easier.</div>
+    {% else %}<div class="v">—</div><div class="s">difficulty was not part of this run</div>{% endif %}
+  </div>
+
+  <div class="tile">
+    <div class="k">Sensitive items per document</div>
+    {% if "sensitive" in report.run.components_run %}
+      <div class="v">{{ "%.1f"|format(agg.sensitive_total / agg.documents_audited) if agg.documents_audited else 0 }}</div>
+      <div class="s">{{ agg.sensitive_total }} found in
+        {{ agg.documents_with_sensitive_data }} of {{ agg.documents_audited }} document(s).
+        {% if agg.counts_by_severity_high is defined %}{% endif %}
+        {% set high = agg.sensitive_by_severity.get("high", 0) %}
+        {{ high }} rated high severity.</div>
+    {% else %}<div class="v">—</div><div class="s">the sensitive scan was not part of this run</div>{% endif %}
+  </div>
+</div>
+
+{% if per_1000_chart %}
+<h3>Cost per 1,000 documents</h3>
+<div class="legend">
+  {% for key, label, colour in series %}
+    <span><i style="background:{{ colour }}"></i>{{ label }}</span>
+  {% endfor %}
+</div>
+{{ per_1000_chart | safe }}
+<p class="note">Reading the text is far cheaper than sending pictures of the pages, but it
+only works on documents that carry a text layer. The Cost page shows how many documents each
+approach actually reaches.</p>
+{% endif %}
 
 {% if report.staleness_warnings %}
 <div class="box"><strong>Unverified prices</strong>
   <ul>{% for w in report.staleness_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
 {% endif %}
 
-<h2>Limitations of this run</h2>
-<p class="note">Generated from what happened during this run, not a standard disclaimer.
+<h2>What this run could not tell you</h2>
+<p class="note">Built from what happened during this run, not a standard disclaimer.
 {% set important = report.limitations | selectattr("severity", "equalto", "important") | list %}
-{{ important | length }} of {{ report.limitations | length }} are marked important.</p>
+{{ important | length }} of {{ report.limitations | length }} need attention. Signals that did
+not apply to a particular document are listed on that document.</p>
 <details class="more" open>
   <summary>{{ report.limitations | length }} limitation(s)</summary>
-  <div class="lims" data-paginate-list="8">
+  <div class="lims" data-paginate-list="6">
   {% for lim in report.limitations %}
     <div class="lim{% if lim.severity == 'important' %} important{% endif %}">
       <div class="h">{{ lim.area }}{% if lim.severity == "important" %} — important{% endif %}</div>
@@ -280,16 +405,31 @@
   </div>
 </details>
 
-{% if report.skipped %}
-<h3>Files skipped</h3>
-<div class="scroll"><table data-paginate="15">
-  <thead><tr><th>File</th><th>Reason</th><th>Detail</th></tr></thead>
-  <tbody>{% for s in report.skipped %}
-    <tr><td class="mono">{{ s.path.name }}</td><td>{{ s.reason }}</td>
-        <td class="why">{{ s.detail or "—" }}</td></tr>
-  {% endfor %}</tbody>
-</table></div>
-{% endif %}
+<details class="more">
+  <summary>Run detail — {{ agg.documents_audited }} document(s),
+    {{ agg.pages_total }} page(s){% if agg.documents_skipped %},
+    {{ agg.documents_skipped }} skipped{% endif %}</summary>
+  <div>
+  <table><tbody>
+    <tr><td>Documents audited</td><td class="n">{{ agg.documents_audited }}</td>
+        <td class="why">{{ agg.pages_total }} page(s)</td></tr>
+    {% if agg.pages_unreadable %}
+    <tr><td>Pages not read</td><td class="n">{{ agg.pages_unreadable }}</td>
+        <td class="why">not searched for sensitive data</td></tr>{% endif %}
+    <tr><td>Network guard</td>
+        <td class="n">{% if report.run.offline_guard == "armed" %}<span class="ok">armed</span>{% else %}<span class="poor">{{ report.run.offline_guard }}</span>{% endif %}</td>
+        <td class="why">no document content left this machine</td></tr>
+  </tbody></table>
+  {% if report.skipped %}
+  <div class="scroll"><table data-paginate="15">
+    <thead><tr><th>File not examined</th><th>Reason</th></tr></thead>
+    <tbody>{% for sk in report.skipped %}
+      <tr><td class="mono">{{ sk.path.name }}</td><td class="why">{{ sk.reason }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+  </div>
+</details>
 </section>
 
 {# =============================================================== COST #}
@@ -410,183 +550,202 @@ for it, not because nothing is there.</p>
 {# ========================================================== DOCUMENTS #}
 <section data-page id="documents" hidden>
 <h2>Documents</h2>
+
 {% if agg.signal_distribution %}
-<h3>Difficulty signals across the folder</h3>
-<div class="scroll"><table>
-  <thead><tr><th>Signal</th>{% if report.signal_weights %}<th class="n">Weight</th>{% endif %}
-    <th class="n">Good</th><th class="n">Fair</th><th class="n">Poor</th><th class="n">N/A</th></tr></thead>
-  <tbody>
-  {% for sid, d in agg.signal_distribution | dictsort %}
-    <tr><td>{{ signal_name(sid) }}</td>
-      {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(report.signal_weights.get(sid, 0)) }}</td>{% endif %}
-      <td class="n">{% if d.good %}<span style="color:var(--good)">{{ d.good }}</span>{% endif %}</td>
-      <td class="n">{% if d.fair %}<span style="color:var(--fair)">{{ d.fair }}</span>{% endif %}</td>
-      <td class="n">{% if d.poor %}<span class="poor">{{ d.poor }}</span>{% endif %}</td>
-      <td class="n">{% if d.not_applicable %}<span style="color:var(--na)">{{ d.not_applicable }}</span>{% endif %}</td></tr>
-  {% endfor %}
-  </tbody>
-</table></div>
-{% if report.signal_weights %}
-<p class="note">Weights come from <code>difficulty.yaml</code>. A score is only produced when
-every weight behind it is shown.</p>
-{% endif %}
-{% endif %}
-
-<h3>Each document</h3>
-<div id="docs">
-{% for doc in report.documents %}
-<details>
-  <summary>{{ doc.relative_path }}
-    <span>— {{ doc.format }}, {{ doc.page_count }} page(s){% if not doc.page_count_known %} (not fixed){% endif %}{% if doc.difficulty and doc.difficulty.score %}, difficulty <span class="r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.value }}/100 {{ doc.difficulty.score.label }}</span>{% endif %}{% if doc.sensitive and doc.sensitive.total %}, {{ doc.sensitive.total }} sensitive item(s){% endif %}</span>
-  </summary>
-  <div>
-
-  {% if doc.load_warnings %}
-    <div class="warn"><strong>Reading this document was incomplete.</strong>
-      <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
-  {% endif %}
-
-  {% if doc.previews %}
-    <h4 class="sec sec-text"><span class="tag">what exists</span>Pages</h4>
-    <div class="key">
-      <span><i class="sw" style="background:#dcdcdc;border-color:#cfcfcf"></i> text</span>
-      <span><i class="sw" style="background:#f4dfae;border-color:#dcbf7d"></i> image, needs OCR or vision</span>
-      <span><i class="sw" style="background:#fff;border-color:var(--poor)"></i> sensitive, high severity</span>
-      <span><i class="sw" style="background:#fff;border-color:var(--fair)"></i> sensitive, other</span>
-    </div>
-    <div class="pages">
-    {% for pv in doc.previews[:max_preview_pages] %}
-      <div class="page">
-        <div class="pair">
-          {% if pv.image_data_uri %}
-          <div class="half"><div class="lbl">document</div>
-            <img class="pg" src="{{ pv.image_data_uri }}" alt="Page {{ pv.number }}" loading="lazy"></div>
-          {% endif %}
-          <div class="half"><div class="lbl">{{ "extracted" if pv.image_data_uri else "layout" }}</div>
-            {{ page_preview_svg(pv) | safe }}</div>
-        </div>
-        <div class="cap">p{{ pv.number }}{% if pv.rotation %} · {{ pv.rotation }}°{% endif %} ·
-          {{ pv.image_coverage_pct | round | int }}% img{% if pv.sensitive_count %} ·
-          {{ pv.sensitive_count }} sensitive{% endif %}</div>
-      </div>
+<details class="more">
+  <summary>Difficulty signals across the whole folder</summary>
+  <div class="scroll"><table>
+    <thead><tr><th>Signal</th>{% if report.signal_weights %}<th class="n">Weight</th>{% endif %}
+      <th class="n">Good</th><th class="n">Fair</th><th class="n">Poor</th><th class="n">N/A</th></tr></thead>
+    <tbody>
+    {% for sid, d in agg.signal_distribution | dictsort %}
+      <tr><td>{{ signal_name(sid) }}</td>
+        {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(report.signal_weights.get(sid, 0)) }}</td>{% endif %}
+        <td class="n">{% if d.good %}<span style="color:var(--good)">{{ d.good }}</span>{% endif %}</td>
+        <td class="n">{% if d.fair %}<span style="color:var(--fair)">{{ d.fair }}</span>{% endif %}</td>
+        <td class="n">{% if d.poor %}<span class="poor">{{ d.poor }}</span>{% endif %}</td>
+        <td class="n">{% if d.not_applicable %}<span style="color:var(--na)">{{ d.not_applicable }}</span>{% endif %}</td></tr>
     {% endfor %}
-    </div>
-    {% if doc.previews | length > max_preview_pages %}
-      <p class="note">Showing the first {{ max_preview_pages }} of {{ doc.previews | length }} pages.</p>
-    {% endif %}
-    {% if not doc.previews[0].image_data_uri %}
-      <p class="note">Layout only. Run with <code>--page-images</code> to show the pages themselves.</p>
-    {% endif %}
-  {% endif %}
-
-  {% if doc.difficulty %}
-    {% set hard = hard_drivers(doc.difficulty) %}
-    {% set easy = easy_drivers(doc.difficulty) %}
-    <h4 class="sec sec-diff"><span class="tag">difficulty</span>How hard it is to extract{% if doc.difficulty.score %} —
-      <span class="r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.label }},
-      {{ doc.difficulty.score.value }}/100</span>{% endif %}</h4>
-    <div class="drivers">
-      <div class="driver"><div class="lbl">makes it harder</div>
-        {% if hard %}<table class="bare"><tbody>
-        {% for s in hard %}
-          <tr class="d-head"><td>{{ s.name }}</td><td class="v">{{ s.display }}</td>
-              <td class="n"><span class="wt">{{ "%.2f"|format(s.weight) }}</span></td></tr>
-          <tr class="d-why"><td colspan="3" class="why">{{ s.why }}</td></tr>
-        {% endfor %}</tbody></table>{% else %}<p class="note">Nothing rated poor.</p>{% endif %}
-      </div>
-      <div class="driver"><div class="lbl">makes it easier</div>
-        {% if easy %}<table class="bare"><tbody>
-        {% for s in easy %}
-          <tr class="d-head"><td>{{ s.name }}</td><td class="v">{{ s.display }}</td>
-              <td class="n"><span class="wt">{{ "%.2f"|format(s.weight) }}</span></td></tr>
-          <tr class="d-why"><td colspan="3" class="why">{{ s.why }}</td></tr>
-        {% endfor %}</tbody></table>{% else %}<p class="note">Nothing rated good.</p>{% endif %}
-      </div>
-    </div>
-    {% if doc.difficulty.score and doc.difficulty.score.confidence_note %}
-      <p class="note">{{ doc.difficulty.score.confidence_note }}</p>
-    {% endif %}
-  {% endif %}
-
-  {% if doc.extracted_text %}
-    <h4 class="sec sec-text"><span class="tag">what was read</span>Extracted text</h4>
-    <p class="note">This is what the cost, difficulty and sensitive-data numbers were computed
-    from, so it is where to check whether a low score is the document's fault or the
-    extractor's.</p>
-    {% for pt in doc.extracted_text %}
-      <details class="text">
-        <summary>Page {{ pt.number }} — {{ "{:,}".format(pt.characters) }} characters,
-          read as {{ pt.source }}{% if pt.truncated %}, truncated{% endif %}</summary>
-        <div class="pair-text">
-          <div class="half-text">
-            <div class="lbl">{{ "text layer" if pt.source == "native" else pt.source }}</div>
-            {% if pt.text.strip() %}<pre>{{ pt.text }}</pre>
-            {% else %}<p class="note">Nothing was read from this page.</p>{% endif %}
-          </div>
-          {% if pt.ocr_text and pt.source == "native" %}
-          <div class="half-text">
-            <div class="lbl">what OCR sees</div>
-            <pre>{{ pt.ocr_text }}</pre>
-          </div>
-          {% endif %}
-        </div>
-      </details>
-    {% endfor %}
-    {% if not report.run.ocr_compare_used %}
-      <p class="note">OCR only ran where there was no text layer. Add <code>--ocr-compare</code>
-      to read every page with OCR as well and see the two side by side.</p>
-    {% endif %}
-  {% endif %}
-
-  {% if doc.sensitive and doc.sensitive.matches %}
-    <h4 class="sec sec-pii"><span class="tag">security</span>Sensitive information —
-      {{ doc.sensitive.total }} item(s)</h4>
-    {% set rows = [] %}{% for m in doc.sensitive.matches %}{% set _ = rows.append((doc, m)) %}{% endfor %}
-    {{ matches_table(rows, false) }}
-  {% endif %}
-  {% if doc.sensitive and doc.sensitive.unreadable_pages %}
-    <p class="note"><strong>Page(s) {{ doc.sensitive.unreadable_pages | join(", ") }} carried no
-    readable text and were not searched.</strong></p>
-  {% endif %}
-
-  <details class="more">
-    <summary>All signals, page detail and provenance</summary>
-    <div>
-    {% if doc.difficulty %}
-      <div class="scroll"><table>
-        <thead><tr><th>Signal</th><th>Measured</th><th>Rating</th>
-          {% if report.signal_weights %}<th class="n">Weight</th>{% endif %}<th>Why it matters</th></tr></thead>
-        <tbody>
-        {% for s in doc.difficulty.signals %}
-          <tr><td>{{ s.name }}</td>
-            <td>{{ s.display }}{% if s.reason %}<div class="why">{{ s.reason }}</div>{% endif %}</td>
-            <td>{% if s.rating %}<span class="r r-{{ s.rating }}">{{ s.rating }}</span>{% else %}<span class="r r-na">{{ s.status.replace("_", " ") }}</span>{% endif %}</td>
-            {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(s.weight) }}</td>{% endif %}
-            <td class="why">{{ s.why }}</td></tr>
-        {% endfor %}
-        </tbody>
-      </table></div>
-    {% endif %}
-    {% if doc.cost %}
-      <div class="scroll"><table data-paginate="15">
-        <thead><tr><th class="n">Page</th><th>Size</th><th class="n">Scan DPI</th><th>Text</th>
-          <th class="n">Text coverage</th></tr></thead>
-        <tbody>{% for p in doc.cost.pages %}
-          <tr><td class="n">{{ p.number }}</td><td>{{ p.size_label }}</td>
-            <td class="n">{{ p.dpi if p.dpi else "—" }}</td><td>{{ p.text_source }}</td>
-            <td class="n">{{ "%.1f"|format(p.text_coverage_pct) }}%</td></tr>
-        {% endfor %}</tbody>
-      </table></div>
-    {% endif %}
-    <p class="note">SHA-256 <code>{{ doc.sha256 }}</code></p>
-    </div>
-  </details>
-
-  </div>
+    </tbody>
+  </table></div>
 </details>
-{% else %}
-<p class="note">No documents were audited.</p>
-{% endfor %}
+{% endif %}
+
+<div class="explorer" id="explorer">
+  <aside class="files">
+    <div class="filter">
+      <input type="search" id="docfilter" placeholder="Filter files" aria-label="Filter files">
+    </div>
+    <div class="count" id="doccount"></div>
+    <ul id="filelist">
+    {% for doc in report.documents %}
+      {%- set poor = doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty else [] -%}
+      {%- set sources = doc.extracted_text | map(attribute="source") | list -%}
+      {%- set haystack = [doc.relative_path, doc.format]
+            + (poor | map(attribute="name") | list)
+            + sources
+            + ([doc.difficulty.score.label] if doc.difficulty and doc.difficulty.score else []) -%}
+      <li data-search="{{ haystack | join(' ') | lower }}">
+        <button type="button" data-doc="{{ loop.index0 }}">
+          <span class="nm">{{ doc.relative_path }}</span>
+          {% if doc.difficulty and doc.difficulty.score %}
+            <span class="sc r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.value | round | int }}</span>
+          {% else %}<span class="sc r r-na">—</span>{% endif %}
+        </button>
+      </li>
+    {% endfor %}
+    </ul>
+  </aside>
+
+  <div class="viewer" id="viewer">
+  {% for doc in report.documents %}
+    <div class="doc" data-doc="{{ loop.index0 }}" hidden>
+      <h3>{{ doc.relative_path }}</h3>
+      <div class="flags">
+        <span class="flag">{{ doc.format }}</span>
+        <span class="flag">{{ doc.page_count }} page(s){% if not doc.page_count_known %}, not fixed{% endif %}</span>
+        {% if doc.difficulty and doc.difficulty.score %}
+          <span class="flag {{ 'ok' if score_band(doc.difficulty.score.value) == 'good' else ('warn' if score_band(doc.difficulty.score.value) == 'fair' else 'bad') }}">
+            {{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>
+        {% endif %}
+        {% for s in doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty %}
+          <span class="flag bad" title="{{ s.why }}">{{ s.name | lower }}: {{ s.display }}</span>
+        {% endfor %}
+      </div>
+
+      {% if doc.load_warnings %}
+        <div class="warn"><strong>Reading this document was incomplete.</strong>
+          <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
+      {% endif %}
+
+      <div class="subtabs" role="tablist">
+        <button type="button" data-view="pages" aria-selected="true">Pages</button>
+        <button type="button" data-view="text" aria-selected="false">Extracted text</button>
+        <button type="button" data-view="ocr" aria-selected="false">What OCR sees</button>
+        <button type="button" data-view="signals" aria-selected="false">All signals</button>
+      </div>
+
+      <div data-view="pages">
+        {% if doc.previews %}
+        <div class="key">
+          <span><i class="sw" style="background:var(--pv-text);border-color:var(--pv-text)"></i> text</span>
+          <span><i class="sw" style="background:var(--pv-image);border-color:var(--pv-image)"></i> image, needs OCR or vision</span>
+          <span><i class="sw" style="background:transparent;border-color:var(--poor)"></i> sensitive, high</span>
+          <span><i class="sw" style="background:transparent;border-color:var(--fair)"></i> sensitive, other</span>
+        </div>
+        <div class="pages">
+        {% for pv in doc.previews[:max_preview_pages] %}
+          <div class="page">
+            <div class="pair">
+              {% if pv.image_data_uri %}
+              <div class="half"><div class="lbl">document</div>
+                <img class="pg" src="{{ pv.image_data_uri }}" alt="Page {{ pv.number }}" loading="lazy"></div>
+              {% endif %}
+              <div class="half"><div class="lbl">{{ "extracted" if pv.image_data_uri else "layout" }}</div>
+                {{ page_preview_svg(pv) | safe }}</div>
+            </div>
+            <div class="cap">page {{ pv.number }}</div>
+            <div class="pcap">
+              {% for level, label in pv.flags %}<span class="flag {{ level }}">{{ label }}</span>{% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+        </div>
+        {% if doc.previews | length > max_preview_pages %}
+          <p class="note">Showing the first {{ max_preview_pages }} of {{ doc.previews | length }} pages.</p>
+        {% endif %}
+        {% if not doc.previews[0].image_data_uri %}
+          <p class="note">Layout only. Run with <code>--page-images</code> to show the pages themselves.</p>
+        {% endif %}
+        {% else %}<p class="note">No pages could be read from this document.</p>{% endif %}
+      </div>
+
+      <div data-view="text" hidden>
+        {% if doc.extracted_text %}
+          <p class="note">What complydoc read off each page. The cost, difficulty and
+          sensitive-data numbers were all computed from this.</p>
+          {% for pt in doc.extracted_text %}
+            <details class="text" {% if loop.first %}open{% endif %}>
+              <summary>Page {{ pt.number }} — {{ "{:,}".format(pt.characters) }} characters,
+                read as {{ pt.source }}{% if pt.truncated %}, truncated{% endif %}</summary>
+              {% if pt.text.strip() %}<pre>{{ pt.text }}</pre>
+              {% else %}<p class="note">Nothing was read from this page.</p>{% endif %}
+            </details>
+          {% endfor %}
+        {% else %}
+          <p class="note">Run with <code>--extracted-text</code> to include the text read off
+          each page.</p>
+        {% endif %}
+      </div>
+
+      <div data-view="ocr" hidden>
+        {% set any_ocr = doc.extracted_text | selectattr("ocr_text") | list %}
+        {% if any_ocr %}
+          <p class="note">What the OCR engine reads, independently of any text layer. Where a
+          page has both, comparing them is how you tell a document that extracts badly from an
+          extractor that reads it badly.</p>
+          {% for pt in doc.extracted_text %}
+            {% if pt.ocr_text %}
+            <details class="text" {% if loop.first %}open{% endif %}>
+              <summary>Page {{ pt.number }} — OCR read
+                {{ "{:,}".format(pt.ocr_text | length) }} characters</summary>
+              <pre>{{ pt.ocr_text }}</pre>
+            </details>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <p class="note">No OCR output for this document. OCR only runs where there is no text
+          layer; add <code>--ocr-compare</code> to read every page with OCR as well.</p>
+        {% endif %}
+      </div>
+
+      <div data-view="signals" hidden>
+        {% if doc.difficulty %}
+        <div class="scroll"><table>
+          <thead><tr><th>Signal</th><th>Measured</th><th>Rating</th>
+            {% if report.signal_weights %}<th class="n">Weight</th>{% endif %}<th>Why it matters</th></tr></thead>
+          <tbody>
+          {% for s in doc.difficulty.signals %}
+            <tr><td>{{ s.name }}</td>
+              <td>{{ s.display }}{% if s.reason %}<div class="why">{{ s.reason }}</div>{% endif %}</td>
+              <td>{% if s.rating %}<span class="r r-{{ s.rating }}">{{ s.rating }}</span>{% else %}<span class="r r-na">{{ s.status.replace("_", " ") }}</span>{% endif %}</td>
+              {% if report.signal_weights %}<td class="n">{{ "%.2f"|format(s.weight) }}</td>{% endif %}
+              <td class="why">{{ s.why }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table></div>
+        {% if doc.difficulty.score %}<p class="note">{{ doc.difficulty.score.method }}</p>{% endif %}
+        {% set skipped = doc.difficulty.signals | rejectattr("rating") | list %}
+        {% if skipped %}
+        <details class="more">
+          <summary>{{ skipped | length }} signal(s) not measured for this document</summary>
+          <div class="scroll"><table>
+            <thead><tr><th>Signal</th><th>Why not</th></tr></thead>
+            <tbody>{% for sg in skipped %}
+              <tr><td>{{ sg.name }}</td><td class="why">{{ sg.reason or sg.status }}</td></tr>
+            {% endfor %}</tbody>
+          </table></div>
+        </details>
+        {% endif %}
+        {% endif %}
+        {% if doc.cost %}
+        <div class="scroll"><table data-paginate="15">
+          <thead><tr><th class="n">Page</th><th>Size</th><th class="n">Scan DPI</th><th>Text</th>
+            <th class="n">Text coverage</th></tr></thead>
+          <tbody>{% for pg in doc.cost.pages %}
+            <tr><td class="n">{{ pg.number }}</td><td>{{ pg.size_label }}</td>
+              <td class="n">{{ pg.dpi if pg.dpi else "—" }}</td><td>{{ pg.text_source }}</td>
+              <td class="n">{{ "%.1f"|format(pg.text_coverage_pct) }}%</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+        {% endif %}
+        <p class="note">SHA-256 <code>{{ doc.sha256 }}</code></p>
+      </div>
+    </div>
+  {% else %}
+    <p class="note">No documents were audited.</p>
+  {% endfor %}
+  </div>
 </div>
 </section>
 
@@ -607,40 +766,104 @@ name detection {{ "on" if report.run.ner_available else "off" }}
 (function () {
   "use strict";
 
-  function makeFilter(container) {
-    var items = Array.prototype.slice.call(container.children).filter(function (el) {
-      return el.tagName === "DETAILS";
+  function explorer() {
+    var root = document.getElementById("explorer");
+    if (!root) return;
+    var items = Array.prototype.slice.call(root.querySelectorAll("#filelist > li"));
+    var docs = Array.prototype.slice.call(root.querySelectorAll(".viewer > .doc"));
+    var input = document.getElementById("docfilter");
+    var count = document.getElementById("doccount");
+    if (!items.length) return;
+
+    function select(index) {
+      docs.forEach(function (d) { d.hidden = d.getAttribute("data-doc") !== index; });
+      items.forEach(function (li) {
+        var button = li.querySelector("button");
+        if (button.getAttribute("data-doc") === index) button.setAttribute("aria-current", "true");
+        else button.removeAttribute("aria-current");
+      });
+    }
+
+    items.forEach(function (li) {
+      li.querySelector("button").addEventListener("click", function () {
+        select(li.querySelector("button").getAttribute("data-doc"));
+      });
     });
-    if (items.length < 5) return;
 
-    var bar = document.createElement("div");
-    bar.className = "filter";
-    var input = document.createElement("input");
-    input.type = "search";
-    input.placeholder = "Filter documents — filename, category, any text";
-    input.setAttribute("aria-label", "Filter documents");
-    var count = document.createElement("span");
-    count.className = "count";
-    bar.appendChild(input);
-    bar.appendChild(count);
-    container.parentNode.insertBefore(bar, container);
-
-    var haystacks = items.map(function (el) { return el.textContent.toLowerCase(); });
+    function firstVisible() {
+      var li = items.filter(function (x) { return !x.hidden; })[0];
+      return li ? li.querySelector("button").getAttribute("data-doc") : null;
+    }
 
     function apply() {
-      var q = input.value.trim().toLowerCase();
+      // Matches the file name, format, text source and the signals actually rated
+      // poor — not the explanatory prose, which is identical in every document and
+      // made a search for "rotated" return the whole folder.
+      var q = input ? input.value.trim().toLowerCase() : "";
       var shown = 0;
-      items.forEach(function (el, i) {
-        var hit = !q || haystacks[i].indexOf(q) !== -1;
-        el.hidden = !hit;
+      items.forEach(function (li) {
+        var hit = !q || (li.getAttribute("data-search") || "").indexOf(q) !== -1;
+        li.hidden = !hit;
         if (hit) shown++;
       });
-      count.textContent = q
-        ? shown + " of " + items.length + " document(s)"
-        : items.length + " document(s)";
+      if (count) {
+        count.textContent = q
+          ? shown + " of " + items.length + " file(s)"
+          : items.length + " file(s)";
+      }
+      var current = docs.filter(function (d) { return !d.hidden; })[0];
+      var visible = firstVisible();
+      if (visible && (!current || items.filter(function (li) {
+        return !li.hidden && li.querySelector("button").getAttribute("data-doc") ===
+          current.getAttribute("data-doc");
+      }).length === 0)) {
+        select(visible);
+      }
     }
-    input.addEventListener("input", apply);
+
+    if (input) input.addEventListener("input", apply);
     apply();
+    select(items[0].querySelector("button").getAttribute("data-doc"));
+
+    docs.forEach(function (doc) {
+      var buttons = Array.prototype.slice.call(doc.querySelectorAll(".subtabs button"));
+      var views = Array.prototype.slice.call(doc.querySelectorAll("[data-view]"))
+        .filter(function (v) { return v.tagName !== "BUTTON"; });
+      buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          var want = button.getAttribute("data-view");
+          buttons.forEach(function (b) {
+            b.setAttribute("aria-selected", String(b === button));
+          });
+          views.forEach(function (v) { v.hidden = v.getAttribute("data-view") !== want; });
+        });
+      });
+    });
+  }
+
+  function theme() {
+    var button = document.getElementById("theme");
+    if (!button) return;
+    button.hidden = false;
+    var root = document.documentElement;
+
+    function current() {
+      var set = root.getAttribute("data-theme");
+      if (set) return set;
+      return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    function paint() {
+      var dark = current() === "dark";
+      button.textContent = dark ? "Light" : "Dark";
+      button.setAttribute("aria-pressed", String(dark));
+    }
+    button.addEventListener("click", function () {
+      root.setAttribute("data-theme", current() === "dark" ? "light" : "dark");
+      paint();
+    });
+    paint();
   }
 
   function paginate(table) {
@@ -746,8 +969,8 @@ name detection {{ "on" if report.run.ner_available else "off" }}
   Array.prototype.forEach.call(
     document.querySelectorAll("[data-paginate-list]"), paginateList
   );
-  var docs = document.getElementById("docs");
-  if (docs) makeFilter(docs);
+  explorer();
+  theme();
   Array.prototype.forEach.call(
     document.querySelectorAll("table[data-paginate]"), paginate
   );

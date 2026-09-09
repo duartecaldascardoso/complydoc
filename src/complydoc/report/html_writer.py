@@ -24,16 +24,16 @@ __all__ = ["page_preview_svg", "render_html", "write_html"]
 # The mark, inlined so the report stays a single file: a document inside the
 # network guard boundary, with one line redacted.
 _LOGO_SVG = (
-    '<svg class="logo" viewBox="0 0 296 64" width="148" height="32" role="img" '
+    '<svg class="logo" viewBox="0 0 296 64" width="222" height="48" role="img" '
     'aria-label="complydoc">'
-    '<rect x="8" y="12" width="40" height="40" rx="8" fill="none" stroke="#1a7f4b" '
+    '<rect x="8" y="12" width="40" height="40" rx="8" fill="none" stroke="var(--accent)" '
     'stroke-width="1.5" stroke-dasharray="3,3"/>'
-    '<rect x="20" y="21" width="16" height="22" rx="2" fill="none" stroke="#111" '
+    '<rect x="20" y="21" width="16" height="22" rx="2" fill="none" stroke="var(--ink)" '
     'stroke-width="1.5"/>'
-    '<line x1="23" y1="27" x2="33" y2="27" stroke="#111" stroke-width="1.5"/>'
-    '<line x1="23" y1="32" x2="33" y2="32" stroke="#111" stroke-width="1.5"/>'
-    '<line x1="23" y1="37" x2="29" y2="37" stroke="#1a7f4b" stroke-width="1.5"/>'
-    '<text x="62" y="41" fill="#111" font-size="27" font-weight="600" '
+    '<line x1="23" y1="27" x2="33" y2="27" stroke="var(--ink)" stroke-width="1.5"/>'
+    '<line x1="23" y1="32" x2="33" y2="32" stroke="var(--ink)" stroke-width="1.5"/>'
+    '<line x1="23" y1="37" x2="29" y2="37" stroke="var(--accent)" stroke-width="1.5"/>'
+    '<text x="62" y="41" fill="var(--ink)" font-size="27" font-weight="600" '
     "font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\" "
     'letter-spacing="-0.02em">complydoc</text>'
     "</svg>"
@@ -104,21 +104,24 @@ def page_preview_svg(preview: PagePreview, width: int = _PREVIEW_WIDTH) -> str:
         extra = " ".join(f'{k.replace("_", "-")}="{v}"' for k, v in attrs.items())
         return f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" {extra}/>'
 
-    parts.append(f'<rect x="0" y="0" width="{width}" height="{height}" fill="#fff" stroke="#bbb"/>')
+    parts.append(
+        f'<rect x="0" y="0" width="{width}" height="{height}" '
+        f'fill="var(--pv-page)" stroke="var(--pv-edge)"/>'
+    )
     for box in preview.gutters:
-        parts.append(rect(box, fill="#f4f4f2"))
+        parts.append(rect(box, fill="var(--pv-gutter)"))
     for box in preview.image_blocks:
-        parts.append(rect(box, fill="#f4dfae"))
+        parts.append(rect(box, fill="var(--pv-image)"))
     for box in preview.text_blocks:
-        parts.append(rect(box, fill="#dcdcdc"))
+        parts.append(rect(box, fill="var(--pv-text)"))
     for box in preview.sensitive:
-        stroke = "#b3261e" if box.label == "high" else "#8a5a00"
+        stroke = "var(--poor)" if box.label == "high" else "var(--fair)"
         parts.append(rect(box, fill="none", stroke=stroke, stroke_width="1.2"))
 
     if preview.unreadable:
         parts.append(
-            f'<line x1="0" y1="0" x2="{width}" y2="{height}" stroke="#ddd"/>'
-            f'<line x1="{width}" y1="0" x2="0" y2="{height}" stroke="#ddd"/>'
+            f'<line x1="0" y1="0" x2="{width}" y2="{height}" stroke="var(--pv-edge)"/>'
+            f'<line x1="{width}" y1="0" x2="0" y2="{height}" stroke="var(--pv-edge)"/>'
         )
     parts.append("</svg>")
     return "".join(parts)
@@ -176,6 +179,9 @@ def render_html(report: AuditReport, config: Config) -> str:
         series=SERIES,
         folder_chart=grouped_bars_svg(
             comparisons, "folder_usd", "Cost for this folder, by model and architecture"
+        ),
+        per_1000_chart=grouped_bars_svg(
+            comparisons, "per_1000_usd", "Cost per 1,000 documents, by model and architecture"
         ),
         annual_chart=(
             grouped_bars_svg(comparisons, "annual_usd", "Annual cost, by model and architecture")

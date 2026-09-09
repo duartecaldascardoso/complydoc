@@ -141,18 +141,11 @@ def build_limitations(
             key = (signal.name, signal.reason or "no reason recorded")
             bucket.setdefault(key, []).append(document.relative_path)
 
-    for (name, reason), affected in sorted(na_signals.items()):
-        limitations.append(
-            Limitation(
-                area="Signals not measured",
-                statement=(
-                    f'"{name}" could not be measured for {len(set(affected))} document(s): '
-                    f"{reason}. It is excluded from those documents' scores rather than "
-                    f"counted as a bad result."
-                ),
-                affected=sorted(set(affected)),
-            )
-        )
+    # Signals that simply do not apply to a format are a property of the document,
+    # not of the run. They are listed on the document itself; repeating eighteen of
+    # them here buried everything that actually needed attention.
+    _ = na_signals
+
     for (name, reason), affected in sorted(error_signals.items()):
         limitations.append(
             Limitation(

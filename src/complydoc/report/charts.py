@@ -21,13 +21,19 @@ from complydoc.report.models import AuditReport
 
 __all__ = ["ArchitectureCost", "ModelComparison", "build_comparison", "grouped_bars_svg"]
 
-# Categorical series colours. Deliberately not the report's green/amber/red, which
-# carry status meaning; reusing them here would say "vision is bad". Validated for
-# colour-vision separation as a three-slot all-pairs palette.
+# Categorical series colours, held as CSS variables so light and dark can differ.
+# Deliberately not the report's green/amber/red, which carry status meaning here;
+# reusing them would say "vision is bad".
+#
+# Both sets were validated against their own surface rather than flipped:
+#   light  #2a78d6 blue / #4a3aa7 violet / #e87ba4 magenta  — CVD 13.0, normal 16.3
+#   dark   #3987e5 blue / #d55181 magenta / #c98500 yellow  — CVD 13.2, normal 19.3
+# Blue and magenta keep their hue across modes; the middle slot cannot, because
+# violet and blue are indistinguishable to a protanope on a dark surface (ΔE 1.9).
 SERIES = (
-    ("text_layer", "Text layer", "#2a78d6"),
-    ("text_ocr", "Text + local OCR", "#4a3aa7"),
-    ("vision", "Vision", "#e87ba4"),
+    ("text_layer", "Text layer", "var(--series-1)"),
+    ("text_ocr", "Text + local OCR", "var(--series-2)"),
+    ("vision", "Vision", "var(--series-3)"),
 )
 
 _NOTES = {
@@ -43,6 +49,7 @@ class ArchitectureCost:
     label: str
     folder_usd: float | None
     per_document_usd: float | None
+    per_1000_usd: float | None
     annual_usd: float | None
     documents_served: int
     documents_total: int
@@ -105,6 +112,7 @@ def build_comparison(report: AuditReport) -> list[ModelComparison]:
                     label=label,
                     folder_usd=total if served else None,
                     per_document_usd=per_document,
+                    per_1000_usd=per_document * 1000 if per_document is not None else None,
                     annual_usd=(
                         per_document * volume * 12 if per_document is not None and volume else None
                     ),
@@ -173,20 +181,20 @@ def grouped_bars_svg(
     # Recessive axis only; no grid competing with the marks.
     parts.append(
         f'<line x1="{label_w}" y1="{top - 10}" x2="{label_w}" y2="{height - 12}" '
-        f'stroke="#ddd" stroke-width="1"/>'
+        f'stroke="var(--line)" stroke-width="1"/>'
     )
 
     y = top
     for comparison, series in rows:
         parts.append(
             f'<text x="{label_w - 10}" y="{y + group_h / 2 + 4}" text-anchor="end" '
-            f'font-size="12" font-weight="600" fill="#111">{comparison.display_name}</text>'
+            f'font-size="12" font-weight="600" fill="var(--ink)">{comparison.display_name}</text>'
         )
         for _key, label, colour, amount in series:
             if amount is None:
                 parts.append(
                     f'<text x="{label_w + 6}" y="{y + bar_h - 3}" font-size="10" '
-                    f'fill="#999">{label} — not applicable</text>'
+                    f'fill="var(--muted)">{label} — not applicable</text>'
                 )
             else:
                 bar_w = (amount / peak) * plot_w if peak else 0
@@ -196,7 +204,7 @@ def grouped_bars_svg(
                 )
                 parts.append(
                     f'<text x="{label_w + bar_w + 8}" y="{y + bar_h - 3}" font-size="10.5" '
-                    f'fill="#333">{money(amount)}</text>'
+                    f'fill="var(--ink-2)">{money(amount)}</text>'
                 )
             y += bar_h + gap
         y += group_gap - gap

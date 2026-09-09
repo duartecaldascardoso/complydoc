@@ -119,7 +119,7 @@ def test_limitations_are_generated_from_this_run(report):
     assert "Files not examined" in areas
     assert "Pages that could not be read" in areas
     assert "Encrypted documents" in areas
-    assert "Signals not measured" in areas
+    assert "Table detection" in areas
 
 
 def test_limitations_name_the_documents_they_apply_to(report):
@@ -194,9 +194,19 @@ def test_page_images_are_stamped_when_used(config):
 
 
 def test_report_ships_its_own_filter_and_pagination(html):
-    assert 'id="docs"' in html
+    assert 'id="filelist"' in html
+    assert 'id="docfilter"' in html
     assert "data-paginate" in html
     assert "<script>" in html
+
+
+def test_the_file_filter_indexes_facts_not_prose(html):
+    """Matching the whole section text made "rotated" return every document, because
+    the explanation of the rotation signal appears in all of them."""
+    assert "data-search=" in html
+    index = html.split('data-search="')[1].split('"')[0]
+    assert "rotated" not in index or "rotated_scan" in index
+    assert "stored sideways" not in index
 
 
 def test_the_script_is_inline_not_fetched(html):
@@ -229,7 +239,7 @@ def test_extracted_text_is_included_and_stamped_when_asked_for(config):
 
     page = render_html(with_text, config)
     assert "contains the extracted text" in page
-    assert '<details class="text">' in page
+    assert 'class="text"' in page
 
 
 def test_extracted_text_records_how_each_page_was_read(config):
@@ -286,8 +296,15 @@ def test_tabs_do_not_depend_on_the_url_hash(html):
 
 def test_limitations_live_on_the_summary_page_in_an_expander(html):
     summary = html.split('id="summary"')[1].split("<section")[0]
-    assert "Limitations of this run" in summary
-    assert 'data-paginate-list="8"' in summary
+    assert "What this run could not tell you" in summary
+    assert "data-paginate-list=" in summary
+
+
+def test_summary_leads_with_the_three_business_figures(html):
+    summary = html.split('id="summary"')[1].split("<section")[0]
+    assert "Cost per 1,000 documents" in summary
+    assert "Average quality" in summary
+    assert "Sensitive items per document" in summary
 
 
 def test_cost_page_carries_the_charts(html):
@@ -305,6 +322,19 @@ def test_security_page_lists_every_occurrence(html, report):
 
 def test_documents_page_holds_the_explorer(html):
     documents = html.split('id="documents"')[1].split("</main>")[0]
-    assert 'id="docs"' in documents
-    assert "makes it harder" in documents
-    assert "makes it easier" in documents
+    assert 'id="filelist"' in documents
+    assert 'class="viewer"' in documents
+    for view in ("pages", "text", "ocr", "signals"):
+        assert f'data-view="{view}"' in documents
+
+
+def test_documents_page_carries_no_security_table(html):
+    """Sensitive findings belong on the security page; the explorer is about content."""
+    documents = html.split('id="documents"')[1].split("</main>")[0]
+    assert "Matched because" not in documents
+
+
+def test_difficulty_is_flagged_on_the_document_itself(html):
+    documents = html.split('id="documents"')[1].split("</main>")[0]
+    assert 'class="flags"' in documents
+    assert 'class="flag' in documents

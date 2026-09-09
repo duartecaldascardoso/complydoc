@@ -63,6 +63,16 @@ uv run complydoc cost ./invoices -m claude-opus-5 -m claude-haiku-4-5
 
 Inputs: PDF (native text and scanned), PNG, JPG, TIFF, BMP, DOCX, XLSX. Folders are recursed. Files that cannot be opened are skipped and listed in the report.
 
+## Using it from an agent
+
+```bash
+complydoc audit ./invoices --print-json | jq '.aggregate'
+```
+
+`--print-json` puts the report on stdout and nothing else; progress goes to stderr.
+`complydoc schema` describes the shape. [AGENTS.md](AGENTS.md) has an instruction block
+you can paste into an agent, and the handful of fields where a naive reading goes wrong.
+
 ## Optional extras
 
 The base install covers cost and difficulty. Two extras add the heavier paths:

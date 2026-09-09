@@ -71,6 +71,14 @@ OcrCompareOpt = Annotated[
         "what OCR reads can be compared. Implies --extracted-text.",
     ),
 ]
+PrintJsonOpt = Annotated[
+    bool,
+    typer.Option(
+        "--print-json",
+        help="Write the JSON report to stdout and nothing else, for piping into "
+        "another tool or an agent. Progress goes to stderr.",
+    ),
+]
 QuietOpt = Annotated[bool, typer.Option("--quiet", "-q", help="Suppress progress output.")]
 ModelOpt = Annotated[
     list[str] | None,
@@ -92,11 +100,18 @@ def _load(config_dir: Path | None) -> object:
 
 
 def _emit(report: AuditReport, config: object, out: Path, name: str, quiet: bool) -> None:
-    json_path = write_json(report, out / f"{name}.json")
-    html_path = write_html(report, config, out / f"{name}.html")  # type: ignore[arg-type]
-    if not quiet:
-        console.print(f"\n[green]JSON[/]  {json_path}")
-        console.print(f"[green]HTML[/]  {html_path}")
+    json_path = write_json(report, out / f"{name}.json").resolve()
+    html_path = write_html(report, config, out / f"{name}.html").resolve()  # type: ignore[arg-type]
+    if quiet:
+        return
+    # file:// URLs, so terminals that support hyperlinks open these on a click.
+    console.print()
+    console.print(
+        f"[bold]Report[/]  [link=file://{html_path}]{html_path}[/link]", no_wrap=True, crop=False
+    )
+    console.print(
+        f"[bold]Data[/]    [link=file://{json_path}]{json_path}[/link]", no_wrap=True, crop=False
+    )
 
 
 def _summary(report: AuditReport) -> None:
@@ -156,8 +171,14 @@ def _run(
     page_images: bool = False,
     extracted_text: bool = False,
     ocr_compare: bool = False,
+    print_json: bool = False,
 ) -> None:
     offline.arm()
+    # stdout has to stay pure JSON when a caller is parsing it.
+    global console
+    if print_json:
+        console = errors
+        quiet = True
     config = _load(config_dir)
 
     if not target.exists():
@@ -206,6 +227,14 @@ def _run(
     if not quiet:
         _summary(report)
     _emit(report, config, out, name, quiet)
+    if print_json:
+        import json as _json
+
+        from complydoc.report.json_writer import to_dict
+
+        sys.stdout.write(
+            _json.dumps(to_dict(report), indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+        )
 
 
 @app.command()
@@ -234,6 +263,7 @@ def audit(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
+    print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
     """Run all three components and write both reports."""
@@ -253,6 +283,7 @@ def audit(
         page_images=page_images,
         extracted_text=extracted_text,
         ocr_compare=ocr_compare,
+        print_json=print_json,
     )
 
 
@@ -272,6 +303,7 @@ def cost(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
+    print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
     """Estimate LLM processing cost only."""
@@ -287,6 +319,7 @@ def cost(
         monthly_volume=monthly_volume,
         resolution=resolution,
         select_models=model,
+        print_json=print_json,
     )
 
 
@@ -300,10 +333,23 @@ def difficulty(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
+    print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
     """Measure extraction difficulty signals only."""
-    _run(target, ("difficulty",), out, name, config_dir, ocr, recurse, quiet)
+    _run(
+        target,
+        ("difficulty",),
+        out,
+        name,
+        config_dir,
+        ocr,
+        recurse,
+        quiet,
+        extracted_text=extracted_text,
+        ocr_compare=ocr_compare,
+        print_json=print_json,
+    )
 
 
 @app.command()
@@ -323,10 +369,72 @@ def sensitive(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = False,
     recurse: RecurseOpt = True,
+    print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
     """Scan for UK GDPR relevant identifiers only."""
-    _run(target, ("sensitive",), out, name, config_dir, ocr, recurse, quiet, reveal=reveal)
+    _run(
+        target,
+        ("sensitive",),
+        out,
+        name,
+        config_dir,
+        ocr,
+        recurse,
+        quiet,
+        reveal=reveal,
+        page_images=page_images,
+        extracted_text=extracted_text,
+        print_json=print_json,
+    )
+
+
+@app.command()
+def schema() -> None:
+    """Print the JSON schema of the report, for a caller that needs to parse it."""
+    import json
+
+    from complydoc.report.models import SCHEMA_VERSION
+
+    console.print(
+        json.dumps(
+            {
+                "schema_version": SCHEMA_VERSION,
+                "top_level_keys": [
+                    "run",
+                    "documents",
+                    "skipped",
+                    "cost",
+                    "aggregate",
+                    "limitations",
+                    "staleness_warnings",
+                    "signal_weights",
+                    "config_masking",
+                ],
+                "run": {
+                    "components_run": "list of cost | difficulty | sensitive",
+                    "offline_guard": "armed | not_armed",
+                    "reveal_used": "bool — true means values are NOT masked",
+                    "page_images_used": "bool",
+                    "extracted_text_used": "bool",
+                    "config_digest": "identifies the config that produced these numbers",
+                },
+                "documents[]": {
+                    "relative_path": "str",
+                    "sha256": "str",
+                    "format": "pdf | image | docx | xlsx",
+                    "cost.models[]": "per-model text and vision token counts and USD",
+                    "difficulty.signals[]": "id, value, rating, weight, why, status",
+                    "difficulty.score": "value 0-100, higher is easier; label; low_confidence",
+                    "sensitive.matches[]": "category, page, line, column, masked, severity",
+                    "sensitive.unreadable_pages": "pages that were not searched at all",
+                },
+                "aggregate": "folder totals: cost, signal_distribution, sensitive_by_category",
+                "limitations[]": "area, statement, affected[], severity (info | important)",
+            },
+            indent=2,
+        )
+    )
 
 
 @app.command()

@@ -76,6 +76,31 @@ class PagePreview:
     unreadable: bool = False
 
     @property
+    def flags(self) -> list[tuple[str, str]]:
+        """What is wrong with this page, as (severity, label) chips.
+
+        The difficulty signals are folder-wide and document-wide; these put the
+        same facts on the page they came from, which is where a reader looking at
+        a thumbnail actually wants them.
+        """
+        found: list[tuple[str, str]] = []
+        if self.unreadable:
+            found.append(("bad", "not read"))
+        if self.rotation:
+            found.append(("bad", f"rotated {self.rotation}\u00b0"))
+        if self.image_coverage_pct >= 60:
+            found.append(("warn", f"{self.image_coverage_pct:.0f}% image"))
+        if self.text_coverage_pct < 3 and not self.unreadable:
+            found.append(("warn", "almost no text"))
+        elif self.text_coverage_pct >= 30:
+            found.append(("ok", f"{self.text_coverage_pct:.0f}% text"))
+        if len(self.gutters) >= 1:
+            found.append(("warn", f"{len(self.gutters) + 1} columns"))
+        if self.sensitive_count:
+            found.append(("bad", f"{self.sensitive_count} sensitive"))
+        return found
+
+    @property
     def aspect(self) -> float:
         if self.width_pt <= 0 or self.height_pt <= 0:
             return 1.4142

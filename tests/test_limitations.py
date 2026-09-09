@@ -41,24 +41,48 @@ def test_form_fields_reason_matches_the_document(report):
             assert entry.affected == ["encrypted.pdf"]
 
 
-def test_character_counts_are_per_group_not_borrowed(report):
-    """ "only N characters" must describe the documents it is attached to."""
-    seen = [
-        e
-        for e in entries(report, "Signals not measured")
-        if "Garbled character rate" in e.statement
-    ]
-    assert len(seen) > 1, "different character counts should not be merged into one entry"
-    counts = {e.statement.split("only ")[1].split(" character")[0] for e in seen}
-    assert len(counts) == len(seen), "each entry should carry its own count"
+def test_character_counts_describe_their_own_document(report):
+    """A count in a reason must be the count for the document it sits on.
+
+    An earlier revision grouped these by signal name and reused the first
+    document's character count for every document in the group.
+    """
+    counts = {}
+    for document in report.documents:
+        if not document.difficulty:
+            continue
+        signal = next((s for s in document.difficulty.signals if s.id == "garbled_char_rate"), None)
+        if signal and signal.reason and "only " in signal.reason:
+            counts[document.relative_path] = signal.reason.split("only ")[1].split(" ")[0]
+    assert len(counts) > 1
+    assert len(set(counts.values())) > 1, "every document reported the same count"
 
 
 def test_articles_read_as_english(report):
     """The reasons are generated, so the article has to be chosen, not hardcoded."""
     for entry in report.limitations:
         assert "a image" not in entry.statement
-        assert "a pdf, image" not in entry.statement
-    assert any("an image file" in e.statement for e in report.limitations)
+    reasons = [
+        signal.reason or ""
+        for document in report.documents
+        if document.difficulty
+        for signal in document.difficulty.signals
+    ]
+    assert any("an image file" in reason for reason in reasons)
+    assert not any("a image" in reason for reason in reasons)
+
+
+def test_signals_that_do_not_apply_are_not_run_level_limitations(report):
+    """Eighteen per document buried everything that actually needed attention."""
+    assert "Signals not measured" not in {x.area for x in report.limitations}
+    assert len(report.limitations) < 15
+
+
+def test_a_signal_that_did_not_apply_still_says_why_on_its_document(report):
+    document = next(d for d in report.documents if d.relative_path == "sample.docx")
+    skipped = [s for s in document.difficulty.signals if s.rating is None]
+    assert skipped
+    assert all(s.reason for s in skipped)
 
 
 def test_one_entry_per_distinct_tokenizer_note(report):

@@ -88,14 +88,14 @@ jobs:
       # Signed, verifiable provenance for the artefacts, tying each file to this
       # commit and this workflow. Check one with:
       #   gh attestation verify <file> --repo duartecaldascardoso/complydoc
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v3
         with:
           subject-path: |
             dist/*.whl
             dist/*.tar.gz
             dist/complydoc-sbom.json
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: complydoc-${{ needs.verify.outputs.version }}
           path: dist/

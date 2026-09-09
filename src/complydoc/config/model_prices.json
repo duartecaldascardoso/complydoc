@@ -1,1695 +1,1647 @@
 {
+ "batch_source_url": "https://github.com/BerriAI/litellm",
  "imported": "2026-09-09",
  "models": {
-  "chat-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 5.0,
-   "max_input_tokens": 400000,
-   "output_per_mtok_usd": 30.0,
-   "provider": "openai"
-  },
-  "chatgpt-4o-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 5.0,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 15.0,
-   "provider": "openai"
-  },
-  "claude-3-7-sonnet-20250219": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 3.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 15.0,
-   "provider": "anthropic"
-  },
-  "claude-3-haiku-20240307": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.25,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 1.25,
-   "provider": "anthropic"
-  },
-  "claude-3-opus-20240229": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 15.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 75.0,
-   "provider": "anthropic"
-  },
-  "claude-4-opus-20250514": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 15.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 75.0,
-   "provider": "anthropic"
-  },
-  "claude-4-sonnet-20250514": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 3.0,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 15.0,
-   "provider": "anthropic"
-  },
   "claude-fable-5": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Fable 5",
    "input_per_mtok_usd": 10.0,
    "max_input_tokens": 1000000,
    "output_per_mtok_usd": 50.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2026-06-07"
   },
   "claude-fable-5-1": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Fable 5.1",
    "input_per_mtok_usd": 10.0,
    "max_input_tokens": 1000000,
    "output_per_mtok_usd": 50.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2026-09-01"
   },
   "claude-haiku-4-5": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Haiku 4.5 (latest)",
    "input_per_mtok_usd": 1.0,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 5.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2025-10-15"
   },
   "claude-haiku-4-5-20251001": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Haiku 4.5",
    "input_per_mtok_usd": 1.0,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 5.0,
-   "provider": "anthropic"
-  },
-  "claude-mythos-5": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 10.0,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 50.0,
-   "provider": "anthropic"
-  },
-  "claude-mythos-5-1": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 10.0,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 50.0,
-   "provider": "anthropic"
-  },
-  "claude-mythos-preview": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 10.0,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 50.0,
-   "provider": "anthropic"
-  },
-  "claude-opus-4-1": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 15.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 75.0,
-   "provider": "anthropic"
-  },
-  "claude-opus-4-1-20250805": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 15.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 75.0,
-   "provider": "anthropic"
-  },
-  "claude-opus-4-20250514": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 15.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 75.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2025-10-15"
   },
   "claude-opus-4-5": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Opus 4.5 (latest)",
    "input_per_mtok_usd": 5.0,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 25.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2025-11-24"
   },
   "claude-opus-4-5-20251101": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Opus 4.5",
    "input_per_mtok_usd": 5.0,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 25.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2025-11-24"
   },
   "claude-opus-4-6": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Opus 4.6",
    "input_per_mtok_usd": 5.0,
    "max_input_tokens": 1000000,
    "output_per_mtok_usd": 25.0,
-   "provider": "anthropic"
-  },
-  "claude-opus-4-6-20260205": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 5.0,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 25.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2026-02-04"
   },
   "claude-opus-4-7": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Opus 4.7",
    "input_per_mtok_usd": 5.0,
    "max_input_tokens": 1000000,
    "output_per_mtok_usd": 25.0,
-   "provider": "anthropic"
-  },
-  "claude-opus-4-7-20260416": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 5.0,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 25.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2026-04-14"
   },
   "claude-opus-4-8": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Opus 4.8",
    "input_per_mtok_usd": 5.0,
    "max_input_tokens": 1000000,
    "output_per_mtok_usd": 25.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2026-05-28"
   },
   "claude-opus-5": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Opus 5",
    "input_per_mtok_usd": 5.0,
    "max_input_tokens": 1000000,
    "output_per_mtok_usd": 25.0,
-   "provider": "anthropic"
-  },
-  "claude-sonnet-4-20250514": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 3.0,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 15.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2026-07-24"
   },
   "claude-sonnet-4-5": {
-   "batch_input_per_mtok_usd": null,
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 1.5,
+   "display_name": "Claude Sonnet 4.5 (latest)",
    "input_per_mtok_usd": 3.0,
-   "max_input_tokens": 200000,
+   "max_input_tokens": 1000000,
    "output_per_mtok_usd": 15.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2025-09-29"
   },
   "claude-sonnet-4-5-20250929": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Sonnet 4.5",
    "input_per_mtok_usd": 3.0,
-   "max_input_tokens": 200000,
+   "max_input_tokens": 1000000,
    "output_per_mtok_usd": 15.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2025-09-29"
   },
   "claude-sonnet-4-6": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Sonnet 4.6",
    "input_per_mtok_usd": 3.0,
    "max_input_tokens": 1000000,
    "output_per_mtok_usd": 15.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2026-02-17"
   },
   "claude-sonnet-5": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Claude Sonnet 5",
    "input_per_mtok_usd": 2.0,
    "max_input_tokens": 1000000,
    "output_per_mtok_usd": 10.0,
-   "provider": "anthropic"
+   "provider": "anthropic",
+   "release_date": "2026-06-29"
   },
-  "codex-mini-latest": {
+  "codestral-latest": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 6.0,
-   "provider": "openai"
+   "display_name": "Codestral (latest)",
+   "input_per_mtok_usd": 0.3,
+   "max_input_tokens": 256000,
+   "output_per_mtok_usd": 0.9,
+   "provider": "mistral",
+   "release_date": "2024-05-29"
   },
-  "daybreak-blue-latest": {
+  "deep-research-max-preview-04-2026": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 4.0,
-   "max_input_tokens": 1050000,
-   "output_per_mtok_usd": 20.0,
-   "provider": "openai"
+   "display_name": "Deep Research Max Preview (Apr-21-2026)",
+   "input_per_mtok_usd": 2.0,
+   "max_input_tokens": 131072,
+   "output_per_mtok_usd": 12.0,
+   "provider": "gemini",
+   "release_date": "2026-04-21"
   },
-  "daybreak-red-latest": {
+  "deep-research-preview-04-2026": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 12.5,
-   "max_input_tokens": 400000,
-   "output_per_mtok_usd": 75.0,
-   "provider": "openai"
+   "display_name": "Deep Research Preview (Apr-21-2026)",
+   "input_per_mtok_usd": 2.0,
+   "max_input_tokens": 131072,
+   "output_per_mtok_usd": 12.0,
+   "provider": "gemini",
+   "release_date": "2026-04-21"
+  },
+  "deepseek-v4-flash": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "DeepSeek V4 Flash",
+   "input_per_mtok_usd": 0.14,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 0.28,
+   "provider": "deepseek",
+   "release_date": "2026-07-31"
   },
   "deepseek-v4-flash-vision-exp": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.44,
+   "display_name": "DeepSeek V4 Flash Vision Exp",
+   "input_per_mtok_usd": 0.14,
    "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 1.32,
-   "provider": "deepseek"
+   "output_per_mtok_usd": 0.28,
+   "provider": "deepseek",
+   "release_date": "2026-08-21"
   },
-  "deepseek/deepseek-v4-flash-vision-exp": {
+  "deepseek-v4-pro": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.44,
+   "display_name": "DeepSeek V4 Pro",
+   "input_per_mtok_usd": 0.435,
    "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 1.32,
-   "provider": "deepseek"
+   "output_per_mtok_usd": 0.87,
+   "provider": "deepseek",
+   "release_date": "2026-08-12"
   },
-  "ft:gpt-4o-2024-08-06": {
-   "batch_input_per_mtok_usd": 1.875,
-   "input_per_mtok_usd": 3.75,
+  "devstral-2512": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Devstral 2",
+   "input_per_mtok_usd": 0.4,
+   "max_input_tokens": 262144,
+   "output_per_mtok_usd": 2.0,
+   "provider": "mistral",
+   "release_date": "2025-12-09"
+  },
+  "devstral-latest": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Devstral 2",
+   "input_per_mtok_usd": 0.4,
+   "max_input_tokens": 262144,
+   "output_per_mtok_usd": 2.0,
+   "provider": "mistral",
+   "release_date": "2025-12-09"
+  },
+  "devstral-medium-2507": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Devstral Medium",
+   "input_per_mtok_usd": 0.4,
    "max_input_tokens": 128000,
-   "output_per_mtok_usd": 15.0,
-   "provider": "openai"
+   "output_per_mtok_usd": 2.0,
+   "provider": "mistral",
+   "release_date": "2025-07-10"
   },
-  "gemini-3.1-flash-live-preview": {
+  "devstral-medium-latest": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.75,
+   "display_name": "Devstral 2 (latest)",
+   "input_per_mtok_usd": 0.4,
+   "max_input_tokens": 262144,
+   "output_per_mtok_usd": 2.0,
+   "provider": "mistral",
+   "release_date": "2025-12-02"
+  },
+  "devstral-small-2505": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Devstral Small 2505",
+   "input_per_mtok_usd": 0.1,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.3,
+   "provider": "mistral",
+   "release_date": "2025-05-07"
+  },
+  "devstral-small-2507": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Devstral Small",
+   "input_per_mtok_usd": 0.1,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.3,
+   "provider": "mistral",
+   "release_date": "2025-07-10"
+  },
+  "gemini-2.5-computer-use-preview-10-2025": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 2.5 Computer Use Preview 10-2025",
+   "input_per_mtok_usd": 1.25,
    "max_input_tokens": 131072,
-   "output_per_mtok_usd": 4.5,
-   "provider": "gemini"
-  },
-  "gemini-exp-1206": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.3,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 2.5,
-   "provider": "gemini"
-  },
-  "gemini-flash-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.3,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 2.5,
-   "provider": "gemini"
-  },
-  "gemini-flash-lite-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.4,
-   "provider": "gemini"
-  },
-  "gemini-pro-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1048576,
    "output_per_mtok_usd": 10.0,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2025-10-07"
   },
-  "gemini/deep-research-pro-preview-12-2025": {
-   "batch_input_per_mtok_usd": 1.0,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 65536,
-   "output_per_mtok_usd": 12.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-2.0-flash": {
+  "gemini-2.5-flash": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.4,
-   "provider": "gemini"
-  },
-  "gemini/gemini-2.0-flash-001": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.4,
-   "provider": "gemini"
-  },
-  "gemini/gemini-2.0-flash-lite": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.075,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.3,
-   "provider": "gemini"
-  },
-  "gemini/gemini-2.0-flash-lite-001": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.075,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.3,
-   "provider": "gemini"
-  },
-  "gemini/gemini-2.5-computer-use-preview-10-2025": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-2.5-flash": {
-   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 2.5 Flash",
    "input_per_mtok_usd": 0.3,
    "max_input_tokens": 1048576,
    "output_per_mtok_usd": 2.5,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2025-06-17"
   },
-  "gemini/gemini-2.5-flash-image": {
+  "gemini-2.5-flash-image": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Nano Banana",
    "input_per_mtok_usd": 0.3,
    "max_input_tokens": 32768,
-   "output_per_mtok_usd": 2.5,
-   "provider": "gemini"
+   "output_per_mtok_usd": 30.0,
+   "provider": "gemini",
+   "release_date": "2025-08-26"
   },
-  "gemini/gemini-2.5-flash-lite": {
+  "gemini-2.5-flash-lite": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 2.5 Flash-Lite",
    "input_per_mtok_usd": 0.1,
    "max_input_tokens": 1048576,
    "output_per_mtok_usd": 0.4,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2025-06-17"
   },
-  "gemini/gemini-2.5-flash-lite-preview-06-17": {
+  "gemini-2.5-flash-preview-tts": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.4,
-   "provider": "gemini"
+   "display_name": "Gemini 2.5 Flash Preview TTS",
+   "input_per_mtok_usd": 0.5,
+   "max_input_tokens": 8192,
+   "output_per_mtok_usd": 10.0,
+   "provider": "gemini",
+   "release_date": "2025-05-01"
   },
-  "gemini/gemini-2.5-flash-lite-preview-09-2025": {
+  "gemini-2.5-pro": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.4,
-   "provider": "gemini"
-  },
-  "gemini/gemini-2.5-flash-preview-09-2025": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.3,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 2.5,
-   "provider": "gemini"
-  },
-  "gemini/gemini-2.5-pro": {
-   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 2.5 Pro",
    "input_per_mtok_usd": 1.25,
    "max_input_tokens": 1048576,
    "output_per_mtok_usd": 10.0,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2025-06-17"
   },
-  "gemini/gemini-2.5-pro-preview-tts": {
+  "gemini-2.5-pro-preview-tts": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 2.5 Pro Preview TTS",
    "input_per_mtok_usd": 1.0,
-   "max_input_tokens": 1048576,
+   "max_input_tokens": 8192,
    "output_per_mtok_usd": 20.0,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2025-05-01"
   },
-  "gemini/gemini-3-flash-preview": {
+  "gemini-3-flash-preview": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 3 Flash Preview",
    "input_per_mtok_usd": 0.5,
    "max_input_tokens": 1048576,
    "output_per_mtok_usd": 3.0,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2025-12-17"
   },
-  "gemini/gemini-3-pro-image": {
+  "gemini-3-pro-image": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 1.0,
+   "display_name": "Nano Banana Pro",
    "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 65536,
-   "output_per_mtok_usd": 12.0,
-   "provider": "gemini"
+   "max_input_tokens": 131072,
+   "output_per_mtok_usd": 120.0,
+   "provider": "gemini",
+   "release_date": "2026-05-28"
   },
-  "gemini/gemini-3-pro-image-preview": {
+  "gemini-3-pro-image-preview": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 1.0,
+   "display_name": "Nano Banana Pro",
    "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 65536,
-   "output_per_mtok_usd": 12.0,
-   "provider": "gemini"
+   "max_input_tokens": 131072,
+   "output_per_mtok_usd": 120.0,
+   "provider": "gemini",
+   "release_date": "2025-11-20"
   },
-  "gemini/gemini-3-pro-preview": {
-   "batch_input_per_mtok_usd": 1.0,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 12.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-3.1-flash-image": {
+  "gemini-3.1-flash-image": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 0.25,
+   "display_name": "Nano Banana 2",
    "input_per_mtok_usd": 0.5,
    "max_input_tokens": 65536,
-   "output_per_mtok_usd": 3.0,
-   "provider": "gemini"
+   "output_per_mtok_usd": 60.0,
+   "provider": "gemini",
+   "release_date": "2026-05-28"
   },
-  "gemini/gemini-3.1-flash-image-preview": {
+  "gemini-3.1-flash-image-preview": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 0.25,
+   "display_name": "Nano Banana 2",
    "input_per_mtok_usd": 0.5,
    "max_input_tokens": 65536,
-   "output_per_mtok_usd": 3.0,
-   "provider": "gemini"
+   "output_per_mtok_usd": 60.0,
+   "provider": "gemini",
+   "release_date": "2026-02-26"
   },
-  "gemini/gemini-3.1-flash-lite": {
+  "gemini-3.1-flash-lite": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 0.125,
+   "display_name": "Gemini 3.1 Flash Lite",
    "input_per_mtok_usd": 0.25,
    "max_input_tokens": 1048576,
    "output_per_mtok_usd": 1.5,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2026-05-07"
   },
-  "gemini/gemini-3.1-flash-lite-image": {
+  "gemini-3.1-flash-lite-image": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 0.125,
+   "display_name": "Nano Banana 2 Lite",
    "input_per_mtok_usd": 0.25,
    "max_input_tokens": 65536,
-   "output_per_mtok_usd": 1.5,
-   "provider": "gemini"
+   "output_per_mtok_usd": 30.0,
+   "provider": "gemini",
+   "release_date": "2026-06-30"
   },
-  "gemini/gemini-3.1-flash-lite-preview": {
+  "gemini-3.1-flash-lite-preview": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 3.1 Flash Lite Preview",
    "input_per_mtok_usd": 0.25,
    "max_input_tokens": 1048576,
    "output_per_mtok_usd": 1.5,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2026-03-03"
   },
-  "gemini/gemini-3.1-flash-live-preview": {
+  "gemini-3.1-flash-live-preview": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 3.1 Flash Live Preview",
    "input_per_mtok_usd": 0.75,
    "max_input_tokens": 131072,
    "output_per_mtok_usd": 4.5,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2026-03-26"
   },
-  "gemini/gemini-3.1-pro-preview": {
-   "batch_input_per_mtok_usd": 1.0,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 12.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-3.1-pro-preview-customtools": {
-   "batch_input_per_mtok_usd": 1.0,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 12.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-3.5-flash": {
-   "batch_input_per_mtok_usd": 0.75,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 9.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-3.5-flash-lite": {
-   "batch_input_per_mtok_usd": 0.15,
-   "input_per_mtok_usd": 0.3,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 2.5,
-   "provider": "gemini"
-  },
-  "gemini/gemini-3.6-flash": {
-   "batch_input_per_mtok_usd": 0.375,
-   "input_per_mtok_usd": 0.75,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 3.75,
-   "provider": "gemini"
-  },
-  "gemini/gemini-3.7-flash": {
-   "batch_input_per_mtok_usd": 0.375,
-   "input_per_mtok_usd": 0.75,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 3.75,
-   "provider": "gemini"
-  },
-  "gemini/gemini-3.8-flash": {
-   "batch_input_per_mtok_usd": 0.375,
-   "input_per_mtok_usd": 0.75,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 3.75,
-   "provider": "gemini"
-  },
-  "gemini/gemini-flash-latest": {
+  "gemini-3.1-flash-tts-preview": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.3,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 2.5,
-   "provider": "gemini"
-  },
-  "gemini/gemini-flash-lite-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.4,
-   "provider": "gemini"
-  },
-  "gemini/gemini-gemma-2-27b-it": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.35,
-   "max_input_tokens": null,
-   "output_per_mtok_usd": 1.05,
-   "provider": "gemini"
-  },
-  "gemini/gemini-gemma-2-9b-it": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.35,
-   "max_input_tokens": null,
-   "output_per_mtok_usd": 1.05,
-   "provider": "gemini"
-  },
-  "gemini/gemini-live-2.5-flash-preview-native-audio-09-2025": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.5,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 2.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-omni-1.1-flash": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 9.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-omni-flash-preview": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 9.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-pro-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 10.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-robotics-er-1.5-preview": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.3,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 2.5,
-   "provider": "gemini"
-  },
-  "gemini/gemini-robotics-er-1.6-preview": {
-   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 3.1 Flash TTS Preview",
    "input_per_mtok_usd": 1.0,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 5.0,
-   "provider": "gemini"
+   "max_input_tokens": 8192,
+   "output_per_mtok_usd": 20.0,
+   "provider": "gemini",
+   "release_date": "2026-04-15"
   },
-  "gemini/gemini-robotics-er-2-preview": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 10.0,
-   "provider": "gemini"
-  },
-  "gemini/gemini-robotics-er-2-streaming-preview": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": null,
-   "output_per_mtok_usd": 10.0,
-   "provider": "gemini"
-  },
-  "gemini/nano-banana-pro-preview": {
+  "gemini-3.1-pro-preview": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 1.0,
+   "display_name": "Gemini 3.1 Pro Preview",
    "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 131072,
+   "max_input_tokens": 1048576,
    "output_per_mtok_usd": 12.0,
-   "provider": "gemini"
+   "provider": "gemini",
+   "release_date": "2026-02-19"
+  },
+  "gemini-3.1-pro-preview-customtools": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 1.0,
+   "display_name": "Gemini 3.1 Pro Preview Custom Tools",
+   "input_per_mtok_usd": 2.0,
+   "max_input_tokens": 1048576,
+   "output_per_mtok_usd": 12.0,
+   "provider": "gemini",
+   "release_date": "2026-02-19"
+  },
+  "gemini-3.5-flash": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 0.75,
+   "display_name": "Gemini 3.5 Flash",
+   "input_per_mtok_usd": 1.5,
+   "max_input_tokens": 1048576,
+   "output_per_mtok_usd": 9.0,
+   "provider": "gemini",
+   "release_date": "2026-05-19"
+  },
+  "gemini-3.5-flash-lite": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 0.15,
+   "display_name": "Gemini 3.5 Flash Lite",
+   "input_per_mtok_usd": 0.3,
+   "max_input_tokens": 1048576,
+   "output_per_mtok_usd": 2.5,
+   "provider": "gemini",
+   "release_date": "2026-07-21"
+  },
+  "gemini-3.5-live-translate-preview": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini 3.5 Live Translate Preview",
+   "input_per_mtok_usd": 3.5,
+   "max_input_tokens": 16384,
+   "output_per_mtok_usd": 21.0,
+   "provider": "gemini",
+   "release_date": "2026-06-09"
+  },
+  "gemini-3.6-flash": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 0.375,
+   "display_name": "Gemini 3.6 Flash",
+   "input_per_mtok_usd": 0.75,
+   "max_input_tokens": 1048576,
+   "output_per_mtok_usd": 3.75,
+   "provider": "gemini",
+   "release_date": "2026-07-21"
+  },
+  "gemini-3.7-flash": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 0.375,
+   "display_name": "Gemini 3.7 Flash",
+   "input_per_mtok_usd": 0.75,
+   "max_input_tokens": 1048576,
+   "output_per_mtok_usd": 3.75,
+   "provider": "gemini",
+   "release_date": "2026-08-13"
+  },
+  "gemini-3.8-flash": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 0.375,
+   "display_name": "Gemini 3.8 Flash",
+   "input_per_mtok_usd": 0.75,
+   "max_input_tokens": 1048576,
+   "output_per_mtok_usd": 3.75,
+   "provider": "gemini",
+   "release_date": "2026-09-02"
+  },
+  "gemini-embedding-001": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini Embedding 001",
+   "input_per_mtok_usd": 0.15,
+   "max_input_tokens": 2048,
+   "output_per_mtok_usd": 0.0,
+   "provider": "gemini",
+   "release_date": "2025-05-20"
+  },
+  "gemini-embedding-2": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini Embedding 2",
+   "input_per_mtok_usd": 0.2,
+   "max_input_tokens": 8192,
+   "output_per_mtok_usd": 0.0,
+   "provider": "gemini",
+   "release_date": "2026-04-22"
+  },
+  "gemini-flash-latest": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini Flash Latest",
+   "input_per_mtok_usd": 0.75,
+   "max_input_tokens": 1048576,
+   "output_per_mtok_usd": 3.75,
+   "provider": "gemini",
+   "release_date": "2026-08-13"
+  },
+  "gemini-flash-lite-latest": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini Flash-Lite Latest",
+   "input_per_mtok_usd": 0.3,
+   "max_input_tokens": 1048576,
+   "output_per_mtok_usd": 2.5,
+   "provider": "gemini",
+   "release_date": "2026-07-21"
+  },
+  "gemini-omni-flash-preview": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Gemini Omni Flash Preview",
+   "input_per_mtok_usd": 1.5,
+   "max_input_tokens": 131072,
+   "output_per_mtok_usd": 17.5,
+   "provider": "gemini",
+   "release_date": "2026-06-30"
+  },
+  "glm-4.5": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-4.5",
+   "input_per_mtok_usd": 0.6,
+   "max_input_tokens": 131072,
+   "output_per_mtok_usd": 2.2,
+   "provider": "zai",
+   "release_date": "2025-07-28"
+  },
+  "glm-4.5-air": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-4.5-Air",
+   "input_per_mtok_usd": 0.2,
+   "max_input_tokens": 131072,
+   "output_per_mtok_usd": 1.1,
+   "provider": "zai",
+   "release_date": "2025-07-28"
+  },
+  "glm-4.5v": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-4.5V",
+   "input_per_mtok_usd": 0.6,
+   "max_input_tokens": 64000,
+   "output_per_mtok_usd": 1.8,
+   "provider": "zai",
+   "release_date": "2025-08-11"
+  },
+  "glm-4.6": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-4.6",
+   "input_per_mtok_usd": 0.6,
+   "max_input_tokens": 204800,
+   "output_per_mtok_usd": 2.2,
+   "provider": "zai",
+   "release_date": "2025-09-30"
+  },
+  "glm-4.6v": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-4.6V",
+   "input_per_mtok_usd": 0.3,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.9,
+   "provider": "zai",
+   "release_date": "2025-12-08"
+  },
+  "glm-4.7": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-4.7",
+   "input_per_mtok_usd": 0.6,
+   "max_input_tokens": 204800,
+   "output_per_mtok_usd": 2.2,
+   "provider": "zai",
+   "release_date": "2025-12-22"
+  },
+  "glm-4.7-flashx": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-4.7-FlashX",
+   "input_per_mtok_usd": 0.07,
+   "max_input_tokens": 200000,
+   "output_per_mtok_usd": 0.4,
+   "provider": "zai",
+   "release_date": "2026-01-19"
+  },
+  "glm-5": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-5",
+   "input_per_mtok_usd": 1.0,
+   "max_input_tokens": 204800,
+   "output_per_mtok_usd": 3.2,
+   "provider": "zai",
+   "release_date": "2026-02-12"
+  },
+  "glm-5-turbo": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-5-Turbo",
+   "input_per_mtok_usd": 1.2,
+   "max_input_tokens": 200000,
+   "output_per_mtok_usd": 4.0,
+   "provider": "zai",
+   "release_date": "2026-03-16"
+  },
+  "glm-5.1": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-5.1",
+   "input_per_mtok_usd": 1.4,
+   "max_input_tokens": 200000,
+   "output_per_mtok_usd": 4.4,
+   "provider": "zai",
+   "release_date": "2026-04-07"
+  },
+  "glm-5.2": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-5.2",
+   "input_per_mtok_usd": 1.4,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 4.4,
+   "provider": "zai",
+   "release_date": "2026-06-13"
+  },
+  "glm-5.3": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-5.3",
+   "input_per_mtok_usd": 1.4,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 4.4,
+   "provider": "zai",
+   "release_date": "2026-08-14"
+  },
+  "glm-5.3-flash": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-5.3-Flash",
+   "input_per_mtok_usd": 0.075,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 0.25,
+   "provider": "zai",
+   "release_date": "2026-08-26"
+  },
+  "glm-5v-turbo": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-5V-Turbo",
+   "input_per_mtok_usd": 1.2,
+   "max_input_tokens": 200000,
+   "output_per_mtok_usd": 4.0,
+   "provider": "zai",
+   "release_date": "2026-04-01"
+  },
+  "gpt-3.5-turbo": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-3.5-turbo",
+   "input_per_mtok_usd": 0.5,
+   "max_input_tokens": 16385,
+   "output_per_mtok_usd": 1.5,
+   "provider": "openai",
+   "release_date": "2023-03-01"
+  },
+  "gpt-4": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-4",
+   "input_per_mtok_usd": 30.0,
+   "max_input_tokens": 8192,
+   "output_per_mtok_usd": 60.0,
+   "provider": "openai",
+   "release_date": "2023-11-06"
   },
   "gpt-4-turbo": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-4 Turbo",
    "input_per_mtok_usd": 10.0,
    "max_input_tokens": 128000,
    "output_per_mtok_usd": 30.0,
-   "provider": "openai"
-  },
-  "gpt-4-turbo-2024-04-09": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 10.0,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 30.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2023-11-06"
   },
   "gpt-4.1": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 1.0,
+   "display_name": "GPT-4.1",
    "input_per_mtok_usd": 2.0,
    "max_input_tokens": 1047576,
    "output_per_mtok_usd": 8.0,
-   "provider": "openai"
-  },
-  "gpt-4.1-2025-04-14": {
-   "batch_input_per_mtok_usd": 1.0,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 1047576,
-   "output_per_mtok_usd": 8.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-04-14"
   },
   "gpt-4.1-mini": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 0.2,
+   "display_name": "GPT-4.1 mini",
    "input_per_mtok_usd": 0.4,
    "max_input_tokens": 1047576,
    "output_per_mtok_usd": 1.6,
-   "provider": "openai"
-  },
-  "gpt-4.1-mini-2025-04-14": {
-   "batch_input_per_mtok_usd": 0.2,
-   "input_per_mtok_usd": 0.4,
-   "max_input_tokens": 1047576,
-   "output_per_mtok_usd": 1.6,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-04-14"
   },
   "gpt-4.1-nano": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 0.05,
+   "display_name": "GPT-4.1 nano",
    "input_per_mtok_usd": 0.1,
    "max_input_tokens": 1047576,
    "output_per_mtok_usd": 0.4,
-   "provider": "openai"
-  },
-  "gpt-4.1-nano-2025-04-14": {
-   "batch_input_per_mtok_usd": 0.05,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 1047576,
-   "output_per_mtok_usd": 0.4,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-04-14"
   },
   "gpt-4o": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 1.25,
+   "display_name": "GPT-4o",
    "input_per_mtok_usd": 2.5,
    "max_input_tokens": 128000,
    "output_per_mtok_usd": 10.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2024-05-13"
   },
   "gpt-4o-2024-05-13": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 2.5,
+   "display_name": "GPT-4o (2024-05-13)",
    "input_per_mtok_usd": 5.0,
    "max_input_tokens": 128000,
    "output_per_mtok_usd": 15.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2024-05-13"
   },
   "gpt-4o-2024-08-06": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 1.25,
+   "display_name": "GPT-4o (2024-08-06)",
    "input_per_mtok_usd": 2.5,
    "max_input_tokens": 128000,
    "output_per_mtok_usd": 10.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2024-08-06"
   },
   "gpt-4o-2024-11-20": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 1.25,
+   "display_name": "GPT-4o (2024-11-20)",
    "input_per_mtok_usd": 2.5,
    "max_input_tokens": 128000,
    "output_per_mtok_usd": 10.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2024-11-20"
   },
   "gpt-4o-mini": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 0.075,
+   "display_name": "GPT-4o mini",
    "input_per_mtok_usd": 0.15,
    "max_input_tokens": 128000,
    "output_per_mtok_usd": 0.6,
-   "provider": "openai"
-  },
-  "gpt-4o-mini-2024-07-18": {
-   "batch_input_per_mtok_usd": 0.075,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 0.6,
-   "provider": "openai"
-  },
-  "gpt-4o-mini-search-preview": {
-   "batch_input_per_mtok_usd": 0.075,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 0.6,
-   "provider": "openai"
-  },
-  "gpt-4o-mini-search-preview-2025-03-11": {
-   "batch_input_per_mtok_usd": 0.075,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 0.6,
-   "provider": "openai"
-  },
-  "gpt-4o-search-preview": {
-   "batch_input_per_mtok_usd": 1.25,
-   "input_per_mtok_usd": 2.5,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-4o-search-preview-2025-03-11": {
-   "batch_input_per_mtok_usd": 1.25,
-   "input_per_mtok_usd": 2.5,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2024-07-18"
   },
   "gpt-5": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5",
    "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5-2025-08-07": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5-chat": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5-chat-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5-codex": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-08-07"
   },
   "gpt-5-mini": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5 Mini",
    "input_per_mtok_usd": 0.25,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 2.0,
-   "provider": "openai"
-  },
-  "gpt-5-mini-2025-08-07": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 2.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-08-07"
   },
   "gpt-5-nano": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5 Nano",
    "input_per_mtok_usd": 0.05,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 0.4,
-   "provider": "openai"
-  },
-  "gpt-5-nano-2025-08-07": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.05,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 0.4,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-08-07"
   },
   "gpt-5-pro": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 7.5,
+   "display_name": "GPT-5 Pro",
    "input_per_mtok_usd": 15.0,
    "max_input_tokens": 400000,
    "output_per_mtok_usd": 120.0,
-   "provider": "openai"
-  },
-  "gpt-5-pro-2025-10-06": {
-   "batch_input_per_mtok_usd": 7.5,
-   "input_per_mtok_usd": 15.0,
-   "max_input_tokens": 400000,
-   "output_per_mtok_usd": 120.0,
-   "provider": "openai"
-  },
-  "gpt-5-search-api": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5-search-api-2025-10-14": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-10-06"
   },
   "gpt-5.1": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5.1",
    "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5.1-2025-11-13": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5.1-chat-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5.1-codex": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5.1-codex-max": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
-  },
-  "gpt-5.1-codex-mini": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.25,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 2.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-11-13"
   },
   "gpt-5.2": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5.2",
    "input_per_mtok_usd": 1.75,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 14.0,
-   "provider": "openai"
-  },
-  "gpt-5.2-2025-12-11": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.75,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 14.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-12-11"
   },
   "gpt-5.2-chat-latest": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5.2 Chat",
    "input_per_mtok_usd": 1.75,
    "max_input_tokens": 128000,
    "output_per_mtok_usd": 14.0,
-   "provider": "openai"
-  },
-  "gpt-5.2-codex": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.75,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 14.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-12-11"
   },
   "gpt-5.2-pro": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5.2 Pro",
    "input_per_mtok_usd": 21.0,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 168.0,
-   "provider": "openai"
-  },
-  "gpt-5.2-pro-2025-12-11": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 21.0,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 168.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-12-11"
   },
   "gpt-5.3-chat-latest": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5.3 Chat (latest)",
    "input_per_mtok_usd": 1.75,
    "max_input_tokens": 128000,
    "output_per_mtok_usd": 14.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-03-03"
   },
   "gpt-5.3-codex": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5.3 Codex",
    "input_per_mtok_usd": 1.75,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 14.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-02-05"
+  },
+  "gpt-5.3-codex-spark": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5.3 Codex Spark",
+   "input_per_mtok_usd": 1.75,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 14.0,
+   "provider": "openai",
+   "release_date": "2026-02-05"
   },
   "gpt-5.4": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 1.25,
+   "display_name": "GPT-5.4",
    "input_per_mtok_usd": 2.5,
    "max_input_tokens": 1050000,
    "output_per_mtok_usd": 15.0,
-   "provider": "openai"
-  },
-  "gpt-5.4-2026-03-05": {
-   "batch_input_per_mtok_usd": 1.25,
-   "input_per_mtok_usd": 2.5,
-   "max_input_tokens": 1050000,
-   "output_per_mtok_usd": 15.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-03-05"
   },
   "gpt-5.4-mini": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 0.375,
+   "display_name": "GPT-5.4 mini",
    "input_per_mtok_usd": 0.75,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 4.5,
-   "provider": "openai"
-  },
-  "gpt-5.4-mini-2026-03-17": {
-   "batch_input_per_mtok_usd": 0.375,
-   "input_per_mtok_usd": 0.75,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 4.5,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-03-17"
   },
   "gpt-5.4-nano": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 0.1,
+   "display_name": "GPT-5.4 nano",
    "input_per_mtok_usd": 0.2,
-   "max_input_tokens": 272000,
+   "max_input_tokens": 400000,
    "output_per_mtok_usd": 1.25,
-   "provider": "openai"
-  },
-  "gpt-5.4-nano-2026-03-17": {
-   "batch_input_per_mtok_usd": 0.1,
-   "input_per_mtok_usd": 0.2,
-   "max_input_tokens": 272000,
-   "output_per_mtok_usd": 1.25,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-03-17"
   },
   "gpt-5.4-pro": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 15.0,
+   "display_name": "GPT-5.4 Pro",
    "input_per_mtok_usd": 30.0,
    "max_input_tokens": 1050000,
    "output_per_mtok_usd": 180.0,
-   "provider": "openai"
-  },
-  "gpt-5.4-pro-2026-03-05": {
-   "batch_input_per_mtok_usd": 15.0,
-   "input_per_mtok_usd": 30.0,
-   "max_input_tokens": 1050000,
-   "output_per_mtok_usd": 180.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-03-05"
   },
   "gpt-5.5": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 2.5,
+   "display_name": "GPT-5.5",
    "input_per_mtok_usd": 5.0,
    "max_input_tokens": 1050000,
    "output_per_mtok_usd": 30.0,
-   "provider": "openai"
-  },
-  "gpt-5.5-2026-04-23": {
-   "batch_input_per_mtok_usd": 2.5,
-   "input_per_mtok_usd": 5.0,
-   "max_input_tokens": 1050000,
-   "output_per_mtok_usd": 30.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-04-23"
   },
   "gpt-5.5-pro": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 15.0,
+   "display_name": "GPT-5.5 Pro",
    "input_per_mtok_usd": 30.0,
    "max_input_tokens": 1050000,
    "output_per_mtok_usd": 180.0,
-   "provider": "openai"
-  },
-  "gpt-5.5-pro-2026-04-23": {
-   "batch_input_per_mtok_usd": 15.0,
-   "input_per_mtok_usd": 30.0,
-   "max_input_tokens": 1050000,
-   "output_per_mtok_usd": 180.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-04-23"
   },
   "gpt-5.6": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": 2.0,
-   "input_per_mtok_usd": 4.0,
-   "max_input_tokens": 922000,
-   "output_per_mtok_usd": 20.0,
-   "provider": "openai"
-  },
-  "gpt-5.6-cyber": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 12.5,
-   "max_input_tokens": 400000,
-   "output_per_mtok_usd": 75.0,
-   "provider": "openai"
-  },
-  "gpt-5.6-luna": {
-   "batch_input_per_mtok_usd": 0.1,
-   "input_per_mtok_usd": 0.2,
-   "max_input_tokens": 922000,
-   "output_per_mtok_usd": 1.2,
-   "provider": "openai"
-  },
-  "gpt-5.6-sol": {
-   "batch_input_per_mtok_usd": 2.0,
-   "input_per_mtok_usd": 4.0,
-   "max_input_tokens": 922000,
-   "output_per_mtok_usd": 20.0,
-   "provider": "openai"
-  },
-  "gpt-5.6-terra": {
-   "batch_input_per_mtok_usd": 1.0,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 922000,
-   "output_per_mtok_usd": 12.0,
-   "provider": "openai"
-  },
-  "gpt-6-astra": {
-   "batch_input_per_mtok_usd": 5.0,
-   "input_per_mtok_usd": 10.0,
-   "max_input_tokens": 922000,
-   "output_per_mtok_usd": 50.0,
-   "provider": "openai"
-  },
-  "gpt-daybreak-blue-latest": {
-   "batch_input_per_mtok_usd": null,
+   "display_name": "GPT-5.6",
    "input_per_mtok_usd": 4.0,
    "max_input_tokens": 1050000,
    "output_per_mtok_usd": 20.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2026-07-09"
   },
-  "gpt-daybreak-red-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 12.5,
-   "max_input_tokens": 400000,
-   "output_per_mtok_usd": 75.0,
-   "provider": "openai"
+  "gpt-5.6-luna": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 0.1,
+   "display_name": "GPT-5.6 Luna",
+   "input_per_mtok_usd": 0.2,
+   "max_input_tokens": 1050000,
+   "output_per_mtok_usd": 1.2,
+   "provider": "openai",
+   "release_date": "2026-07-09"
   },
-  "gpt-image-1.5": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 5.0,
-   "max_input_tokens": null,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
+  "gpt-5.6-sol": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 2.0,
+   "display_name": "GPT-5.6 Sol",
+   "input_per_mtok_usd": 4.0,
+   "max_input_tokens": 1050000,
+   "output_per_mtok_usd": 20.0,
+   "provider": "openai",
+   "release_date": "2026-07-09"
   },
-  "gpt-image-1.5-2025-12-16": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 5.0,
-   "max_input_tokens": null,
-   "output_per_mtok_usd": 10.0,
-   "provider": "openai"
+  "gpt-5.6-terra": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 1.0,
+   "display_name": "GPT-5.6 Terra",
+   "input_per_mtok_usd": 2.0,
+   "max_input_tokens": 1050000,
+   "output_per_mtok_usd": 12.0,
+   "provider": "openai",
+   "release_date": "2026-07-09"
+  },
+  "gpt-6-astra": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": 5.0,
+   "display_name": "GPT-6 Astra",
+   "input_per_mtok_usd": 10.0,
+   "max_input_tokens": 1050000,
+   "output_per_mtok_usd": 50.0,
+   "provider": "openai",
+   "release_date": "2026-09-04"
   },
   "gpt-image-2": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "gpt-image-2",
    "input_per_mtok_usd": 5.0,
-   "max_input_tokens": null,
-   "output_per_mtok_usd": null,
-   "provider": "openai"
+   "max_input_tokens": 0,
+   "output_per_mtok_usd": 30.0,
+   "provider": "openai",
+   "release_date": "2026-04-21"
   },
-  "gpt-image-2-2026-04-21": {
+  "gpt-realtime-2.1": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 5.0,
-   "max_input_tokens": null,
-   "output_per_mtok_usd": null,
-   "provider": "openai"
-  },
-  "mistral/magistral-medium-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/magistral-small-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.6,
-   "provider": "mistral"
-  },
-  "mistral/ministral-14b-2512": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.2,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.2,
-   "provider": "mistral"
-  },
-  "mistral/ministral-14b-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.2,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.2,
-   "provider": "mistral"
-  },
-  "mistral/ministral-3-14b-2512": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.2,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.2,
-   "provider": "mistral"
-  },
-  "mistral/ministral-3-3b-2512": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 0.1,
-   "provider": "mistral"
-  },
-  "mistral/ministral-3-8b-2512": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.15,
-   "provider": "mistral"
-  },
-  "mistral/ministral-3b-2512": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 0.1,
-   "provider": "mistral"
-  },
-  "mistral/ministral-3b-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.1,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 0.1,
-   "provider": "mistral"
-  },
-  "mistral/ministral-8b-2512": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.15,
-   "provider": "mistral"
-  },
-  "mistral/ministral-8b-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.15,
-   "provider": "mistral"
-  },
-  "mistral/mistral-large-2512": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 1.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-large-3": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 1.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-large-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 1.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-medium": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-medium-2508": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.4,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 2.0,
-   "provider": "mistral"
-  },
-  "mistral/mistral-medium-2604": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-medium-3": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-medium-3-1-2508": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.4,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 2.0,
-   "provider": "mistral"
-  },
-  "mistral/mistral-medium-3-5": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-medium-3.5": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-medium-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-small-2603": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.6,
-   "provider": "mistral"
-  },
-  "mistral/mistral-small-3-2-2506": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.06,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 0.18,
-   "provider": "mistral"
-  },
-  "mistral/mistral-small-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.6,
-   "provider": "mistral"
-  },
-  "mistral/mistral-vibe-cli-fast": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 0.6,
-   "provider": "mistral"
-  },
-  "mistral/mistral-vibe-cli-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/mistral-vibe-cli-with-tools": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.5,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 7.5,
-   "provider": "mistral"
-  },
-  "mistral/pixtral-12b-2409": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.15,
+   "display_name": "GPT-Realtime-2.1",
+   "input_per_mtok_usd": 4.0,
    "max_input_tokens": 128000,
-   "output_per_mtok_usd": 0.15,
-   "provider": "mistral"
+   "output_per_mtok_usd": 24.0,
+   "provider": "openai",
+   "release_date": "2026-07-06"
   },
-  "mistral/pixtral-large-2411": {
+  "grok-4.20-0309-non-reasoning": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Grok 4.20 (Non-Reasoning)",
+   "input_per_mtok_usd": 1.25,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 2.5,
+   "provider": "xai",
+   "release_date": "2026-03-09"
+  },
+  "grok-4.20-0309-reasoning": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Grok 4.20 (Reasoning)",
+   "input_per_mtok_usd": 1.25,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 2.5,
+   "provider": "xai",
+   "release_date": "2026-03-09"
+  },
+  "grok-4.20-multi-agent-0309": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Grok 4.20 Multi-Agent",
+   "input_per_mtok_usd": 1.25,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 2.5,
+   "provider": "xai",
+   "release_date": "2026-03-09"
+  },
+  "grok-4.3": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Grok 4.3",
+   "input_per_mtok_usd": 1.25,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 2.5,
+   "provider": "xai",
+   "release_date": "2026-04-17"
+  },
+  "grok-4.5": {
+   "accepts_image": true,
+   "accepts_pdf": true,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Grok 4.5",
    "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 128000,
+   "max_input_tokens": 500000,
    "output_per_mtok_usd": 6.0,
-   "provider": "mistral"
+   "provider": "xai",
+   "release_date": "2026-07-08"
   },
-  "mistral/pixtral-large-latest": {
+  "grok-4.6": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Grok 4.6",
    "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 128000,
+   "max_input_tokens": 500000,
    "output_per_mtok_usd": 6.0,
-   "provider": "mistral"
+   "provider": "xai",
+   "release_date": "2026-08-12"
   },
-  "moonshot/kimi-k2.5": {
+  "grok-build-0.1": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.6,
-   "max_input_tokens": 262144,
-   "output_per_mtok_usd": 3.0,
-   "provider": "moonshot"
+   "display_name": "Grok Build 0.1",
+   "input_per_mtok_usd": 1.0,
+   "max_input_tokens": 256000,
+   "output_per_mtok_usd": 2.0,
+   "provider": "xai",
+   "release_date": "2026-04-16"
   },
-  "moonshot/kimi-k2.6": {
+  "kimi-k2.6": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Kimi K2.6",
    "input_per_mtok_usd": 0.95,
    "max_input_tokens": 262144,
    "output_per_mtok_usd": 4.0,
-   "provider": "moonshot"
+   "provider": "moonshot",
+   "release_date": "2026-04-21"
   },
-  "moonshot/kimi-k2.7-code": {
+  "kimi-k2.7-code": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Kimi K2.7 Code",
    "input_per_mtok_usd": 0.95,
    "max_input_tokens": 262144,
    "output_per_mtok_usd": 4.0,
-   "provider": "moonshot"
+   "provider": "moonshot",
+   "release_date": "2026-06-12"
   },
-  "moonshot/kimi-k3": {
+  "kimi-k2.7-code-highspeed": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Kimi K2.7 Code HighSpeed",
+   "input_per_mtok_usd": 1.9,
+   "max_input_tokens": 262144,
+   "output_per_mtok_usd": 8.0,
+   "provider": "moonshot",
+   "release_date": "2026-06-12"
+  },
+  "kimi-k3": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Kimi K3",
    "input_per_mtok_usd": 3.0,
    "max_input_tokens": 1048576,
    "output_per_mtok_usd": 15.0,
-   "provider": "moonshot"
+   "provider": "moonshot",
+   "release_date": "2026-07-16"
   },
-  "moonshot/kimi-latest": {
+  "magistral-medium-latest": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "Magistral Medium (latest)",
+   "input_per_mtok_usd": 2.0,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 5.0,
+   "provider": "mistral",
+   "release_date": "2025-03-17"
+  },
+  "magistral-small": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Magistral Small",
+   "input_per_mtok_usd": 0.5,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 1.5,
+   "provider": "mistral",
+   "release_date": "2025-03-17"
+  },
+  "ministral-3b-latest": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Ministral 3B (latest)",
+   "input_per_mtok_usd": 0.04,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.04,
+   "provider": "mistral",
+   "release_date": "2024-10-01"
+  },
+  "ministral-8b-latest": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Ministral 8B (latest)",
+   "input_per_mtok_usd": 0.1,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.1,
+   "provider": "mistral",
+   "release_date": "2024-10-01"
+  },
+  "mistral-embed": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Embed",
+   "input_per_mtok_usd": 0.1,
+   "max_input_tokens": 8000,
+   "output_per_mtok_usd": 0.0,
+   "provider": "mistral",
+   "release_date": "2023-12-11"
+  },
+  "mistral-large-2411": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Large 2.1",
    "input_per_mtok_usd": 2.0,
    "max_input_tokens": 131072,
-   "output_per_mtok_usd": 5.0,
-   "provider": "moonshot"
+   "output_per_mtok_usd": 6.0,
+   "provider": "mistral",
+   "release_date": "2024-11-18"
   },
-  "moonshot/kimi-latest-128k": {
+  "mistral-large-2512": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
+   "display_name": "Mistral Large 3",
+   "input_per_mtok_usd": 0.5,
+   "max_input_tokens": 262144,
+   "output_per_mtok_usd": 1.5,
+   "provider": "mistral",
+   "release_date": "2024-11-01"
+  },
+  "mistral-large-latest": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Large (latest)",
+   "input_per_mtok_usd": 0.5,
+   "max_input_tokens": 262144,
+   "output_per_mtok_usd": 1.5,
+   "provider": "mistral",
+   "release_date": "2024-11-01"
+  },
+  "mistral-medium-2505": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Medium 3",
+   "input_per_mtok_usd": 0.4,
    "max_input_tokens": 131072,
-   "output_per_mtok_usd": 5.0,
-   "provider": "moonshot"
-  },
-  "moonshot/kimi-latest-32k": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.0,
-   "max_input_tokens": 32768,
-   "output_per_mtok_usd": 3.0,
-   "provider": "moonshot"
-  },
-  "moonshot/kimi-latest-8k": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.2,
-   "max_input_tokens": 8192,
    "output_per_mtok_usd": 2.0,
-   "provider": "moonshot"
+   "provider": "mistral",
+   "release_date": "2025-05-07"
   },
-  "moonshot/kimi-thinking-preview": {
+  "mistral-medium-2508": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.6,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 2.5,
-   "provider": "moonshot"
-  },
-  "moonshot/moonshot-v1-128k-vision-preview": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 131072,
-   "output_per_mtok_usd": 5.0,
-   "provider": "moonshot"
-  },
-  "moonshot/moonshot-v1-32k-vision-preview": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.0,
-   "max_input_tokens": 32768,
-   "output_per_mtok_usd": 3.0,
-   "provider": "moonshot"
-  },
-  "moonshot/moonshot-v1-8k-vision-preview": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.2,
-   "max_input_tokens": 8192,
+   "display_name": "Mistral Medium 3.1",
+   "input_per_mtok_usd": 0.4,
+   "max_input_tokens": 262144,
    "output_per_mtok_usd": 2.0,
-   "provider": "moonshot"
+   "provider": "mistral",
+   "release_date": "2025-08-12"
+  },
+  "mistral-medium-2604": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Medium 3.5",
+   "input_per_mtok_usd": 1.5,
+   "max_input_tokens": 262144,
+   "output_per_mtok_usd": 7.5,
+   "provider": "mistral",
+   "release_date": "2026-04-29"
+  },
+  "mistral-medium-latest": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Medium (latest)",
+   "input_per_mtok_usd": 1.5,
+   "max_input_tokens": 262144,
+   "output_per_mtok_usd": 7.5,
+   "provider": "mistral",
+   "release_date": "2026-04-29"
+  },
+  "mistral-nemo": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Nemo",
+   "input_per_mtok_usd": 0.15,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.15,
+   "provider": "mistral",
+   "release_date": "2024-07-01"
+  },
+  "mistral-small-2506": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Small 3.2",
+   "input_per_mtok_usd": 0.1,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.3,
+   "provider": "mistral",
+   "release_date": "2025-06-20"
+  },
+  "mistral-small-2603": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Small 4",
+   "input_per_mtok_usd": 0.15,
+   "max_input_tokens": 256000,
+   "output_per_mtok_usd": 0.6,
+   "provider": "mistral",
+   "release_date": "2026-03-16"
+  },
+  "mistral-small-latest": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mistral Small (latest)",
+   "input_per_mtok_usd": 0.15,
+   "max_input_tokens": 256000,
+   "output_per_mtok_usd": 0.6,
+   "provider": "mistral",
+   "release_date": "2026-03-16"
   },
   "o1": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "o1",
    "input_per_mtok_usd": 15.0,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 60.0,
-   "provider": "openai"
-  },
-  "o1-2024-12-17": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 15.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 60.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2024-12-05"
   },
   "o1-pro": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 75.0,
+   "display_name": "o1-pro",
    "input_per_mtok_usd": 150.0,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 600.0,
-   "provider": "openai"
-  },
-  "o1-pro-2025-03-19": {
-   "batch_input_per_mtok_usd": 75.0,
-   "input_per_mtok_usd": 150.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 600.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-03-19"
   },
   "o3": {
+   "accepts_image": true,
+   "accepts_pdf": true,
    "batch_input_per_mtok_usd": null,
+   "display_name": "o3",
    "input_per_mtok_usd": 2.0,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 8.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-04-16"
   },
-  "o3-2025-04-16": {
+  "o3-mini": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
+   "display_name": "o3-mini",
+   "input_per_mtok_usd": 1.1,
    "max_input_tokens": 200000,
-   "output_per_mtok_usd": 8.0,
-   "provider": "openai"
-  },
-  "o3-deep-research": {
-   "batch_input_per_mtok_usd": 5.0,
-   "input_per_mtok_usd": 10.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 40.0,
-   "provider": "openai"
-  },
-  "o3-deep-research-2025-06-26": {
-   "batch_input_per_mtok_usd": 5.0,
-   "input_per_mtok_usd": 10.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 40.0,
-   "provider": "openai"
+   "output_per_mtok_usd": 4.4,
+   "provider": "openai",
+   "release_date": "2024-12-20"
   },
   "o3-pro": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": 10.0,
+   "display_name": "o3-pro",
    "input_per_mtok_usd": 20.0,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 80.0,
-   "provider": "openai"
-  },
-  "o3-pro-2025-06-10": {
-   "batch_input_per_mtok_usd": 10.0,
-   "input_per_mtok_usd": 20.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 80.0,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-06-10"
   },
   "o4-mini": {
+   "accepts_image": true,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
+   "display_name": "o4-mini",
    "input_per_mtok_usd": 1.1,
    "max_input_tokens": 200000,
    "output_per_mtok_usd": 4.4,
-   "provider": "openai"
+   "provider": "openai",
+   "release_date": "2025-04-16"
   },
-  "o4-mini-2025-04-16": {
+  "open-mistral-7b": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.1,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 4.4,
-   "provider": "openai"
+   "display_name": "Mistral 7B",
+   "input_per_mtok_usd": 0.25,
+   "max_input_tokens": 8000,
+   "output_per_mtok_usd": 0.25,
+   "provider": "mistral",
+   "release_date": "2023-09-27"
   },
-  "o4-mini-deep-research": {
-   "batch_input_per_mtok_usd": 1.0,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 8.0,
-   "provider": "openai"
-  },
-  "o4-mini-deep-research-2025-06-26": {
-   "batch_input_per_mtok_usd": 1.0,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 200000,
-   "output_per_mtok_usd": 8.0,
-   "provider": "openai"
-  },
-  "xai/grok-4-1-fast": {
+  "open-mistral-nemo": {
+   "accepts_image": false,
+   "accepts_pdf": false,
    "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 2000000.0,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4-1-fast-non-reasoning": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 2000000.0,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4-1-fast-non-reasoning-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 2000000.0,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4-1-fast-reasoning": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 2000000.0,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4-1-fast-reasoning-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 2000000.0,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-0309-non-reasoning": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-0309-reasoning": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-beta-0309-non-reasoning": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-beta-0309-reasoning": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-multi-agent": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-multi-agent-0309": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-multi-agent-beta-0309": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-multi-agent-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-non-reasoning": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-non-reasoning-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-reasoning": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.20-reasoning-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.3": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.3-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.25,
-   "max_input_tokens": 1000000,
-   "output_per_mtok_usd": 2.5,
-   "provider": "xai"
-  },
-  "xai/grok-4.5": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 500000,
-   "output_per_mtok_usd": 6.0,
-   "provider": "xai"
-  },
-  "xai/grok-4.5-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 500000,
-   "output_per_mtok_usd": 6.0,
-   "provider": "xai"
-  },
-  "xai/grok-4.6": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 500000,
-   "output_per_mtok_usd": 6.0,
-   "provider": "xai"
-  },
-  "xai/grok-build-0.1": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.0,
-   "max_input_tokens": 256000,
-   "output_per_mtok_usd": 2.0,
-   "provider": "xai"
-  },
-  "xai/grok-build-latest": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 2.0,
-   "max_input_tokens": 500000,
-   "output_per_mtok_usd": 6.0,
-   "provider": "xai"
-  },
-  "xai/grok-code-fast": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.0,
-   "max_input_tokens": 256000,
-   "output_per_mtok_usd": 2.0,
-   "provider": "xai"
-  },
-  "xai/grok-code-fast-1": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.0,
-   "max_input_tokens": 256000,
-   "output_per_mtok_usd": 2.0,
-   "provider": "xai"
-  },
-  "xai/grok-code-fast-1-0825": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 1.0,
-   "max_input_tokens": 256000,
-   "output_per_mtok_usd": 2.0,
-   "provider": "xai"
-  },
-  "zai/glm-4.5v": {
-   "batch_input_per_mtok_usd": null,
-   "input_per_mtok_usd": 0.6,
-   "max_input_tokens": 128000,
-   "output_per_mtok_usd": 1.8,
-   "provider": "zai"
-  },
-  "zai/glm-5.3-flash": {
-   "batch_input_per_mtok_usd": null,
+   "display_name": "Open Mistral Nemo",
    "input_per_mtok_usd": 0.15,
-   "max_input_tokens": 1048576,
-   "output_per_mtok_usd": 0.5,
-   "provider": "zai"
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.15,
+   "provider": "mistral",
+   "release_date": "2024-07-01"
+  },
+  "open-mixtral-8x22b": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mixtral 8x22B",
+   "input_per_mtok_usd": 2.0,
+   "max_input_tokens": 64000,
+   "output_per_mtok_usd": 6.0,
+   "provider": "mistral",
+   "release_date": "2024-04-17"
+  },
+  "open-mixtral-8x7b": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Mixtral 8x7B",
+   "input_per_mtok_usd": 0.7,
+   "max_input_tokens": 32000,
+   "output_per_mtok_usd": 0.7,
+   "provider": "mistral",
+   "release_date": "2023-12-11"
+  },
+  "pixtral-12b": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Pixtral 12B",
+   "input_per_mtok_usd": 0.15,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 0.15,
+   "provider": "mistral",
+   "release_date": "2024-09-01"
+  },
+  "pixtral-large-latest": {
+   "accepts_image": true,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Pixtral Large (latest)",
+   "input_per_mtok_usd": 2.0,
+   "max_input_tokens": 128000,
+   "output_per_mtok_usd": 6.0,
+   "provider": "mistral",
+   "release_date": "2024-11-01"
+  },
+  "text-embedding-3-large": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": 0.065,
+   "display_name": "text-embedding-3-large",
+   "input_per_mtok_usd": 0.13,
+   "max_input_tokens": 8191,
+   "output_per_mtok_usd": 0.0,
+   "provider": "openai",
+   "release_date": "2024-01-25"
+  },
+  "text-embedding-3-small": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": 0.01,
+   "display_name": "text-embedding-3-small",
+   "input_per_mtok_usd": 0.02,
+   "max_input_tokens": 8191,
+   "output_per_mtok_usd": 0.0,
+   "provider": "openai",
+   "release_date": "2024-01-25"
+  },
+  "text-embedding-ada-002": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "text-embedding-ada-002",
+   "input_per_mtok_usd": 0.1,
+   "max_input_tokens": 8192,
+   "output_per_mtok_usd": 0.0,
+   "provider": "openai",
+   "release_date": "2022-12-15"
+  },
+  "voxtral-small-latest": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "Voxtral Small (latest)",
+   "input_per_mtok_usd": 0.1,
+   "max_input_tokens": 32000,
+   "output_per_mtok_usd": 0.3,
+   "provider": "mistral",
+   "release_date": "2025-07-15"
+  },
+  "zai-glm-5-2": {
+   "accepts_image": false,
+   "accepts_pdf": false,
+   "batch_input_per_mtok_usd": null,
+   "display_name": "GLM-5.2",
+   "input_per_mtok_usd": 1.4,
+   "max_input_tokens": 1000000,
+   "output_per_mtok_usd": 4.4,
+   "provider": "mistral",
+   "release_date": "2026-06-13"
   }
  },
  "source_licence": "MIT",
- "source_url": "https://github.com/BerriAI/litellm",
- "upstream_entries": 3853
+ "source_url": "https://models.dev"
 }

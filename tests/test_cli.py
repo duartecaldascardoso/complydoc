@@ -163,7 +163,7 @@ def test_models_command_lists_configured_models(monkeypatch):
     result = runner.invoke(app, ["models"])
     assert result.exit_code == 0
     assert "claude-opus-5" in result.output
-    assert "width_height_area" in result.output
+    assert "verified" in result.output, "the table says where each price came from"
 
 
 def test_model_selection_narrows_the_report(tmp_path):
@@ -328,3 +328,35 @@ def test_the_text_can_be_left_out(tmp_path):
     report = _run_json(tmp_path, "--no-extracted-text")
     assert report["run"]["extracted_text_used"] is False
     assert not report["documents"][0].get("extracted_text")
+
+
+def test_models_can_be_listed_newest_first(monkeypatch):
+    """An alphabetical dump sorts a two-year-old model above this month's.
+
+    Checked against the catalogue rather than by reading dates out of the
+    table, which prints release dates and import dates in the same row.
+    """
+    from complydoc import cli
+    from complydoc.config.loader import load_config
+    from complydoc.cost.price_table import released_on
+
+    dated = [(released_on(m.id), m.id) for m in load_config().pricing.models]
+    latest = max(date for date, _ in dated if date)
+    expected = {model_id for date, model_id in dated if date == latest}
+
+    monkeypatch.setattr(cli.console, "width", 200)
+    result = runner.invoke(app, ["models", "--new", "5"])
+    assert result.exit_code == 0
+    assert "Released" in result.output
+    assert any(model_id in result.output for model_id in expected), (
+        "the most recently released model should be in the newest five"
+    )
+
+
+def test_searching_the_catalogue_finds_imported_models(monkeypatch):
+    from complydoc import cli
+
+    monkeypatch.setattr(cli.console, "width", 200)
+    result = runner.invoke(app, ["models", "gemini"])
+    assert result.exit_code == 0
+    assert "imported" in result.output

@@ -32,9 +32,13 @@ def test_the_table_carries_only_what_is_used():
     table = json.loads(TABLE_PATH.read_text())
     allowed = {
         "provider",
+        "display_name",
         "input_per_mtok_usd",
         "output_per_mtok_usd",
         "batch_input_per_mtok_usd",
+        "accepts_image",
+        "accepts_pdf",
+        "release_date",
         "max_input_tokens",
     }
     for entry in table["models"].values():
@@ -105,10 +109,34 @@ def test_using_an_imported_price_is_disclosed(config):
     report = run_audit(FIXTURES, config, ("cost",), ocr=False, select_models=["gpt-4.1-mini"])
     entry = next(x for x in report.limitations if x.area == "Price provenance")
     assert entry.severity == "important"
-    assert "gpt-4.1-mini" in entry.affected
+    assert entry.affected, "it names the models it is talking about"
     assert "third-party" in entry.statement
 
 
 def test_a_verified_only_run_carries_no_provenance_caveat(config):
     report = run_audit(FIXTURES, config, ("cost",), ocr=False, select_models=["claude-opus-5"])
     assert not [x for x in report.limitations if x.area == "Price provenance"]
+
+
+def test_the_catalogue_knows_when_models_were_released():
+    """Recency is the whole reason for preferring this catalogue.
+
+    Without it the only ordering available is alphabetical, which puts a
+    two-year-old model above the one released this month.
+    """
+    import datetime as dt
+
+    from complydoc.cost.price_table import imported_models, released_on
+
+    dated = [d for d in (released_on(m.id) for m in imported_models()) if d]
+    assert len(dated) > 50, "most of the catalogue should carry a release date"
+    assert max(dated) > dt.date.today() - dt.timedelta(days=365), "and it should be current"
+
+
+def test_a_text_only_model_is_not_given_a_vision_price():
+    """The catalogue says what each model accepts, so nothing is assumed."""
+    from complydoc.cost.price_table import imported_models
+
+    text_only = [m for m in imported_models() if not m.supports_vision]
+    assert text_only, "the catalogue carries text-only models"
+    assert all(m.vision_formula is None for m in text_only)

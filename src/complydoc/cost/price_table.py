@@ -2,9 +2,13 @@
 
 `pricing.yaml` is the curated layer: a short list of models someone has checked
 against the provider's own page, and the only ones a report compares by default.
-This is the long tail behind it — a few hundred models with prices taken from a
-maintained third-party table, so that asking for one by name works without
-anybody having hand-written an entry for it first.
+This is the catalogue behind it — every current model from the first-party
+providers, so that asking for one by name works without anybody having
+hand-written an entry for it first.
+
+Each entry carries the date its model was released, which is what lets the tool
+show what is current instead of an alphabetical list where a two-year-old model
+sorts above this month's.
 
 The file is data on disk. Nothing here reaches the network; `scripts/build_price_table.py`
 refreshes it, and that is a maintenance step, not part of an audit.
@@ -82,6 +86,16 @@ def table_provenance() -> tuple[str | None, dt.date | None, int]:
     )
 
 
+def released_on(model_id: str) -> dt.date | None:
+    """When the model was released, where the catalogue records it."""
+    entry = _table().get("models", {}).get(model_id) or {}
+    value = entry.get("release_date")
+    try:
+        return dt.date.fromisoformat(value) if value else None
+    except ValueError:  # pragma: no cover - a malformed date is not worth failing on
+        return None
+
+
 @lru_cache(maxsize=1)
 def imported_models() -> tuple[ModelPricing, ...]:
     """Every model in the table, switched off.
@@ -95,8 +109,12 @@ def imported_models() -> tuple[ModelPricing, ...]:
     for name, entry in sorted(_table().get("models", {}).items()):
         provider = str(entry.get("provider", "unknown"))
         formula = _VISION_FORMULA.get(provider)
+        # The catalogue says what each model actually accepts, so a text-only
+        # model is priced for text rather than being given an image formula it
+        # would never be sent an image under.
+        takes_images = bool(entry.get("accepts_image"))
         notes = None
-        if provider in _ASSUMED_FORMULA:
+        if takes_images and provider in _ASSUMED_FORMULA:
             notes = (
                 f"The vision token formula is assumed to follow the OpenAI tiling "
                 f"convention; {provider} does not publish one."
@@ -105,13 +123,13 @@ def imported_models() -> tuple[ModelPricing, ...]:
             ModelPricing(
                 id=name,
                 provider=provider,
-                display_name=name,
+                display_name=str(entry.get("display_name") or name),
                 enabled=False,
                 input_per_mtok_usd=entry.get("input_per_mtok_usd"),
                 output_per_mtok_usd=entry.get("output_per_mtok_usd"),
                 batch_input_per_mtok_usd=entry.get("batch_input_per_mtok_usd"),
-                supports_vision=formula is not None,
-                vision_formula=formula,
+                supports_vision=takes_images and formula is not None,
+                vision_formula=formula if takes_images else None,
                 tokenizer=_tokenizer(provider),
                 price_source="imported",
                 imported_on=imported,

@@ -609,6 +609,10 @@ def models(
     show_all: Annotated[
         bool, typer.Option("--all", help="Include every model in the vendored price table.")
     ] = False,
+    new: Annotated[
+        int | None,
+        typer.Option("--new", help="Show the N most recently released models instead."),
+    ] = None,
     config_dir: ConfigOpt = None,
 ) -> None:
     """List the models available to price against, and where each price came from.
@@ -619,19 +623,29 @@ def models(
     """
     import datetime as dt
 
-    from complydoc.cost.price_table import table_provenance
+    from complydoc.cost.price_table import released_on, table_provenance
 
     config = _load(config_dir)
     pricing = config.pricing  # type: ignore[attr-defined]
     today = dt.date.today()
 
     chosen = list(pricing.models)
-    filtered = bool(match or provider)
+    filtered = bool(match or provider or new)
     if match:
         chosen = [m for m in chosen if match.lower() in m.id.lower()]
     if provider:
         chosen = [m for m in chosen if m.provider.lower() == provider.lower()]
-    if not filtered and not show_all:
+    if new:
+        # Newest first, and only models the catalogue dates. A model with no
+        # release date is not assumed to be old; it is simply not ranked.
+        dated = [(released_on(m.id), m) for m in chosen]
+        chosen = [
+            m
+            for date, m in sorted(
+                ((d, m) for d, m in dated if d), key=lambda pair: pair[0], reverse=True
+            )
+        ][:new]
+    elif not filtered and not show_all:
         chosen = [m for m in chosen if m.enabled]
 
     if not chosen:
@@ -643,7 +657,8 @@ def models(
     table.add_column("Provider")
     table.add_column("Input $/Mtok", justify="right")
     table.add_column("Batch", justify="right")
-    table.add_column("Vision formula")
+    table.add_column("Takes images")
+    table.add_column("Released")
     table.add_column("Price from")
 
     for entry in chosen:
@@ -665,7 +680,8 @@ def models(
             entry.provider,
             f"{entry.input_per_mtok_usd:g}" if entry.is_priced else "\u2014",
             f"{entry.batch_input_per_mtok_usd:g}" if entry.has_batch_price else "\u2014",
-            entry.vision_formula or "\u2014",
+            "yes" if entry.supports_vision else "[dim]text only[/]",
+            (released_on(entry.id) or "\u2014").__str__(),
             state,
         )
     console.print(table)
@@ -674,9 +690,10 @@ def models(
     enabled = sum(1 for m in pricing.models if m.enabled)
     if not filtered and not show_all:
         console.print(
-            f"\n[dim]Showing the {enabled} compared by default. "
-            f"{total} more are in the price table — [/][bold]complydoc models --all[/][dim], "
-            f"or search: [/][bold]complydoc models gpt[/][dim].[/]"
+            f"\n[dim]Showing the {enabled} compared by default. {total} are in the "
+            f"catalogue — [/][bold]complydoc models --new 15[/][dim] for the most "
+            f"recently released, [/][bold]--all[/][dim], or search: "
+            f"[/][bold]complydoc models gpt[/][dim].[/]"
         )
     console.print(
         f"\n[dim]Price one model with [/][bold]--model <id>[/][dim], repeat for several. "

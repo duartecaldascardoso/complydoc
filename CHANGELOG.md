@@ -10,12 +10,14 @@ branch on when reading reports programmatically.
 
 ### Added
 
-- A vendored price table: about 240 models across the eight first-party providers, so
-  `--model` reaches a model without anyone having hand-written an entry for it, and
-  `complydoc models` can search them. It is data on disk — a run still reaches no
-  network — and `make prices` refreshes it. Imported prices are marked as imported, kept
-  apart from the handful someone verified against a provider's page, and a report that
-  prices against one says so in its limitations.
+- A vendored model catalogue from models.dev: every current model from the eight
+  first-party providers, so `--model` reaches one without anyone having hand-written an
+  entry for it. `complydoc models --new N` lists the most recently released, because an
+  alphabetical dump sorts a two-year-old model above this month's. It is data on disk —
+  a run still reaches no network — and `make prices` refreshes it. Imported prices are
+  marked as imported, kept apart from the handful someone verified against a provider's
+  page, and a report that prices against one says so in its limitations.
+  Batch prices come from litellm, the only one of the two sources that publishes them.
 - Batch pricing, where the provider publishes one. The cost page shows what the same
   tokens cost through a batch endpoint beside the interactive price. Never inferred from
   the customary half price: a discount nobody can check does not belong in a budget.

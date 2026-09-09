@@ -28,7 +28,7 @@ Run `complydoc` with no arguments to audit the current directory.
 | `complydoc cost <path>` | Cost only |
 | `complydoc readiness <path>` | Extraction readiness only |
 | `complydoc sensitive <path>` | Identifiers only |
-| `complydoc models` | Which models can be priced against (`--all` for every one) |
+| `complydoc models` | Which models can be priced against (`--new N` for the latest, `--all` for every one) |
 | `complydoc doctor` | What is installed |
 
 Flags worth knowing: `--monthly-volume N` extrapolates cost, `--model <id>` (repeatable)

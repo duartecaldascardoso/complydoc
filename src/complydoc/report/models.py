@@ -31,6 +31,7 @@ __all__ = [
     "AuditReport",
     "DocumentReport",
     "DocumentTiming",
+    "ExtractorReading",
     "Limitation",
     "PageText",
     "RunMetadata",
@@ -71,6 +72,9 @@ class RunMetadata:
     ner_available: bool
     python_version: str
     monthly_volume: int | None
+    extractor: str = "pdfplumber"
+    """Which extractor's reading the findings were built from."""
+    compare_extractors: list[str] = field(default_factory=list)
     jobs: int = 1
     """Worker processes used. More than one changes nothing about the findings."""
     sampled_from: int | None = None
@@ -103,6 +107,22 @@ class PageText:
     truncated: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class ExtractorReading:
+    """What one extractor made of one document, totalled over its pages."""
+
+    extractor: str
+    characters: int
+    mean_coverage_pct: float
+    seconds: float
+    granularity: str
+    reads_tables: bool
+
+    @property
+    def read_nothing(self) -> bool:
+        return self.characters == 0
+
+
 @dataclass(slots=True)
 class DocumentReport:
     path: Path
@@ -120,6 +140,27 @@ class DocumentReport:
     timing: DocumentTiming | None = None
     extracted_text: list[PageText] = field(default_factory=list)
     """The text itself. Only populated with --extracted-text: it is the document."""
+    extractions: list[ExtractorReading] = field(default_factory=list)
+    """One per extractor the run was asked for. The first is the one kept."""
+
+    @property
+    def extractors_disagree(self) -> bool:
+        """Whether the extractors read this document differently enough to say so.
+
+        Measured against the one whose output was kept. A tenth of the text is
+        the line: below that the difference is line endings and whitespace, and
+        reporting it would be noise on every document.
+        """
+        if len(self.extractions) < 2:
+            return False
+        kept = self.extractions[0]
+        for other in self.extractions[1:]:
+            if kept.read_nothing != other.read_nothing:
+                return True
+            highest = max(kept.characters, other.characters, 1)
+            if abs(kept.characters - other.characters) / highest > 0.10:
+                return True
+        return False
 
 
 @dataclass(slots=True)

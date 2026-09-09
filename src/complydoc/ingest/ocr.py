@@ -7,17 +7,19 @@ than being quietly counted as containing nothing — a sensitive data scan that
 silently returns zero on a scanned bank statement is worse than one that says it
 could not look.
 
-The engine is RapidOCR on ONNX Runtime: pip-installable, models bundled, no
-system binary to install, and no network access at any point.
+The engine itself lives in `engines/`, chosen by name. This module is what the
+rest of complydoc talks to: which engine is selected, how much work it did, and
+how long it took.
 """
 
 from __future__ import annotations
 
 import atexit
 import time
-from dataclasses import dataclass
-from functools import lru_cache
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+
+from complydoc.ingest.engines.base import Engine, Recognised
+from complydoc.ingest.engines.registry import DEFAULT_ENGINE, engine_by_id
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from PIL.Image import Image
@@ -29,15 +31,62 @@ __all__ = [
     "engine_name",
     "reset_stats",
     "run",
+    "select",
     "set_threads",
     "stats",
     "unavailable_reason",
 ]
 
-_IMPORT_ERROR: str | None = None
+# OCR dominates the wall clock on a folder of scans, and how fast it runs is a
+# property of this machine rather than something worth guessing at. It is
+# measured here so the report can quote a rate it actually observed.
+_pages = 0
+_seconds = 0.0
+_selected = DEFAULT_ENGINE
 
-_threads: int | None = None
-"""Native threads the engine may use per page. None leaves it to the engine."""
+
+def select(engine_id: str | None) -> None:
+    """Choose the engine. Unknown names fall back to the default rather than failing."""
+    global _selected
+    if engine_id and engine_by_id(engine_id) is not None:
+        _selected = engine_id
+
+
+def _engine() -> Engine | None:
+    return engine_by_id(_selected)
+
+
+def _release() -> None:
+    """Drop the engine before the interpreter tears itself down.
+
+    RapidOCR holds native ONNX Runtime threads. Letting those be collected during
+    interpreter shutdown occasionally aborts the process with a mutex error after
+    the work has already finished, which turns a green test run into exit 134.
+    """
+    from complydoc.ingest.engines import rapidocr
+
+    rapidocr.release()
+
+
+atexit.register(_release)
+
+
+def available() -> bool:
+    engine = _engine()
+    return engine is not None and engine.available()
+
+
+def unavailable_reason() -> str | None:
+    engine = _engine()
+    if engine is None:
+        return f"no OCR engine called {_selected!r} is registered"
+    reason: str | None = engine.unavailable_reason()
+    return reason
+
+
+def engine_name() -> str:
+    engine = _engine()
+    return engine.name if engine is not None else _selected
 
 
 def set_threads(count: int | None) -> None:
@@ -48,83 +97,9 @@ def set_threads(count: int | None) -> None:
     the workers end up competing for the same cores and the run gets slower. A
     worker pins itself to one thread and lets the process pool do the spreading.
     """
-    global _threads
-    if count != _threads:
-        _engine.cache_clear()
-    _threads = count
-
-
-# OCR dominates the wall clock on a folder of scans, and how fast it runs is a
-# property of this machine rather than something worth guessing at. It is
-# measured here so the report can quote a rate it actually observed.
-_pages = 0
-_seconds = 0.0
-
-
-@dataclass(frozen=True, slots=True)
-class Recognised:
-    """What OCR read, and how sure it was.
-
-    The engine reports a confidence for every box it recognises and we used to
-    throw them away, which left OCR text asserted with exactly the same
-    authority as a native text layer. It does not deserve that.
-    """
-
-    text: str
-    confidence: float | None
-    boxes: int
-
-
-@lru_cache(maxsize=1)
-def _engine() -> Any | None:
-    global _IMPORT_ERROR
-    try:
-        from rapidocr_onnxruntime import RapidOCR
-    except ImportError as exc:
-        _IMPORT_ERROR = str(exc)
-        return None
-    options = (
-        {"intra_op_num_threads": _threads, "inter_op_num_threads": _threads}
-        if _threads is not None
-        else {}
-    )
-    try:
-        return RapidOCR(**options)
-    except Exception as exc:  # pragma: no cover - engine init is environment-specific
-        _IMPORT_ERROR = f"RapidOCR failed to initialise: {exc}"
-        return None
-
-
-def _release() -> None:
-    """Drop the engine before the interpreter tears itself down.
-
-    RapidOCR holds native ONNX Runtime threads. Letting those be collected during
-    interpreter shutdown occasionally aborts the process with a mutex error after
-    the work has already finished, which turns a green test run into exit 134.
-    Releasing early avoids the race.
-    """
-    _engine.cache_clear()
-
-
-atexit.register(_release)
-
-
-def available() -> bool:
-    return _engine() is not None
-
-
-def unavailable_reason() -> str | None:
-    if available():
-        return None
-    _engine()
-    return (
-        "the optional OCR extra is not installed "
-        f"(install with: uv sync --extra ocr){f' [{_IMPORT_ERROR}]' if _IMPORT_ERROR else ''}"
-    )
-
-
-def engine_name() -> str:
-    return "rapidocr-onnxruntime"
+    engine = _engine()
+    if engine is not None:
+        engine.set_threads(count)
 
 
 def reset_stats() -> None:
@@ -155,28 +130,13 @@ def run(image: Image) -> Recognised:
     global _pages, _seconds
 
     engine = _engine()
-    if engine is None:
+    if engine is None or not engine.available():
         return Recognised("", None, 0)
-    import numpy as np
 
-    array = np.asarray(image.convert("RGB"))
     started = time.perf_counter()
     try:
-        result, _ = engine(array)
-    except Exception:  # pragma: no cover - a bad page should not kill the run
-        return Recognised("", None, 0)
+        read: Recognised = engine.read(image)
+        return read
     finally:
         _seconds += time.perf_counter() - started
         _pages += 1
-    if not result:
-        return Recognised("", None, 0)
-
-    lines = [str(item[1]) for item in result if len(item) > 1]
-    scores = [
-        float(item[2]) for item in result if len(item) > 2 and isinstance(item[2], int | float)
-    ]
-    return Recognised(
-        text="\n".join(lines),
-        confidence=round(sum(scores) / len(scores), 3) if scores else None,
-        boxes=len(lines),
-    )

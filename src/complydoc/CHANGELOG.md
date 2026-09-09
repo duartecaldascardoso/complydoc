@@ -10,6 +10,22 @@ branch on when reading reports programmatically.
 
 ### Added
 
+- Extractors are pluggable, and more than one can run in a single pass.
+  `--extractor` picks which library reads the text layer; `--compare-extractor`
+  reads every page with a second one as well and reports where the two differ.
+  Only the first reaches a finding — the rest are measured, never adopted.
+  Comparison lives inside a run, so it is the same page on the same machine at the
+  same moment rather than two runs that would differ for reasons of their own.
+  `complydoc extractors` lists them.
+- pdfium as a second extractor: measured against pdfplumber on a real 392-page book
+  the two agree on the text within one to two per cent, and pdfium reads it about
+  thirteen times faster. It provides no table structure and a box per line rather
+  than per word, so the signals that need those report that they could not measure
+  rather than returning a number that means something else.
+- OCR engines are pluggable the same way, with `--ocr-engine` and
+  `complydoc engines`. Tesseract is included for anyone who already has it; it is
+  not a dependency, because it needs a system binary.
+
 - `--save-text <dir>` keeps the text complydoc read, one file per document. Reading a
   scanned folder is the slow part of an audit and it was being thrown away, so the next
   tool to want the text ran OCR over the same pages again.

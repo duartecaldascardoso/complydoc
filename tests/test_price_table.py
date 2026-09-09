@@ -33,6 +33,7 @@ def test_the_table_carries_only_what_is_used():
     allowed = {
         "provider",
         "display_name",
+        "family",
         "input_per_mtok_usd",
         "output_per_mtok_usd",
         "batch_input_per_mtok_usd",
@@ -53,36 +54,44 @@ def test_every_imported_price_says_it_was_imported():
         assert model.imported_on is not None
 
 
-def test_the_comparison_covers_the_configured_providers(config):
-    """Three providers, three models each. A chart of eight is one nobody reads.
+def test_every_provider_is_in_the_comparison(config):
+    """All of them, not a chosen few. A provider left off the chart is a
+    provider nobody can compare against."""
+    compared = {m.provider for m in config.pricing.usable_models}
+    offered = {m.provider for m in config.pricing.models if m.supports_vision and m.is_priced}
+    assert compared == offered
 
-    Each is topped up from the catalogue with its most recently released models,
-    so nobody has to edit a file when a provider ships something new.
+
+def test_each_provider_contributes_a_spread_of_prices(config):
+    """Four models at the same price answer nothing.
+
+    The comparison exists to show the trade being made, so each provider's
+    models are picked across its price range — Anthropic contributing haiku,
+    sonnet, opus and fable rather than four cuts of opus.
     """
     import collections
 
-    compare = config.pricing.compare
-    counts = collections.Counter(m.provider for m in config.pricing.usable_models)
+    wanted = config.pricing.compare.per_provider
+    prices = collections.defaultdict(list)
+    for model in config.pricing.usable_models:
+        prices[model.provider].append(model.input_per_mtok_usd or 0.0)
 
-    assert set(counts) == {name.lower() for name in compare.providers}
-    for provider, count in counts.items():
-        available = sum(
-            1
-            for m in config.pricing.models
-            if m.provider == provider and m.supports_vision and m.is_priced
-        )
-        assert count == min(compare.per_provider, available), provider
+    for provider, found in prices.items():
+        assert len(found) <= wanted, provider
+        assert len(set(found)) == len(found), f"{provider} repeats a price point"
+        if len(found) >= 3:
+            cheapest, dearest = min(found), max(found)
+            assert dearest >= cheapest * 2, f"{provider} spans too narrow a range: {found}"
 
 
-def test_a_provider_outside_the_default_set_is_still_reachable(config):
-    """Left out of the chart is not left out of the tool."""
-    compared = {m.provider for m in config.pricing.usable_models}
-    missing = {m.provider for m in config.pricing.models} - compared
-    assert missing, "the catalogue reaches further than the comparison"
-    for provider in sorted(missing):
-        named = [m for m in config.pricing.models if m.provider == provider and m.is_priced]
-        assert named, provider
-        assert resolve_models(config.pricing, [named[0].id])
+def test_the_anthropic_ladder_is_the_shape_it_should_be(config):
+    """The worked example: the tiers, not four versions of one tier."""
+    from complydoc.cost.price_table import family_of
+
+    picked = [m for m in config.pricing.usable_models if m.provider == "anthropic"]
+    families = {family_of(m.id.rsplit("/", 1)[-1]) for m in picked}
+    assert len(families) == len(picked), "one model per family"
+    assert len(picked) == config.pricing.compare.per_provider
 
 
 def test_the_comparison_never_lists_one_model_twice(config):

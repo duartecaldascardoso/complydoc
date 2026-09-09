@@ -27,7 +27,7 @@ from typing import Any
 
 from complydoc.config.schema import ModelPricing, TokenizerSpec
 
-__all__ = ["TABLE_PATH", "imported_models", "table_provenance"]
+__all__ = ["TABLE_PATH", "family_of", "imported_models", "released_on", "table_provenance"]
 
 TABLE_PATH = Path(__file__).parent.parent / "config" / "model_prices.json"
 
@@ -86,9 +86,21 @@ def table_provenance() -> tuple[str | None, dt.date | None, int]:
     )
 
 
+def family_of(model_id: str) -> str:
+    """The model without the release stamp that distinguishes one cut from another."""
+    models = _table().get("models", {})
+    # Curated entries sometimes name a model with its provider prefix and the
+    # catalogue never does, so the bare name is tried as well.
+    entry = models.get(model_id) or models.get(model_id.rsplit("/", 1)[-1]) or {}
+    return str(entry.get("family") or model_id)
+
+
 def released_on(model_id: str) -> dt.date | None:
     """When the model was released, where the catalogue records it."""
-    entry = _table().get("models", {}).get(model_id) or {}
+    models = _table().get("models", {})
+    # Curated entries sometimes name a model with its provider prefix and the
+    # catalogue never does, so the bare name is tried as well.
+    entry = models.get(model_id) or models.get(model_id.rsplit("/", 1)[-1]) or {}
     value = entry.get("release_date")
     try:
         return dt.date.fromisoformat(value) if value else None

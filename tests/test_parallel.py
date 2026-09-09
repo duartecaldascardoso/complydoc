@@ -23,6 +23,9 @@ def findings(report):
         data["run"].pop(key, None)
     for document in data["documents"]:
         document.pop("timing", None)
+        # How long an extractor took is wall clock, like the timings above it.
+        for reading in document.get("extractions") or []:
+            reading.pop("seconds", None)
     for key in [k for k in data.get("aggregate") or {} if "second" in k or "hours" in k]:
         data["aggregate"].pop(key)
     return data

@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
-from collections import Counter, defaultdict
+from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
 import yaml
 
@@ -127,52 +128,131 @@ def _with_imported(pricing: PricingConfig) -> PricingConfig:
 
     merged = [*pricing.models, *usable]
     wanted = [p.lower() for p in pricing.compare.providers]
-    if wanted:
-        # A curated entry for a provider outside the default set stays in the
-        # catalogue, reachable by name, rather than in the comparison.
-        merged = [
-            m.model_copy(update={"enabled": False}) if m.provider.lower() not in wanted else m
-            for m in merged
-        ]
     if pricing.compare.top_up_from_catalogue:
-        merged = _top_up(merged, pricing.compare.per_provider, wanted)
+        merged = _select(merged, pricing.compare.per_provider, wanted)
     return pricing.model_copy(update={"models": merged})
 
 
-def _top_up(
+_RECENT_MONTHS = 18
+"""How far back the comparison reaches for a model.
+
+Price alone would put a two-year-old model at the cheap end of every ladder and
+a long-retired premium one at the top. Both are real prices; neither is what
+anyone is choosing between today.
+"""
+
+
+def _bare(model_id: str) -> str:
+    """A model id without the provider prefix some entries carry."""
+    return model_id.rsplit("/", 1)[-1]
+
+
+def _select(
     models: list[ModelPricing], per_provider: int, providers: list[str]
 ) -> list[ModelPricing]:
-    """Bring every provider up to `per_provider` models in the comparison.
+    """Choose the comparison: `per_provider` models spread across each price range.
 
-    Newest first, and only models that take images: the comparison prices a page
-    three ways, and a text-only model cannot answer two of them. A provider with
-    nothing left to offer simply stays short.
-
-    The models chosen this way are imported, not verified, and the report says so
-    — but a comparison missing two providers entirely was answering less.
+    Every model is a candidate, curated or catalogue, so the ladder is chosen on
+    its merits rather than around whichever entries happened to be written down
+    first. A verified price wins a tie, because it is the one somebody checked.
     """
-    from complydoc.cost.price_table import released_on
+    from complydoc.cost.price_table import family_of, released_on
 
-    counts = Counter(m.provider for m in models if m.enabled and m.is_priced)
     candidates: dict[str, list[ModelPricing]] = defaultdict(list)
     for model in models:
         if providers and model.provider.lower() not in providers:
             continue
-        if not model.enabled and model.is_priced and model.supports_vision:
+        if model.is_priced and model.supports_vision:
             candidates[model.provider].append(model)
 
     chosen: set[str] = set()
-    for provider, available in candidates.items():
-        missing = per_provider - counts.get(provider, 0)
-        if missing <= 0:
-            continue
-        # Undated models sort last rather than being taken for ancient ones.
-        available.sort(key=lambda m: (released_on(m.id) or dt.date.min, m.id), reverse=True)
-        chosen.update(m.id for m in available[:missing])
+    for available in candidates.values():
+        chosen.update(m.id for m in _spread(available, per_provider, family_of, released_on))
 
-    if not chosen:
-        return models
-    return [m.model_copy(update={"enabled": True}) if m.id in chosen else m for m in models]
+    return [m.model_copy(update={"enabled": m.id in chosen}) for m in models]
+
+
+def _spread(
+    models: list[ModelPricing],
+    wanted: int,
+    family_of: Callable[[str], str],
+    released: Callable[[str], dt.date | None],
+) -> list[ModelPricing]:
+    """`wanted` models spread across the price range of what is current.
+
+    Reduced three times before spreading: to what was released recently enough
+    to be a live choice, then to one per family so a model stamped with its
+    release date does not appear beside itself, then to one per price so five
+    versions of one tier cannot fill the whole comparison.
+    """
+    if not models:
+        return []
+
+    cutoff = dt.date.today() - dt.timedelta(days=int(_RECENT_MONTHS * 30.5))
+    current = [m for m in models if (released(m.id) or dt.date.min) >= cutoff]
+    # A provider whose whole line predates the cutoff still gets a comparison,
+    # built from the newest it has, rather than dropping out of the report.
+    if len(current) < wanted:
+        by_age = sorted(models, key=lambda m: released(m.id) or dt.date.min, reverse=True)
+        current = by_age[: max(wanted, len(current))]
+
+    def preference(model: ModelPricing) -> tuple[Any, ...]:
+        # Newest first; a verified price breaks a tie, being the one checked.
+        return (
+            released(model.id) or dt.date.min,
+            model.price_source == "verified",
+            model.id,
+        )
+
+    ranked = sorted(current, key=preference, reverse=True)
+
+    seen: set[str] = set()
+    by_family: list[ModelPricing] = []
+    for model in ranked:
+        key = family_of(_bare(model.id))
+        if key in seen:
+            continue
+        seen.add(key)
+        by_family.append(model)
+
+    by_price: dict[float, ModelPricing] = {}
+    for model in by_family:
+        by_price.setdefault(m_price(model), model)
+
+    ladder = sorted(by_price.values(), key=m_price)
+    ladder = _without_outliers(ladder)
+    if wanted >= len(ladder):
+        return ladder
+    if wanted == 1:
+        return [ladder[0]]
+    # Evenly spaced, always keeping both ends: the cheapest option and the
+    # dearest are the two a reader most wants to see.
+    step = (len(ladder) - 1) / (wanted - 1)
+    return [ladder[i] for i in sorted({round(i * step) for i in range(wanted)})]
+
+
+_OUTLIER_MULTIPLE = 8.0
+"""How far above the middle of a provider's range a price may sit and still be
+part of the comparison.
+
+One model at a hundred and fifty dollars a million tokens is a real price and a
+useless bar: it flattens every other model on the chart to nothing, and nobody
+choosing how to read invoices is choosing it.
+"""
+
+
+def _without_outliers(ladder: list[ModelPricing]) -> list[ModelPricing]:
+    if len(ladder) < 3:
+        return ladder
+    middle = m_price(ladder[len(ladder) // 2])
+    if middle <= 0:
+        return ladder
+    kept = [m for m in ladder if m_price(m) <= middle * _OUTLIER_MULTIPLE]
+    return kept if len(kept) >= 2 else ladder
+
+
+def m_price(model: ModelPricing) -> float:
+    return model.input_per_mtok_usd or 0.0
 
 
 def check_staleness(pricing: PricingConfig, today: dt.date | None = None) -> list[StalenessWarning]:

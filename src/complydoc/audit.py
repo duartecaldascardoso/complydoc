@@ -31,7 +31,8 @@ from complydoc.config.schema import Config, ModelPricing
 from complydoc.cost.estimator import estimate_document, folder_from_estimates, resolve_models
 from complydoc.discovery import discover
 from complydoc.ingest import ocr as ocr_module
-from complydoc.ingest.base import IngestOptions, LoaderError, SkipRecord
+from complydoc.ingest.base import Document, IngestOptions, LoaderError, SkipRecord
+from complydoc.ingest.extractors.registry import DEFAULT_EXTRACTOR
 from complydoc.ingest.registry import load_document
 from complydoc.readiness.analyser import analyse
 from complydoc.report.limitations import build_limitations
@@ -40,6 +41,7 @@ from complydoc.report.models import (
     AuditReport,
     DocumentReport,
     DocumentTiming,
+    ExtractorReading,
     PageText,
     RunMetadata,
     build_aggregate,
@@ -104,6 +106,45 @@ class _Outcome:
     ocr_seconds: float = 0.0
 
 
+def _readings(document: Document) -> list[ExtractorReading]:
+    """Each extractor's reading of the whole document, totalled over its pages.
+
+    Order is preserved: the first is the one whose output the findings were
+    built from, and the rest are there to be compared against it.
+    """
+    order: list[str] = []
+    totals: dict[str, list[float]] = {}
+    shape: dict[str, tuple[str, bool]] = {}
+
+    for page in document.pages:
+        for summary in page.extractions:
+            if summary.extractor not in totals:
+                order.append(summary.extractor)
+                totals[summary.extractor] = [0.0, 0.0, 0.0, 0.0]
+                shape[summary.extractor] = (summary.granularity, summary.reads_tables)
+            row = totals[summary.extractor]
+            row[0] += summary.characters
+            row[1] += summary.coverage_pct
+            row[2] += summary.seconds
+            row[3] += 1
+
+    readings: list[ExtractorReading] = []
+    for name in order:
+        characters, coverage, seconds, pages = totals[name]
+        granularity, reads_tables = shape[name]
+        readings.append(
+            ExtractorReading(
+                extractor=name,
+                characters=int(characters),
+                mean_coverage_pct=round(coverage / pages, 2) if pages else 0.0,
+                seconds=round(seconds, 4),
+                granularity=granularity,
+                reads_tables=reads_tables,
+            )
+        )
+    return readings
+
+
 def _process(path: Path, work: _Work) -> _Outcome:
     """Read one document and produce its report entry. Never raises."""
     ocr_before = ocr_module.stats()
@@ -132,6 +173,8 @@ def _process(path: Path, work: _Work) -> _Outcome:
         page_count_known=document.page_count_known,
         load_warnings=list(document.load_warnings),
     )
+
+    entry.extractions = _readings(document)
 
     analyse_started = time.perf_counter()
     if "readiness" in work.requested:
@@ -278,6 +321,8 @@ def run_audit(
     ocr_compare: bool = False,
     render_dpi: int = 150,
     password: str = "",
+    extractor: str | None = None,
+    compare_extractors: Sequence[str] = (),
     jobs: int = 1,
     sample: int | None = None,
     progress: Callable[[int, int, Path], None] | None = None,
@@ -304,7 +349,10 @@ def run_audit(
         ocr_compare=ocr_compare,
         max_render_pages=50 if (wants_raster or page_images) else 0,
         password=password,
+        extractor=extractor or DEFAULT_EXTRACTOR,
+        compare_extractors=tuple(compare_extractors),
     )
+    chosen_extractor = extractor or DEFAULT_EXTRACTOR
 
     ocr_module.reset_stats()
     jobs = resolve_jobs(jobs, len(files))
@@ -366,6 +414,8 @@ def run_audit(
         sampled_from=found if sampled else None,
         sample_size=len(files) if sampled else None,
         password_used=bool(password),
+        extractor=chosen_extractor,
+        compare_extractors=list(compare_extractors),
     )
 
     staleness = check_staleness(config.pricing) if "cost" in requested else []

@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import re
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -54,6 +55,23 @@ PROVIDERS = {
 }
 
 _PER_MTOK = 1_000_000
+
+# Providers publish the same model several times over: once under a plain name
+# and again stamped with the date it was cut. Reducing them to a family keeps a
+# comparison from showing one model four times at the same price.
+_SUFFIXES = re.compile(
+    r"(-\d{4}-\d{2}-\d{2}|-\d{8}|-\d{4}|-latest|-chat-latest)$",
+)
+
+
+def _family(model_id: str) -> str:
+    """The model without the release stamp that distinguishes one cut from another."""
+    stem = model_id
+    while True:
+        trimmed = _SUFFIXES.sub("", stem)
+        if trimmed == stem:
+            return stem
+        stem = trimmed
 
 
 def _fetch(url: str) -> Any:
@@ -91,7 +109,14 @@ def build(catalogue: dict[str, Any], batch: dict[str, float]) -> dict[str, Any]:
             price = cost.get("input")
             if not isinstance(price, int | float) or price <= 0:
                 continue
-            inputs = (model.get("modalities") or {}).get("input") or []
+            modalities = model.get("modalities") or {}
+            inputs = modalities.get("input") or []
+            outputs = modalities.get("output") or []
+            # A model that draws pictures or turns text into vectors is not one
+            # you send a document to be read. Both accept images, so the input
+            # side alone does not separate them.
+            if "image" in outputs or "embedding" in model_id.lower():
+                continue
             models[model_id] = {
                 "provider": provider,
                 "display_name": model.get("name") or model_id,
@@ -108,6 +133,7 @@ def build(catalogue: dict[str, Any], batch: dict[str, float]) -> dict[str, Any]:
                 # An explicit list of what the model accepts, rather than a
                 # single "supports vision" flag that says nothing about PDFs.
                 "accepts_image": "image" in inputs,
+                "family": _family(model_id),
                 "accepts_pdf": "pdf" in inputs,
                 "release_date": model.get("release_date"),
                 "max_input_tokens": (model.get("limit") or {}).get("context"),

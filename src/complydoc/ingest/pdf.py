@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -21,15 +22,17 @@ import pypdf
 from complydoc.ingest.base import (
     Document,
     DocumentFormat,
+    ExtractionSummary,
     ImageBlock,
     IngestOptions,
     LoaderError,
     Page,
     Rect,
     TableInfo,
-    TextBlock,
     sha256_of,
 )
+from complydoc.ingest.extractors.base import Extraction, PageSource
+from complydoc.ingest.extractors.registry import extractor_by_id
 from complydoc.ingest.registry import register
 from complydoc.text import count, plural
 
@@ -254,6 +257,26 @@ def _aligned_tables(plumber_page: Any, words: list[Any]) -> list[TableInfo]:
     return found
 
 
+def _wants_pdfium(options: IngestOptions) -> bool:
+    """Whether any extractor asked for reads through pdfium."""
+    from complydoc.ingest.extractors.registry import extractor_by_id
+
+    for name in (options.extractor, *options.compare_extractors):
+        engine = extractor_by_id(name)
+        if engine is not None and getattr(engine, "id", "") == "pdfium":
+            return True
+    return False
+
+
+def _open_pdfium(path: Path, password: str) -> Any:
+    try:
+        import pypdfium2 as pdfium
+
+        return pdfium.PdfDocument(str(path), password=password or None)
+    except Exception:  # pragma: no cover - a file pdfplumber opened may still fail here
+        return None
+
+
 def _render_pages(path: Path, password: str, indices: list[int], dpi: int) -> dict[int, Any]:
     """Rasterise selected pages to greyscale PIL images."""
     if not indices:
@@ -348,10 +371,24 @@ class PdfLoader:
         except Exception as exc:
             raise LoaderError(f"pdfplumber could not open the file: {exc}") from exc
 
+        # Opened once, and only when an extractor that reads through it was
+        # asked for. The default run never touches it here.
+        pdfium_doc = None
+        if _wants_pdfium(options):
+            pdfium_doc = _open_pdfium(path, password)
+
         needs_raster: list[int] = []
         with plumber, _quiet_pypdf():
             for index, plumber_page in enumerate(plumber.pages):
-                page = self._build_page(index, plumber_page, reader, options, document)
+                native = None
+                if pdfium_doc is not None and index < len(pdfium_doc):
+                    try:
+                        native = pdfium_doc[index]
+                    except Exception:
+                        native = None
+                page = self._build_page(
+                    index, plumber_page, reader, options, document, pdfium_page=native
+                )
                 document.pages.append(page)
                 if len(needs_raster) < options.max_render_pages and self._needs_raster(
                     page, options
@@ -365,6 +402,52 @@ class PdfLoader:
         self._apply_ocr(document, options, ocr_module, needs_raster)
         self._apply_ocr_compare(document, options, ocr_module)
         return document
+
+    @staticmethod
+    def _extract(
+        page: Page,
+        source: PageSource,
+        width: float,
+        height: float,
+        options: IngestOptions,
+    ) -> Extraction:
+        """Read the page with each extractor asked for, and keep one of them.
+
+        The kept one is the only one that reaches a finding. The others are
+        measured and recorded so the report can say where they disagreed, and
+        they never change what the report concludes.
+        """
+        wanted = [options.extractor, *options.compare_extractors]
+        kept: Extraction | None = None
+
+        for index, name in enumerate(dict.fromkeys(wanted)):
+            engine = extractor_by_id(name)
+            if engine is None or not engine.available():
+                if index == 0:
+                    page.notes.append(f"extractor {name!r} is not available")
+                continue
+            started = time.perf_counter()
+            try:
+                found = engine.read(source, width, height)
+            except Exception as exc:  # pragma: no cover - an extractor may fail
+                page.notes.append(f"extractor {name!r} failed: {exc}")
+                continue
+            seconds = time.perf_counter() - started
+
+            page.extractions.append(
+                ExtractionSummary(
+                    extractor=name,
+                    characters=found.characters,
+                    coverage_pct=found.coverage_pct(width, height),
+                    seconds=round(seconds, 4),
+                    granularity=found.granularity,
+                    tables_found=len(found.tables) if engine.provides_tables else None,
+                )
+            )
+            if kept is None:
+                kept = found
+
+        return kept if kept is not None else Extraction()
 
     @staticmethod
     def _needs_raster(page: Page, options: IngestOptions) -> bool:
@@ -381,6 +464,7 @@ class PdfLoader:
         reader: pypdf.PdfReader,
         options: IngestOptions,
         document: Document,
+        pdfium_page: Any = None,
     ) -> Page:
         width = float(plumber_page.width or 0.0)
         height = float(plumber_page.height or 0.0)
@@ -388,22 +472,21 @@ class PdfLoader:
 
         page = Page(number=index + 1, width_pt=width, height_pt=height, rotation=rotation)
 
-        try:
-            page.text = plumber_page.extract_text() or ""
-        except Exception as exc:
-            page.notes.append(f"text extraction failed: {exc}")
-            page.text = ""
+        source = PageSource(plumber=plumber_page, pdfium=pdfium_page)
+        kept = self._extract(page, source, width, height, options)
+        page.text = kept.text
         page.text_source = "native" if page.text.strip() else "none"
+        page.text_blocks.extend(kept.blocks)
+        page.notes.extend(kept.notes)
 
+        # Word geometry from the extractor that was kept. The alignment table
+        # pass reuses it rather than clustering the characters a second time.
         words: list[Any] = []
-        try:
-            words = plumber_page.extract_words() or []
-            for word in words:
-                page.text_blocks.append(
-                    TextBlock(text=str(word.get("text", "")), bbox=_rect_from(word))
-                )
-        except Exception as exc:
-            page.notes.append(f"word geometry unavailable: {exc}")
+        if kept.granularity == "word":
+            try:
+                words = plumber_page.extract_words() or []
+            except Exception:
+                words = []
 
         try:
             for image in plumber_page.images or []:
@@ -418,15 +501,21 @@ class PdfLoader:
         except Exception as exc:
             page.notes.append(f"image geometry unavailable: {exc}")
 
+        page.raw_chars = kept.raw_chars
         try:
-            characters = plumber_page.chars
-            page.fonts = {str(c["fontname"]) for c in characters if c.get("fontname")}
-            page.raw_chars = "".join(str(c.get("text", "")) for c in characters)
+            # Fonts are a fact about the page rather than a reading of it, so
+            # they come from the file whichever extractor was used.
+            page.fonts = {str(c["fontname"]) for c in plumber_page.chars if c.get("fontname")}
         except Exception:
             page.fonts = set()
-            page.raw_chars = ""
 
-        if options.extract_tables:
+        # Only the extractor that was kept gets to speak for the page. Reading
+        # tables through pdfplumber while the report is built from pdfium would
+        # both claim structure the chosen extractor never saw and spend the time
+        # that choosing it was meant to save.
+        engine = extractor_by_id(options.extractor)
+        reads_tables = engine is None or engine.provides_tables
+        if options.extract_tables and reads_tables:
             try:
                 for table in plumber_page.find_tables():
                     info = _table_shape(table)

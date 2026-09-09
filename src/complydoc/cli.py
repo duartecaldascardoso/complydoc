@@ -110,6 +110,27 @@ OcrCompareOpt = Annotated[
         "what OCR reads can be compared. Implies --extracted-text.",
     ),
 ]
+ExtractorOpt = Annotated[
+    str | None,
+    typer.Option(
+        "--extractor",
+        help="Which library reads the text layer. Defaults to pdfplumber, the "
+        "richest; pdfium is far quicker and reads no table structure. "
+        "See: complydoc extractors.",
+    ),
+]
+CompareExtractorsOpt = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--compare-extractor",
+        help="Also read every page with this one and report where the two "
+        "disagree, repeatable. It never changes a finding.",
+    ),
+]
+OcrEngineOpt = Annotated[
+    str | None,
+    typer.Option("--ocr-engine", help="Which local OCR engine to read scans with."),
+]
 SaveTextOpt = Annotated[
     Path | None,
     typer.Option(
@@ -180,6 +201,9 @@ def _emit(
     name: str,
     quiet: bool,
     save_text: Path | None = None,
+    extractor: str | None = None,
+    compare_extractors: list[str] | None = None,
+    ocr_engine: str | None = None,
 ) -> None:
     json_path = write_json(report, out / f"{name}.json").resolve()
     html_path = write_html(report, config, out / f"{name}.html").resolve()  # type: ignore[arg-type]
@@ -273,8 +297,15 @@ def _run(
     jobs: int = 0,
     sample: int | None = None,
     save_text: Path | None = None,
+    extractor: str | None = None,
+    compare_extractors: list[str] | None = None,
+    ocr_engine: str | None = None,
 ) -> None:
     offline.arm()
+    if ocr_engine:
+        from complydoc.ingest import ocr as ocr_module
+
+        ocr_module.select(ocr_engine)
     # stdout has to stay pure JSON when a caller is parsing it.
     global console
     if print_json:
@@ -311,6 +342,8 @@ def _run(
             ocr_compare=ocr_compare,
             recurse=recurse,
             password=password,
+            extractor=extractor,
+            compare_extractors=tuple(compare_extractors or ()),
             jobs=jobs,
             sample=sample,
             progress=progress if not quiet else None,
@@ -360,6 +393,9 @@ def audit(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
+    extractor: ExtractorOpt = None,
+    ocr_engine: OcrEngineOpt = None,
+    compare_extractor: CompareExtractorsOpt = None,
     save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
@@ -383,6 +419,9 @@ def audit(
         ocr_compare=ocr_compare,
         print_json=print_json,
         save_text=save_text,
+        extractor=extractor,
+        compare_extractors=compare_extractor,
+        ocr_engine=ocr_engine,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -408,6 +447,9 @@ def cost(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
+    extractor: ExtractorOpt = None,
+    ocr_engine: OcrEngineOpt = None,
+    compare_extractor: CompareExtractorsOpt = None,
     save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
@@ -427,6 +469,9 @@ def cost(
         select_models=model,
         print_json=print_json,
         save_text=save_text,
+        extractor=extractor,
+        compare_extractors=compare_extractor,
+        ocr_engine=ocr_engine,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -446,6 +491,9 @@ def readiness(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
+    extractor: ExtractorOpt = None,
+    ocr_engine: OcrEngineOpt = None,
+    compare_extractor: CompareExtractorsOpt = None,
     save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
@@ -464,6 +512,9 @@ def readiness(
         ocr_compare=ocr_compare,
         print_json=print_json,
         save_text=save_text,
+        extractor=extractor,
+        compare_extractors=compare_extractor,
+        ocr_engine=ocr_engine,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -490,6 +541,9 @@ def sensitive(
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
     recurse: RecurseOpt = True,
+    extractor: ExtractorOpt = None,
+    ocr_engine: OcrEngineOpt = None,
+    compare_extractor: CompareExtractorsOpt = None,
     save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
@@ -509,6 +563,9 @@ def sensitive(
         extracted_text=extracted_text,
         print_json=print_json,
         save_text=save_text,
+        extractor=extractor,
+        compare_extractors=compare_extractor,
+        ocr_engine=ocr_engine,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -738,6 +795,54 @@ def models(
         f"{imported_on.isoformat() if imported_on else 'an unknown date'}; refresh with "
         f"[/][bold]make prices[/][dim].[/]"
     )
+
+
+@app.command()
+def extractors() -> None:
+    """List the libraries that can read a PDF's text layer, and what each provides."""
+    from complydoc.ingest.extractors.registry import DEFAULT_EXTRACTOR, all_extractors
+
+    table = Table(box=None, pad_edge=False)
+    table.add_column("Id")
+    table.add_column("Boxes")
+    table.add_column("Reads tables")
+    table.add_column("Available")
+
+    for engine in all_extractors():
+        table.add_row(
+            f"{engine.id}[dim] (default)[/]" if engine.id == DEFAULT_EXTRACTOR else engine.id,
+            f"per {engine.granularity}",
+            "yes" if engine.provides_tables else "[dim]no[/]",
+            "yes" if engine.available() else "[yellow]no[/]",
+        )
+    console.print(table)
+    console.print(
+        "\n[dim]Pick one with [/][bold]--extractor <id>[/][dim], or read every page with a "
+        "second and report where they differ: [/][bold]--compare-extractor <id>[/][dim].\n"
+        "A signal needing what an extractor does not provide reports that it could not "
+        "measure, rather than a number that means something else.[/]"
+    )
+
+
+@app.command()
+def engines() -> None:
+    """List the local OCR engines."""
+    from complydoc.ingest.engines.registry import DEFAULT_ENGINE, all_engines
+
+    table = Table(box=None, pad_edge=False)
+    table.add_column("Id")
+    table.add_column("Engine")
+    table.add_column("Available")
+
+    for engine in all_engines():
+        reason = engine.unavailable_reason()
+        table.add_row(
+            f"{engine.id}[dim] (default)[/]" if engine.id == DEFAULT_ENGINE else engine.id,
+            engine.name,
+            "yes" if reason is None else f"[yellow]{reason}[/]",
+        )
+    console.print(table)
+    console.print("\n[dim]Pick one with [/][bold]--ocr-engine <id>[/][dim].[/]")
 
 
 @app.command("pricing-import")

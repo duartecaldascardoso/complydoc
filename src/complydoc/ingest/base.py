@@ -19,6 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only
 __all__ = [
     "Document",
     "DocumentFormat",
+    "ExtractionSummary",
     "ImageBlock",
     "IngestOptions",
     "Loader",
@@ -86,6 +87,28 @@ class TableInfo:
     depth and merged-cell counts cannot be measured and are reported as unknown."""
 
 
+@dataclass(frozen=True, slots=True)
+class ExtractionSummary:
+    """What one extractor made of one page, for comparing them against each other.
+
+    Comparison lives inside a run: the same page, the same machine, the same
+    moment. Two runs of different extractors would differ for reasons that have
+    nothing to do with the extractors.
+    """
+
+    extractor: str
+    characters: int
+    coverage_pct: float
+    seconds: float
+    granularity: str
+    tables_found: int | None
+    """None when the extractor cannot look for tables, which is not zero tables."""
+
+    @property
+    def reads_tables(self) -> bool:
+        return self.tables_found is not None
+
+
 @dataclass(slots=True)
 class Page:
     number: int
@@ -119,6 +142,8 @@ class Page:
     un-normalised characters are kept alongside. Word spacing is absent here, so
     this is only useful for character-level questions.
     """
+    extractions: list[ExtractionSummary] = field(default_factory=list)
+    """One per extractor asked for, including the one whose output was kept."""
     raster: Image | None = None
     """Populated only for pages a signal actually needs to look at as pixels."""
     notes: list[str] = field(default_factory=list)
@@ -207,6 +232,10 @@ class IngestOptions:
     max_render_pages: int = 50
     """Cap on how many pages of one document are rasterised, to bound memory."""
     extract_tables: bool = True
+    extractor: str = "pdfplumber"
+    """Which extractor's output the report is built from."""
+    compare_extractors: tuple[str, ...] = ()
+    """Others to run alongside, for comparison only. They never change a finding."""
     password: str = ""
     """Tried on encrypted files before falling back to an empty password."""
     ocr_compare: bool = False

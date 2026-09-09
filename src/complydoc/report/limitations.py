@@ -46,6 +46,24 @@ def build_limitations(
             )
         )
 
+    # --- Extractors that read the same page differently --------------------
+    differing = sorted(d.relative_path for d in documents if d.extractors_disagree)
+    if differing:
+        names = ", ".join(r.extractor for r in documents[0].extractions) if documents else ""
+        limitations.append(
+            Limitation(
+                area="Extraction",
+                statement=(
+                    f"{count(len(differing), 'document')} were read differently by the "
+                    f"extractors this run compared ({names}). The findings come from the "
+                    f"first of them, so what the others read is not reflected anywhere but "
+                    f"here — on those documents the choice of extractor changes the answer."
+                ),
+                affected=differing,
+                severity="important",
+            )
+        )
+
     # --- Prices nobody checked --------------------------------------------
     priced = next((d.cost.models for d in documents if d.cost), [])
     imported = sorted({m.display_name for m in priced if m.price_source == "imported"})

@@ -15,6 +15,19 @@ def _tables(document: Document) -> list[TableInfo]:
     return [table for page in document.pages for table in page.tables]
 
 
+def _tables_were_searched(document: Document) -> bool:
+    """Whether anything actually looked.
+
+    A leaner extractor reads the text and no structure, so its zero tables means
+    nobody looked rather than there being none — the distinction this whole
+    module is built to keep.
+    """
+    summaries = [s for page in document.pages for s in page.extractions]
+    if not summaries:
+        return True
+    return any(s.reads_tables for s in summaries)
+
+
 @signal
 class TableCountSignal:
     id = "table_count"
@@ -27,6 +40,11 @@ class TableCountSignal:
         if not document.pages:
             return Measurement.na(
                 "the document could not be opened, so it has no pages to look for tables in"
+            )
+        if not _tables_were_searched(document):
+            return Measurement.na(
+                "the extractor this run used does not read table structure, so nothing "
+                "looked for tables on this document"
             )
         tables = _tables(document)
         return Measurement(
@@ -50,6 +68,11 @@ class TableHeaderDepthSignal:
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:
+        if not _tables_were_searched(document):
+            return Measurement.na(
+                "the extractor this run used does not read table structure, so nothing "
+                "looked for tables on this document"
+            )
         tables = _tables(document)
         ruled = [t for t in tables if t.detected_by == "lines"]
         if not tables:
@@ -76,6 +99,11 @@ class TableMergedCellsSignal:
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:
+        if not _tables_were_searched(document):
+            return Measurement.na(
+                "the extractor this run used does not read table structure, so nothing "
+                "looked for tables on this document"
+            )
         tables = _tables(document)
         ruled = [t for t in tables if t.detected_by == "lines"]
         if not tables:

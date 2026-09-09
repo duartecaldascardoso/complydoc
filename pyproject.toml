@@ -61,6 +61,12 @@ packages = ["src/complydoc"]
 [tool.hatch.build.targets.wheel.force-include]
 "src/complydoc/skill/SKILL.md" = "complydoc/skill/SKILL.md"
 
+[[tool.mypy.overrides]]
+# Not a dependency: the tesseract engine is there for anyone who already has it
+# installed, and complydoc will not make everyone carry a system binary for it.
+module = ["pytesseract"]
+ignore_missing_imports = true
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

@@ -155,14 +155,16 @@ class CompareConfig(_Base):
     rather than a file somebody has to remember to edit.
     """
 
-    providers: list[str] = ["anthropic", "openai", "gemini"]
-    """Which providers the default comparison covers.
+    providers: list[str] = []
+    """Which providers the default comparison covers. Empty means all of them."""
+    per_provider: int = 4
+    """How many models each provider contributes, spread across its price range.
 
-    Three, because a chart of eight is a chart nobody reads. Every other model
-    stays one `--model` away, and the report's provider filter still works on
-    whatever was compared.
+    Not the four newest — those tend to cost about the same as each other, and
+    four figures within a few cents say nothing. Spread across the range they
+    give the trade you are actually choosing between: Anthropic contributes
+    haiku, sonnet, opus and fable rather than four flavours of opus.
     """
-    per_provider: int = 3
     top_up_from_catalogue: bool = True
 
 

@@ -213,11 +213,45 @@ def test_what_the_preamble_used_to_say_is_still_reachable(html):
     assert "straightforward" in signals or "workable" in signals or "difficult" in signals
 
 
-def test_the_layout_key_appears_with_the_layout(html):
-    """A key for colours you cannot see is noise; it travels with the wireframe."""
+def test_the_layout_key_sits_outside_the_panels(html):
+    """Inside the layout view it changed the height when you switched views.
+
+    Constant geometry beats putting it next to what it describes: the layout is
+    one click away from wherever you are, so the key is always true.
+    """
     block = document_section(html).split(f"<h3>{MULTIPAGE}</h3>")[1].split("<h3>")[0]
-    first = block.split('data-page="1"')[1].split('data-page="2"')[0]
-    layout = first.split('class="face" data-face="svg"')[1]
-    assert 'class="key"' in layout.split('class="face"')[0]
-    page = first.split('class="face" data-face="img"')[1].split('class="face"')[0]
-    assert 'class="key"' not in page
+    pages = block.split('<div data-view="pages">')[1].split('<div data-view="signals"')[0]
+    assert pages.count('class="key"') == 1
+    assert 'class="key"' not in pages.split("</div>\n        </div>")[0].split('class="spread"')[-1]
+
+
+def test_the_workspace_is_the_same_shape_with_nothing_to_show(html):
+    """A document nobody could open used to render a different block entirely.
+
+    Switching to it resized the whole page. It gets the same bar and the same
+    two frames now, with the reason inside them.
+    """
+    block = document_section(html).split("<h3>encrypted.pdf</h3>")[1].split("<h3>")[0]
+    pages = block.split('<div data-view="pages">')[1].split('<div data-view="signals"')[0]
+    assert 'class="pagebar"' in pages
+    assert pages.count('class="spread"') == 1
+    assert pages.count('class="side"') == 2
+    assert pages.count('class="body"') == 2
+    assert "No page of this document could be read" in pages
+
+
+def test_nothing_to_page_through_disables_the_arrows(html):
+    """A bar you can press that does nothing is worse than one you cannot."""
+    block = document_section(html).split("<h3>encrypted.pdf</h3>")[1].split("<h3>")[0]
+    nav = block.split('class="pnav"')[1].split("</div>")[0]
+    assert nav.count("disabled") == 3, "both arrows and the number box"
+    assert "/ 0" in nav
+
+
+def test_why_it_could_not_be_read_is_not_only_in_the_panel(html):
+    """The loader's own words belong with the measurements, not above the page."""
+    block = document_section(html).split("<h3>encrypted.pdf</h3>")[1].split("<h3>")[0]
+    signals = block.split('<div data-view="signals"')[1]
+    assert "Reading this document was incomplete" in signals
+    preamble = block.split('<div data-view="pages">')[0]
+    assert "Reading this document was incomplete" not in preamble

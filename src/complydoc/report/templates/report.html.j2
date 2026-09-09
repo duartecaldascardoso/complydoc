@@ -134,10 +134,12 @@
   .pjump:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
   .pof { color: var(--faint); }
   .pmiss { color: var(--attn); }
-  /* The two halves are one row of equal height. The page sets that height, the
-     text side stretches to match it, and each scrolls inside its own box rather
-     than pushing the other one down the screen. */
-  .spread { display: flex; gap: 1.25rem; align-items: stretch; }
+  /* One fixed frame, the same on every document and every page. Letting the
+     page image set the height meant the whole workspace resized every time you
+     stepped a page or picked another file. Content that does not fill it
+     scrolls or sits inside it; nothing moves. */
+  .spread { display: flex; gap: 1.25rem; align-items: stretch;
+            --frame: clamp(26rem, 70vh, 54rem); }
   .spread[hidden] { display: none; }
   .spread .side { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
   /* A fixed label row, so the two frames start on the same line whether the
@@ -147,12 +149,12 @@
                          letter-spacing: 0.06em; margin-bottom: 0.375rem; }
   .spread .face { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
   .spread .face[hidden] { display: none; }
-  .spread .body { flex: 1 1 auto; min-height: 28rem; max-height: min(84vh, 68rem);
-                  overflow: auto; background: var(--panel); border: 1px solid var(--line-2); }
+  .spread .body { flex: 0 0 auto; height: var(--frame); overflow: auto;
+                  background: var(--panel); border: 1px solid var(--line-2); }
   .spread .body > .note { margin: 0; padding: 0.75rem; }
-  /* Zero the paragraph's default bottom margin: it is what made one side end
-     twelve pixels below the other. */
-  .spread .pcap { flex: 0 0 auto; margin: 0.25rem 0 0; }
+  /* Reserved whether or not there is anything to say, so a page with no flags
+     and a page with two does not shift what is underneath it. */
+  .spread .pcap { flex: 0 0 auto; margin: 0.25rem 0 0; min-height: 1.5rem; }
   .swap { display: inline-flex; border: 1px solid var(--line-2); border-radius: 3px;
           overflow: hidden; }
   .swap button { font: inherit; font-size: 0.625rem; text-transform: uppercase;
@@ -640,29 +642,46 @@ before reading that as an all-clear.</p>
           <button type="button" data-view="signals" aria-selected="false">Signals</button>
         </div>
       </div>
-      {% if doc.load_warnings %}
-        <div class="notice"><strong>Reading this document was incomplete.</strong>
-          <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
-      {% endif %}
 
       <div data-view="pages">
+        {# The workspace is the same shape for every document, including one
+           nobody could open: same bar, same two frames, and the reason said
+           inside them rather than in place of them. #}
         {% set rows = page_rows(doc) %}
-        {% if rows %}
         <div class="pagebar">
           <div class="pnav">
-            <button type="button" class="pstep" data-step="-1" aria-label="Previous page">&lsaquo;</button>
+            <button type="button" class="pstep" data-step="-1" aria-label="Previous page"
+                    {% if not rows %}disabled{% endif %}>&lsaquo;</button>
             <span class="pmid">
-              <input type="number" class="pjump" min="{{ rows[0].number }}"
-                     max="{{ rows[-1].number }}" value="{{ rows[0].number }}"
-                     aria-label="Go to page number">
-              <span class="pof">/ {{ rows[-1].number }}</span>
+              <input type="number" class="pjump" min="{{ rows[0].number if rows else 0 }}"
+                     max="{{ rows[-1].number if rows else 0 }}"
+                     value="{{ rows[0].number if rows else 0 }}"
+                     aria-label="Go to page number" {% if not rows %}disabled{% endif %}>
+              <span class="pof">/ {{ rows[-1].number if rows else 0 }}</span>
             </span>
-            <button type="button" class="pstep" data-step="1" aria-label="Next page">&rsaquo;</button>
+            <button type="button" class="pstep" data-step="1" aria-label="Next page"
+                    {% if not rows %}disabled{% endif %}>&rsaquo;</button>
           </div>
           <span class="pmiss" hidden>no page with that number</span>
         </div>
 
         <div class="pageview">
+        {% if not rows %}
+          <div class="spread" data-page="0">
+            <div class="side">
+              <div class="lbl">page</div>
+              <div class="body"><p class="note">No page of this document could be read.
+                {% if doc.load_warnings %}{{ doc.load_warnings[0] }}{% endif %}</p></div>
+              <div class="pcap"></div>
+            </div>
+            <div class="side">
+              <div class="lbl">content</div>
+              <div class="body"><p class="note">Nothing was extracted, so there is nothing
+                to show here. The Signals tab says what could still be measured.</p></div>
+              <div class="pcap"></div>
+            </div>
+          </div>
+        {% endif %}
         {% for row in rows %}
           <div class="spread" data-page="{{ row.number }}" hidden>
             <div class="side">
@@ -686,13 +705,6 @@ before reading that as an all-clear.</p>
               {% if row.preview %}
                 <div class="face" data-face="svg" {% if row.image_data_uri %}hidden{% endif %}>
                   <div class="body">{{ page_preview_svg(row.preview) | safe }}</div>
-                  {# The key explains the layout's colours, so it appears with it. #}
-                  <div class="key">
-                    <span><i class="sw" style="background:var(--pv-text);border-color:var(--pv-text)"></i> text</span>
-                    <span><i class="sw" style="background:var(--pv-image);border-color:var(--pv-image)"></i> image</span>
-                    <span><i class="sw" style="background:transparent;border-color:var(--poor)"></i> sensitive, high</span>
-                    <span><i class="sw" style="background:transparent;border-color:var(--fair)"></i> sensitive, other</span>
-                  </div>
                 </div>
               {% else %}
                 <div class="body"><p class="note">This page could not be read.</p></div>
@@ -744,16 +756,25 @@ before reading that as an all-clear.</p>
         {% endfor %}
         </div>
 
+        <div class="key">
+          <span><i class="sw" style="background:var(--pv-text);border-color:var(--pv-text)"></i> text</span>
+          <span><i class="sw" style="background:var(--pv-image);border-color:var(--pv-image)"></i> image</span>
+          <span><i class="sw" style="background:transparent;border-color:var(--poor)"></i> sensitive, high</span>
+          <span><i class="sw" style="background:transparent;border-color:var(--fair)"></i> sensitive, other</span>
+        </div>
         {% set imaged = rows | selectattr("image_data_uri") | list | length %}
         {% if report.run.page_images_used and imaged and imaged < rows | length %}
           <p class="note">{{ imaged }} of {{ rows | length }} pages were rendered as pictures;
           the rest are shown as layout. Only so many pages of one document are rasterised, so
           that a long scan cannot exhaust memory or make the report too large to send.</p>
         {% endif %}
-        {% else %}<p class="note">No pages could be read from this document.</p>{% endif %}
       </div>
 
       <div data-view="signals" hidden>
+        {% if doc.load_warnings %}
+          <div class="notice"><strong>Reading this document was incomplete.</strong>
+            <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
+        {% endif %}
         <p class="doc-meta">{{ doc.format }} · {{ plural(doc.page_count, "page") }}{% if not doc.page_count_known %}, not fixed{% endif %}{% if doc.difficulty and doc.difficulty.score %} ·
           <span class="{{ 'attn' if score_band(doc.difficulty.score.value) == 'poor' else '' }}">{{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>{% endif %}{% if doc.timing %} ·
           {{ duration(doc.timing.total_seconds) }} to read and analyse{% endif %}</p>
@@ -1027,7 +1048,10 @@ before reading that as an all-clear.</p>
   // a page, which is the only practical way through a long scan.
   function pageviewer(doc) {
     var bar = doc.querySelector(".pagebar");
-    var spreads = Array.prototype.slice.call(doc.querySelectorAll(".pageview > .spread"));
+    var spreads = Array.prototype.slice.call(doc.querySelectorAll(".pageview > .spread"))
+      .filter(function (s) { return s.getAttribute("data-page") !== "0"; });
+    // A document with no readable page still draws the workspace, with the
+    // reason inside it; there is just nothing to step through.
     if (!bar || !spreads.length) return;
 
     var numbers = spreads.map(function (s) { return Number(s.getAttribute("data-page")); });

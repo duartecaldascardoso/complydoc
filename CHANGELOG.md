@@ -20,6 +20,11 @@ branch on when reading reports programmatically.
   can be sorted.
 - The page heading repeating the folder path, the timestamp and the version is gone.
   All of it is recorded once, in the footer.
+- The panels are one fixed frame, identical on every document and every page. Their
+  height used to follow whichever page image was loaded, so the workspace resized
+  every time you stepped a page or picked another file. A document nobody could open
+  now draws the same workspace with the reason inside it, rather than a different
+  block that resized the page on arrival.
 - The file list sits at the height of the panels, not the column that holds them.
 - Every page starts the same distance below the tab bar, whether or not it opens on
   a heading.

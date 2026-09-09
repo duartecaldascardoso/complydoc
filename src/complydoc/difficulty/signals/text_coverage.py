@@ -29,7 +29,7 @@ class TextCoverageSignal:
         mean = sum(per_page) / len(per_page)
         return Measurement(
             value=round(mean, 2),
-            display=f"{mean:.1f}% of page area",
+            display=f"{mean:.1f}% of page",
             detail={
                 "per_page_pct": [round(v, 2) for v in per_page],
                 "lowest_page_pct": round(min(per_page), 2),

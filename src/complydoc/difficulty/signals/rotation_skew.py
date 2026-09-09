@@ -86,7 +86,7 @@ class PageRotationSignal:
         worst = max(rotations)
         return Measurement(
             value=worst,
-            display=f"{worst} degrees" if worst else "upright",
+            display=f"{worst}\u00b0" if worst else "upright",
             detail={
                 "per_page": rotations,
                 "rotated_pages": sum(1 for r in rotations if r),
@@ -117,7 +117,7 @@ class SkewAngleSignal:
         worst = max(angles, key=abs)
         return Measurement(
             value=round(abs(worst), 2),
-            display=f"{worst:+.2f} degrees at the worst page",
+            display=f"{worst:+.1f}\u00b0, worst page",
             detail={
                 "per_page_degrees": [round(a, 2) for a in angles],
                 "pages_measured": len(angles),

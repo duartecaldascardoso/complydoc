@@ -59,7 +59,7 @@ class LanguageCountSignal:
         return Measurement(
             value=len(counts),
             display=(
-                f"{next(iter(counts))} throughout"
+                f"{next(iter(counts))}"
                 if len(counts) == 1
                 else f"{len(counts)} languages: {', '.join(sorted(counts))}"
             ),

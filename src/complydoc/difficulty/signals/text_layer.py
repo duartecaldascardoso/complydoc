@@ -23,9 +23,9 @@ class TextLayerSignal:
         none = len(document.pages) - native - ocr
         present = native > 0
         if present:
-            display = f"yes, on {native} of {len(document.pages)} page(s)"
+            display = f"yes, {native} of {len(document.pages)} pages"
         elif ocr:
-            display = f"no native text; {ocr} page(s) recovered by OCR"
+            display = f"none; {ocr} via OCR"
         else:
             display = "no"
         return Measurement(

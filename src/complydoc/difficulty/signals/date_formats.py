@@ -50,9 +50,7 @@ class DateFormatConsistencySignal:
         consistency = dominant_count / total * 100
         return Measurement(
             value=round(consistency, 2),
-            display=(
-                f"{consistency:.0f}% in one format" if len(counts) > 1 else "100% in one format"
-            ),
+            display=(f"{consistency:.0f}% consistent" if len(counts) > 1 else "consistent"),
             detail={
                 "dates_found": total,
                 "formats_seen": dict(counts),

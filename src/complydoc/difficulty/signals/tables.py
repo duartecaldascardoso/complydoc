@@ -31,7 +31,7 @@ class TableCountSignal:
         tables = _tables(document)
         return Measurement(
             value=len(tables),
-            display=f"{len(tables)} table(s)",
+            display=f"{len(tables)} tables",
             detail={
                 "per_page": [len(p.tables) for p in document.pages],
                 "total_rows": sum(t.rows for t in tables),
@@ -54,7 +54,7 @@ class TableHeaderDepthSignal:
         depth = max(t.header_depth for t in tables)
         return Measurement(
             value=depth,
-            display=f"{depth} header row(s)",
+            display=f"{depth} header rows",
             detail={"per_table": [t.header_depth for t in tables]},
         )
 
@@ -74,7 +74,7 @@ class TableMergedCellsSignal:
         merged = sum(t.merged_cells for t in tables)
         return Measurement(
             value=merged,
-            display=f"{merged} merged cell(s)",
+            display=f"{merged} merged cells",
             detail={
                 "per_table": [t.merged_cells for t in tables],
                 "tables_with_merges": sum(1 for t in tables if t.merged_cells),

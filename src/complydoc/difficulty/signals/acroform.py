@@ -19,5 +19,5 @@ class AcroFormSignal:
         if not document.pages and document.encrypted:
             return Measurement.na("the document is encrypted and could not be inspected")
         count = document.acroform_fields
-        display = f"{count} named field(s)" if count else "none (values must be located by layout)"
+        display = f"{count} named fields" if count else "none"
         return Measurement(value=count, display=display, detail={"field_count": count})

@@ -66,7 +66,7 @@ class ColumnCountSignal:
         worst = max(counts)
         return Measurement(
             value=worst,
-            display=f"{worst} column(s) at the widest",
+            display=f"{worst} columns",
             detail={
                 "per_page": counts,
                 "pages_measured": len(counts),

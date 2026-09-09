@@ -21,11 +21,11 @@ class EncryptedSignal:
         if document.decrypted_with_empty_password:
             return Measurement(
                 value=True,
-                display="encrypted, opened with an empty password",
+                display="encrypted, empty password",
                 detail={"opened": True, "empty_password": True},
             )
         return Measurement(
             value=True,
-            display="encrypted, could not be opened",
+            display="encrypted, unreadable",
             detail={"opened": False},
         )

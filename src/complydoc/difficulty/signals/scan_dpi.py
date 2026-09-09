@@ -41,7 +41,7 @@ class ScanDpiSignal:
         lowest = min(dpi for _, dpi in measured)
         return Measurement(
             value=round(lowest, 1),
-            display=f"{lowest:.0f} DPI at the lowest page",
+            display=f"{lowest:.0f} DPI, lowest page",
             detail={
                 "pages_measured": [n for n, _ in measured],
                 "per_page_dpi": {str(n): round(d, 1) for n, d in measured},

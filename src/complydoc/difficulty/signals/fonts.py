@@ -26,7 +26,7 @@ class FontCountSignal:
             )
         return Measurement(
             value=len(fonts),
-            display=f"{len(fonts)} distinct font(s)",
+            display=f"{len(fonts)} fonts",
             detail={"fonts": sorted(fonts)},
         )
 
@@ -53,7 +53,7 @@ class FontsEmbeddedSignal:
             display=(
                 "all fonts embedded or standard"
                 if all_embedded
-                else f"{missing} page(s) rely on a font that is neither embedded nor standard"
+                else f"{missing} pages use a non-standard font"
             ),
             detail={"pages_checked": len(known), "pages_with_missing_fonts": missing},
         )

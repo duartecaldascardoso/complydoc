@@ -24,11 +24,7 @@ class PageSizeVarianceSignal:
         counts = Counter(sizes)
         return Measurement(
             value=len(counts),
-            display=(
-                "all pages the same size"
-                if len(counts) == 1
-                else f"{len(counts)} different page sizes"
-            ),
+            display=("all pages the same size" if len(counts) == 1 else f"{len(counts)} sizes"),
             detail={
                 "sizes_pt": {f"{w} x {h}": n for (w, h), n in counts.most_common()},
                 "pages_measured": len(sizes),

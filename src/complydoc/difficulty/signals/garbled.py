@@ -63,7 +63,7 @@ class GarbledSignal:
 
         return Measurement(
             value=round(rate, 2),
-            display=f"{rate:.2f} per 1,000 characters",
+            display=f"{rate:.1f} per 1,000 chars",
             detail={
                 "characters_examined": len(text),
                 "replacement_characters": replacements,

@@ -30,7 +30,7 @@ class ImageAreaSignal:
         heavy = sum(1 for v in per_page if v > 50)
         return Measurement(
             value=round(mean, 2),
-            display=f"{mean:.1f}% of page area",
+            display=f"{mean:.0f}% of page",
             detail={
                 "per_page_pct": [round(v, 2) for v in per_page],
                 "pages_over_half_image": heavy,

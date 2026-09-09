@@ -482,17 +482,6 @@ def test_every_page_starts_the_same_distance_below_the_tabs(html):
     assert "section[data-page] > :first-child { margin-top:" in styles.replace("\n", " ")
 
 
-def test_the_text_is_in_the_report_unless_it_is_turned_off():
-    """Reading the page beside what was read off it is the point of the tool."""
-    from typer.testing import CliRunner
-
-    from complydoc.cli import app
-
-    for command in ("audit", "readiness", "sensitive"):
-        help_text = CliRunner().invoke(app, [command, "--help"]).output
-        assert "--no-extracted-text" in help_text, command
-
-
 def test_masking_does_not_claim_more_than_it_covers(config):
     """The findings are masked; the pages the report also carries are not.
 

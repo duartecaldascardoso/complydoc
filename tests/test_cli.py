@@ -148,7 +148,18 @@ def test_the_run_never_crashes_on_the_awkward_folder(tmp_path):
     assert data["aggregate"]["documents_audited"] >= 10
 
 
-def test_models_command_lists_configured_models():
+def test_models_command_lists_configured_models(monkeypatch):
+    """Read at a fixed width: a narrow terminal wraps the ids mid-string.
+
+    The table is for a person to read, so the test reads it the way a person
+    with a normal-sized window would rather than at whatever width happens to
+    be running the suite.
+    """
+    # The console is built when the module is imported, so it has already read
+    # the width; setting the environment here would be too late.
+    from complydoc import cli
+
+    monkeypatch.setattr(cli.console, "width", 200)
     result = runner.invoke(app, ["models"])
     assert result.exit_code == 0
     assert "claude-opus-5" in result.output
@@ -279,3 +290,41 @@ def test_skill_ships_inside_the_package():
     from importlib.resources import files
 
     assert files("complydoc.skill").joinpath("SKILL.md").is_file()
+
+
+def _run_json(tmp_path, *flags):
+    import json
+
+    runner.invoke(
+        app,
+        [
+            "audit",
+            str(FIXTURES / "native_text.pdf"),
+            "--out",
+            str(tmp_path),
+            "--name",
+            "t",
+            "--quiet",
+            "--no-ocr",
+            *flags,
+        ],
+    )
+    return json.loads((tmp_path / "t.json").read_text())
+
+
+def test_the_extracted_text_is_kept_by_default(tmp_path):
+    """Reading a page beside what was read off it is the point of the tool.
+
+    Asserted through the CLI rather than by reading the help text, which wraps at
+    the width of whatever terminal is running the test, or by introspecting
+    typer, whose internals are not the contract.
+    """
+    report = _run_json(tmp_path)
+    assert report["run"]["extracted_text_used"] is True
+    assert report["documents"][0]["extracted_text"]
+
+
+def test_the_text_can_be_left_out(tmp_path):
+    report = _run_json(tmp_path, "--no-extracted-text")
+    assert report["run"]["extracted_text_used"] is False
+    assert not report["documents"][0].get("extracted_text")

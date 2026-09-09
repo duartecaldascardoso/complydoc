@@ -12,11 +12,7 @@ class AcroFormSignal:
     id = "acroform_fields"
     name = "PDF form fields"
     unit = "fields"
-    why = (
-        "Form fields carry a name alongside each value, so the data can be read out "
-        "directly with no layout guesswork. This is the easiest case there is, and more "
-        "fields is better."
-    )
+    why = "Named form fields give labelled values, with no layout guesswork."
     applies_to = frozenset({DocumentFormat.PDF})
 
     def measure(self, document: Document) -> Measurement:

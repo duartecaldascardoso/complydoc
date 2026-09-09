@@ -54,11 +54,7 @@ class ColumnCountSignal:
     id = "column_count"
     name = "Column layout"
     unit = "columns"
-    why = (
-        "Text extraction reads a page in the order the characters were written, not the "
-        "order a person reads them, so a two-column page often comes out with the two "
-        "columns interleaved line by line into nonsense."
-    )
+    why = "Extraction follows writing order, not reading order, so columns interleave."
     applies_to = frozenset({DocumentFormat.PDF})
 
     def measure(self, document: Document) -> Measurement:

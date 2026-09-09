@@ -12,11 +12,7 @@ class TextLayerSignal:
     id = "text_layer_present"
     name = "Text layer present"
     unit = None
-    why = (
-        "With a text layer the words can be read straight out of the file, exactly as "
-        "typed. Without one, every character has to be recognised from an image first, "
-        "which costs more and introduces transcription errors that are hard to spot."
-    )
+    why = "With no text layer every character must be recognised from an image."
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:

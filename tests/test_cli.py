@@ -256,3 +256,26 @@ def test_page_previews_reach_the_html(tmp_path):
     assert 'class="pv"' in html, "the page wireframe should be in the report"
     assert 'class="pair"' in html, "wireframes sit in a document/extraction pair"
     assert "<text" not in html.split('class="pv"')[1].split("</svg>")[0]
+
+
+def test_skill_prints_valid_frontmatter():
+    result = runner.invoke(app, ["skill"])
+    assert result.exit_code == 0
+    assert result.output.lstrip().startswith("---")
+    assert "name: complydoc" in result.output
+    assert "description:" in result.output
+
+
+def test_skill_installs_where_asked(tmp_path):
+    result = runner.invoke(app, ["skill", "--install", "--to", str(tmp_path)])
+    assert result.exit_code == 0
+    written = tmp_path / "complydoc" / "SKILL.md"
+    assert written.is_file()
+    assert "complydoc" in written.read_text()
+
+
+def test_skill_ships_inside_the_package():
+    """One install has to give you the tool and the instructions for driving it."""
+    from importlib.resources import files
+
+    assert files("complydoc.skill").joinpath("SKILL.md").is_file()

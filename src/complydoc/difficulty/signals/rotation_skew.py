@@ -76,11 +76,7 @@ class PageRotationSignal:
     id = "page_rotation"
     name = "Page rotation flag"
     unit = "degrees"
-    why = (
-        "A page marked as rotated is stored sideways and only turned upright by the "
-        "viewer. Tools that read the stored orientation instead of the displayed one get "
-        "the layout, and therefore the reading order, completely wrong."
-    )
+    why = "A page stored sideways reads in the wrong order unless the tool corrects it."
     applies_to = frozenset({DocumentFormat.PDF, DocumentFormat.IMAGE})
 
     def measure(self, document: Document) -> Measurement:
@@ -103,11 +99,7 @@ class SkewAngleSignal:
     id = "skew_angle"
     name = "Estimated scan skew"
     unit = "degrees"
-    why = (
-        "A page fed through a scanner at an angle puts every text line on a slope. OCR "
-        "accuracy falls away quickly with skew, and table row detection fails outright "
-        "once lines cross each other's vertical bands."
-    )
+    why = "OCR accuracy drops quickly with skew, and table rows stop lining up."
     applies_to = frozenset({DocumentFormat.PDF, DocumentFormat.IMAGE})
 
     def measure(self, document: Document) -> Measurement:

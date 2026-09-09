@@ -14,11 +14,7 @@ class PageSizeVarianceSignal:
     id = "page_size_variance"
     name = "Distinct page sizes"
     unit = "sizes"
-    why = (
-        "Mixed page sizes in one file usually mean it was assembled from several "
-        "sources, so any rule that finds a value by its position on the page — a total "
-        "in the bottom right, say — stops holding partway through."
-    )
+    why = "Mixed page sizes break any rule that finds a value by its position."
     applies_to = frozenset({DocumentFormat.PDF})
 
     def measure(self, document: Document) -> Measurement:

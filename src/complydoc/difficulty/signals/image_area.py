@@ -13,11 +13,7 @@ class ImageAreaSignal:
     id = "image_area_ratio_pct"
     name = "Page area that is image"
     unit = "%"
-    why = (
-        "Images of text are the expensive case. They cannot be read directly, they have "
-        "to go through OCR or a vision model, and both cost far more per page than "
-        "reading an existing text layer."
-    )
+    why = "Images of text cannot be read directly; they need OCR or a vision model."
     applies_to = frozenset({DocumentFormat.PDF, DocumentFormat.IMAGE})
 
     def measure(self, document: Document) -> Measurement:

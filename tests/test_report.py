@@ -338,3 +338,18 @@ def test_difficulty_is_flagged_on_the_document_itself(html):
     documents = html.split('id="documents"')[1].split("</main>")[0]
     assert 'class="flags"' in documents
     assert 'class="flag' in documents
+
+
+def test_report_does_not_explain_its_own_flags(html):
+    """Instructions for command line flags are not what a reader is here for."""
+    for phrase in ("Run with <code>--page-images", "Weights come from"):
+        assert phrase not in html
+
+
+def test_signal_explanations_are_one_sentence(config):
+    """The brief asks for one plain sentence, and prose is what buries a table."""
+    from complydoc.difficulty.registry import all_signals
+
+    for signal in all_signals():
+        assert signal.why.count(".") <= 1, f"{signal.id} runs to more than one sentence"
+        assert len(signal.why) <= 100, f"{signal.id} is {len(signal.why)} characters"

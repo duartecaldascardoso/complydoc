@@ -13,13 +13,7 @@ class TextCoverageSignal:
     id = "text_layer_coverage_pct"
     name = "Text layer coverage"
     unit = "%"
-    why = (
-        "A text layer covering almost none of the page usually means the real content "
-        "is an image with only a caption or header in text, so the figures you want are "
-        "not in the text at all. Note that a genuinely sparse document scores low here "
-        "without being hard to read; check this line against the image-area line before "
-        "drawing a conclusion from it."
-    )
+    why = "Almost no text on the page means the content is an image, not text."
     applies_to = frozenset({DocumentFormat.PDF, DocumentFormat.IMAGE})
 
     def measure(self, document: Document) -> Measurement:

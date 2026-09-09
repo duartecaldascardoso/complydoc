@@ -37,11 +37,7 @@ class GarbledSignal:
     id = "garbled_char_rate"
     name = "Garbled character rate"
     unit = "per 1,000 characters"
-    why = (
-        "Replacement characters, ligatures that were never decomposed and words with "
-        "their spaces lost all mean the extracted text does not match what a human sees "
-        "on the page, so field values come out subtly wrong rather than obviously missing."
-    )
+    why = "Replacement characters and lost spaces mean the text is not what is on the page."
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:

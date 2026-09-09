@@ -12,11 +12,7 @@ class FontCountSignal:
     id = "font_count"
     name = "Distinct fonts"
     unit = "fonts"
-    why = (
-        "Rules that find a field by how it looks — bold labels, a larger heading — break "
-        "when a document mixes many fonts, because the same visual role is expressed "
-        "differently in different places."
-    )
+    why = "Rules that find a field by how it looks break across many fonts."
     applies_to = frozenset({DocumentFormat.PDF, DocumentFormat.DOCX})
 
     def measure(self, document: Document) -> Measurement:
@@ -40,11 +36,7 @@ class FontsEmbeddedSignal:
     id = "fonts_embedded"
     name = "Fonts embedded"
     unit = None
-    why = (
-        "A font that is not embedded and is not one of the standard PDF fonts is "
-        "substituted at display time, so character widths shift and text that looked "
-        "aligned on one machine extracts in a different order on another."
-    )
+    why = "A font neither embedded nor standard is substituted, shifting the layout."
     applies_to = frozenset({DocumentFormat.PDF})
 
     def measure(self, document: Document) -> Measurement:

@@ -426,6 +426,35 @@ def sensitive(
 
 
 @app.command()
+def skill(
+    install: Annotated[
+        bool,
+        typer.Option("--install", help="Copy the skill into ~/.claude/skills/complydoc."),
+    ] = False,
+    target: Annotated[
+        Path | None, typer.Option("--to", help="Install somewhere other than ~/.claude/skills.")
+    ] = None,
+) -> None:
+    """Print the agent skill, or install it so an agent picks complydoc up on its own."""
+    import shutil
+    from importlib.resources import files
+
+    source = files("complydoc.skill").joinpath("SKILL.md")
+    if not install:
+        console.print(source.read_text(encoding="utf-8"))
+        console.print("\n[dim]Install it with:  complydoc skill --install[/]", highlight=False)
+        return
+
+    root = (target or Path.home() / ".claude" / "skills") / "complydoc"
+    root.mkdir(parents=True, exist_ok=True)
+    destination = root / "SKILL.md"
+    with source.open("rb") as handle, destination.open("wb") as out:
+        shutil.copyfileobj(handle, out)
+    console.print(f"Installed  [link=file://{destination}]{destination}[/link]", no_wrap=True)
+    console.print("[dim]Start a new agent session for it to be picked up.[/]")
+
+
+@app.command()
 def schema() -> None:
     """Print the JSON schema of the report, for a caller that needs to parse it."""
     import json

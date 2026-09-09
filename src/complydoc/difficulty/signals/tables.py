@@ -20,11 +20,7 @@ class TableCountSignal:
     id = "table_count"
     name = "Tables detected"
     unit = "tables"
-    why = (
-        "Each table is a separate structure to teach a pipeline about. A handful is "
-        "routine; a document full of them means the layout, not the words, is where the "
-        "meaning lives."
-    )
+    why = "Every table is another structure to teach a pipeline about."
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:
@@ -48,10 +44,7 @@ class TableHeaderDepthSignal:
     id = "table_max_header_depth"
     name = "Deepest table header"
     unit = "rows"
-    why = (
-        "A header stacked two or three rows deep means a column's real meaning is spread "
-        "across several cells, so a value cannot be labelled by reading one cell above it."
-    )
+    why = "A header stacked several rows deep spreads one column's meaning across cells."
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:
@@ -71,10 +64,7 @@ class TableMergedCellsSignal:
     id = "table_merged_cells"
     name = "Merged table cells"
     unit = "cells"
-    why = (
-        "A merged cell breaks the grid assumption almost every table parser makes, so "
-        "values downstream of it get attributed to the wrong row or column."
-    )
+    why = "A merged cell breaks the grid, so values land in the wrong row or column."
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:

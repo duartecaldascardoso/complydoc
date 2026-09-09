@@ -15,11 +15,7 @@ class ScanDpiSignal:
     id = "scan_dpi"
     name = "Scan resolution"
     unit = "DPI"
-    why = (
-        "Below roughly 200 DPI the strokes that separate similar characters start to "
-        "disappear, so OCR begins confusing digits in exactly the fields — amounts, "
-        "account numbers, dates — where a single wrong character matters most."
-    )
+    why = "Below about 200 DPI, OCR starts confusing digits in amounts and accounts."
     applies_to = frozenset({DocumentFormat.PDF, DocumentFormat.IMAGE})
 
     def measure(self, document: Document) -> Measurement:

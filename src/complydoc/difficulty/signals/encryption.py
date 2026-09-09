@@ -12,11 +12,7 @@ class EncryptedSignal:
     id = "encrypted"
     name = "Encryption or password protection"
     unit = None
-    why = (
-        "A password protected file cannot be opened by an automated pipeline at all "
-        "until someone supplies the password, which turns every document into a manual "
-        "step before any extraction can begin."
-    )
+    why = "A password protected file cannot be opened by a pipeline at all."
     applies_to = frozenset({DocumentFormat.PDF})
 
     def measure(self, document: Document) -> Measurement:

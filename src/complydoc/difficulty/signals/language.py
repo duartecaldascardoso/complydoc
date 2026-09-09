@@ -29,11 +29,7 @@ class LanguageCountSignal:
     id = "language_count"
     name = "Languages detected"
     unit = "languages"
-    why = (
-        "A pipeline is normally tuned for one language: its field labels, its date words, "
-        "its number formatting. Pages in a second language quietly fall through those "
-        "rules rather than failing loudly."
-    )
+    why = "A pipeline tuned for one language lets a second pass through silently."
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:

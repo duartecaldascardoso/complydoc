@@ -375,9 +375,6 @@
   {% endfor %}
 </div>
 {{ per_1000_chart | safe }}
-<p class="note">Reading the text is far cheaper than sending pictures of the pages, but it
-only works on documents that carry a text layer. The Cost page shows how many documents each
-approach actually reaches.</p>
 {% endif %}
 
 {% if report.staleness_warnings %}
@@ -386,8 +383,7 @@ approach actually reaches.</p>
 {% endif %}
 
 <h2>What this run could not tell you</h2>
-<p class="note">Built from what happened during this run, not a standard disclaimer.
-{% set important = report.limitations | selectattr("severity", "equalto", "important") | list %}
+<p class="note">{% set important = report.limitations | selectattr("severity", "equalto", "important") | list %}
 {{ important | length }} of {{ report.limitations | length }} need attention. Signals that did
 not apply to a particular document are listed on that document.</p>
 <details class="more" open>
@@ -436,9 +432,6 @@ not apply to a particular document are listed on that document.</p>
 <section data-page id="cost" hidden>
 <h2>Cost</h2>
 {% if comparisons %}
-<p class="note">Three ways to get a document in front of a model. Cost alone favours the
-text layer, but it only reaches documents that have one — so reach is shown beside every
-figure.</p>
 <div class="legend">
   {% for key, label, colour in series %}
     <span><i style="background:{{ colour }}"></i>{{ label }}</span>
@@ -474,8 +467,7 @@ figure.</p>
 {% if report.cost and report.cost.volume %}
 <p class="note">{{ report.cost.volume.basis }}</p>
 {% endif %}
-<p class="note">Input tokens only. What you pay for output depends on what you ask the model
-to produce, which this tool cannot know.</p>
+<p class="note">Input tokens only; output cost depends on your prompt.</p>
 
 <h3>Per document</h3>
 <div class="scroll"><table data-paginate="20">
@@ -504,10 +496,8 @@ to produce, which this tool cannot know.</p>
 {% if "sensitive" not in report.run.components_run %}
 <p class="note">The sensitive data scan was not part of this run.</p>
 {% else %}
-<p class="note">Values are masked. At most the last
-{{ report.config_masking.reveal_tail_chars }} characters of any identifier appear here{% if report.config_masking.never_reveal %};
-{{ report.config_masking.never_reveal | join(" and ") }} are never shown in full, even with
-<code>--reveal</code>{% endif %}.</p>
+<p class="note">Masked to the last {{ report.config_masking.reveal_tail_chars }} characters{% if report.config_masking.never_reveal %};
+{{ report.config_masking.never_reveal | join(" and ") }} never shown in full{% endif %}.</p>
 
 {% if agg.sensitive_by_category %}
 <h3>By category</h3>
@@ -531,8 +521,8 @@ to produce, which this tool cannot know.</p>
 {% endfor %}{% endif %}{% endfor %}
 {{ matches_table(rows, true) }}
 {% else %}
-<p class="note">Nothing detected in the text that could be read. Check the limitations on
-the summary page before reading that as an all-clear.</p>
+<p class="note">Nothing detected in the text that could be read. Check the limitations
+before reading that as an all-clear.</p>
 {% endif %}
 
 {% if agg.categories_not_scanned %}
@@ -543,8 +533,7 @@ the summary page before reading that as an all-clear.</p>
     <tr><td>{{ category_meta(cat).label }}</td><td class="why">{{ reason }}</td></tr>
   {% endfor %}</tbody>
 </table></div>
-<p class="note">A category that was not scanned has a count of zero because nothing looked
-for it, not because nothing is there.</p>
+<p class="note">These count zero because nothing looked, not because nothing is there.</p>
 {% endif %}
 {% endif %}
 </section>
@@ -656,16 +645,11 @@ for it, not because nothing is there.</p>
         {% if doc.previews | length > max_preview_pages %}
           <p class="note">Showing the first {{ max_preview_pages }} of {{ doc.previews | length }} pages.</p>
         {% endif %}
-        {% if not doc.previews[0].image_data_uri %}
-          <p class="note">Layout only. Run with <code>--page-images</code> to show the pages themselves.</p>
-        {% endif %}
         {% else %}<p class="note">No pages could be read from this document.</p>{% endif %}
       </div>
 
       <div data-view="text" hidden>
         {% if doc.extracted_text %}
-          <p class="note">What complydoc read off each page. The cost, difficulty and
-          sensitive-data numbers were all computed from this.</p>
           {% for pt in doc.extracted_text %}
             <details class="text" {% if loop.first %}open{% endif %}>
               <summary>Page {{ pt.number }} — {{ "{:,}".format(pt.characters) }} characters,
@@ -683,9 +667,6 @@ for it, not because nothing is there.</p>
       <div data-view="ocr" hidden>
         {% set any_ocr = doc.extracted_text | selectattr("ocr_text") | list %}
         {% if any_ocr %}
-          <p class="note">What the OCR engine reads, independently of any text layer. Where a
-          page has both, comparing them is how you tell a document that extracts badly from an
-          extractor that reads it badly.</p>
           {% for pt in doc.extracted_text %}
             {% if pt.ocr_text %}
             <details class="text" {% if loop.first %}open{% endif %}>
@@ -696,8 +677,8 @@ for it, not because nothing is there.</p>
             {% endif %}
           {% endfor %}
         {% else %}
-          <p class="note">No OCR output for this document. OCR only runs where there is no text
-          layer; add <code>--ocr-compare</code> to read every page with OCR as well.</p>
+          <p class="note">No OCR output. OCR runs only where there is no text layer; add
+          <code>--ocr-compare</code> to read every page.</p>
         {% endif %}
       </div>
 
@@ -716,7 +697,6 @@ for it, not because nothing is there.</p>
           {% endfor %}
           </tbody>
         </table></div>
-        {% if doc.difficulty.score %}<p class="note">{{ doc.difficulty.score.method }}</p>{% endif %}
         {% set skipped = doc.difficulty.signals | rejectattr("rating") | list %}
         {% if skipped %}
         <details class="more">

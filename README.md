@@ -14,7 +14,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-272-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-277-4f5d75" alt="Tests">
   <img src="https://img.shields.io/badge/mypy-strict-4f5d75" alt="mypy strict">
 </div>
 
@@ -90,9 +90,18 @@ Inputs: PDF (native text and scanned), PNG, JPG, TIFF, BMP, DOCX, XLSX. Folders 
 complydoc audit ./invoices --print-json | jq '.aggregate'
 ```
 
-`--print-json` puts the report on stdout and nothing else; progress goes to stderr.
-`complydoc schema` describes the shape. [AGENTS.md](AGENTS.md) has an instruction block
-you can paste into an agent, and the handful of fields where a naive reading goes wrong.
+`--print-json` puts the report on stdout and nothing else; progress goes to stderr, and
+`complydoc schema` describes the shape.
+
+complydoc ships with an agent skill, so one install gives you the tool and the
+instructions for driving it:
+
+```bash
+complydoc skill --install     # writes ~/.claude/skills/complydoc/SKILL.md
+```
+
+`complydoc skill` prints it instead. It covers the commands, the fields worth reading, and
+the four places where a naive reading of the output goes wrong.
 
 ## Optional extras
 

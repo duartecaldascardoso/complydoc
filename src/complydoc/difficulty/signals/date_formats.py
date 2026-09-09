@@ -28,11 +28,7 @@ class DateFormatConsistencySignal:
     id = "date_format_consistency"
     name = "Date format consistency"
     unit = "%"
-    why = (
-        "When one document writes dates several ways, a parser has to guess which "
-        "convention each one follows, and 03/04/2026 is a different day depending on the "
-        "guess. Mixed formats turn every date into a silent correctness risk."
-    )
+    why = "Mixed formats force a parser to guess, and the guess changes the date."
     applies_to = ALL_FORMATS
 
     def measure(self, document: Document) -> Measurement:

@@ -1,4 +1,4 @@
-"""Area coverage helpers shared by the ingest layer and the difficulty signals."""
+"""Area coverage helpers shared by the ingest layer and the readiness signals."""
 
 from __future__ import annotations
 

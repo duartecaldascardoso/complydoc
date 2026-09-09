@@ -2,6 +2,10 @@
 
 `SCHEMA_VERSION` is bumped whenever the JSON shape changes, so that runs stored
 over time can be diffed with confidence about what a difference means.
+
+Version 2 renamed the difficulty component to readiness. A high score always
+meant a document that was easy to process, which read backwards under a name
+that promised the opposite.
 """
 
 from __future__ import annotations
@@ -14,10 +18,10 @@ from typing import Any
 
 from complydoc.config.schema import MaskingConfig
 from complydoc.cost.estimator import DocumentCostEstimate, FolderCostEstimate
-from complydoc.difficulty.analyser import DifficultyReport
-from complydoc.difficulty.base import SignalStatus
 from complydoc.ingest import ocr as ocr_module
 from complydoc.ingest.base import DocumentFormat, SkipRecord
+from complydoc.readiness.analyser import ReadinessReport
+from complydoc.readiness.base import SignalStatus
 from complydoc.report.preview import PagePreview
 from complydoc.sensitive.scanner import ScanResult
 
@@ -32,7 +36,7 @@ __all__ = [
     "RunMetadata",
 ]
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,7 +113,7 @@ class DocumentReport:
     page_count_known: bool
     load_warnings: list[str] = field(default_factory=list)
     cost: DocumentCostEstimate | None = None
-    difficulty: DifficultyReport | None = None
+    readiness: ReadinessReport | None = None
     sensitive: ScanResult | None = None
     previews: list[PagePreview] = field(default_factory=list)
     """Per-page wireframes. Geometry only — never document content."""
@@ -138,8 +142,8 @@ class Aggregate:
 
     signal_distribution: dict[str, dict[str, int]] = field(default_factory=dict)
     """signal id -> {good, fair, poor, not_applicable, error} counts across documents."""
-    difficulty_bands: dict[str, int] = field(default_factory=dict)
-    mean_difficulty_score: float | None = None
+    readiness_bands: dict[str, int] = field(default_factory=dict)
+    mean_readiness_score: float | None = None
 
     sensitive_by_category: dict[str, int] = field(default_factory=dict)
     sensitive_by_severity: dict[str, int] = field(default_factory=dict)
@@ -192,8 +196,8 @@ def build_aggregate(
         formats[document.format.value] += 1
         pages += document.page_count
 
-        if document.difficulty is not None:
-            for signal in document.difficulty.signals:
+        if document.readiness is not None:
+            for signal in document.readiness.signals:
                 bucket = signal_distribution.setdefault(
                     signal.id,
                     {"good": 0, "fair": 0, "poor": 0, "not_applicable": 0, "error": 0},
@@ -204,9 +208,9 @@ def build_aggregate(
                     bucket["not_applicable"] += 1
                 elif signal.rating:
                     bucket[signal.rating] += 1
-            if document.difficulty.score is not None:
-                scores.append(document.difficulty.score.value)
-                bands[document.difficulty.score.label] += 1
+            if document.readiness.score is not None:
+                scores.append(document.readiness.score.value)
+                bands[document.readiness.score.label] += 1
 
         if document.sensitive is not None:
             unreadable += len(document.sensitive.unreadable_pages)
@@ -228,8 +232,8 @@ def build_aggregate(
         pages_unreadable=unreadable,
         formats=dict(formats),
         signal_distribution=signal_distribution,
-        difficulty_bands=dict(bands),
-        mean_difficulty_score=round(sum(scores) / len(scores), 1) if scores else None,
+        readiness_bands=dict(bands),
+        mean_readiness_score=round(sum(scores) / len(scores), 1) if scores else None,
         sensitive_by_category=dict(by_category),
         sensitive_by_severity=dict(by_severity),
         sensitive_total=int(sum(by_category.values())),

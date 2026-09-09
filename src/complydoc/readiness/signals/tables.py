@@ -6,9 +6,9 @@ is still registered and reported independently.
 
 from __future__ import annotations
 
-from complydoc.difficulty.base import ALL_FORMATS, Measurement
-from complydoc.difficulty.registry import signal
 from complydoc.ingest.base import Document, TableInfo
+from complydoc.readiness.base import ALL_FORMATS, Measurement
+from complydoc.readiness.registry import signal
 
 
 def _tables(document: Document) -> list[TableInfo]:

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from complydoc.difficulty.analyser import analyse
-from complydoc.difficulty.base import SignalStatus
+from complydoc.readiness.analyser import analyse
+from complydoc.readiness.base import SignalStatus
 
 PROSE = [
     "dense_text.pdf",
@@ -49,7 +49,7 @@ def test_prose_is_never_mistaken_for_a_table(loader, name):
 
 def test_alignment_tables_do_not_claim_a_header_depth(loader, config):
     document = loader("whitespace_table.pdf")
-    result = analyse(document, config.difficulty)
+    result = analyse(document, config.readiness)
     for signal_id in ("table_max_header_depth", "table_merged_cells"):
         signal = next(s for s in result.signals if s.id == signal_id)
         assert signal.status is SignalStatus.NOT_APPLICABLE
@@ -58,6 +58,6 @@ def test_alignment_tables_do_not_claim_a_header_depth(loader, config):
 
 def test_the_count_says_how_each_table_was_found(loader, config):
     document = loader("whitespace_table.pdf")
-    signal = next(s for s in analyse(document, config.difficulty).signals if s.id == "table_count")
+    signal = next(s for s in analyse(document, config.readiness).signals if s.id == "table_count")
     assert signal.detail["aligned_tables"] == 1
     assert signal.detail["ruled_tables"] == 0

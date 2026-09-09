@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 
 from complydoc.audit import run_audit
-from complydoc.difficulty.analyser import analyse
-from complydoc.difficulty.base import SignalStatus
+from complydoc.readiness.analyser import analyse
+from complydoc.readiness.base import SignalStatus
 from tests.helpers import FIXTURES
 
 
@@ -49,9 +49,9 @@ def test_character_counts_describe_their_own_document(report):
     """
     counts = {}
     for document in report.documents:
-        if not document.difficulty:
+        if not document.readiness:
             continue
-        signal = next((s for s in document.difficulty.signals if s.id == "garbled_char_rate"), None)
+        signal = next((s for s in document.readiness.signals if s.id == "garbled_char_rate"), None)
         if signal and signal.reason and "only " in signal.reason:
             counts[document.relative_path] = signal.reason.split("only ")[1].split(" ")[0]
     assert len(counts) > 1
@@ -65,19 +65,19 @@ def test_articles_read_as_english(report):
     reasons = [
         signal.reason or ""
         for document in report.documents
-        if document.difficulty
-        for signal in document.difficulty.signals
+        if document.readiness
+        for signal in document.readiness.signals
     ]
     assert any("an image file" in reason for reason in reasons)
     assert not any("a image" in reason for reason in reasons)
 
 
 def test_signals_that_do_not_apply_are_not_run_level_limitations(report):
-    """Eighteen per document buried everything that actually needed attention."""
+    """One entry per signal per document buried everything that needed attention."""
     areas = {x.area for x in report.limitations}
     assert "Signals not measured" not in areas
 
-    signals = {s.id for d in report.documents if d.difficulty for s in d.difficulty.signals}
+    signals = {s.id for d in report.documents if d.readiness for s in d.readiness.signals}
     assert not areas & signals, "a signal became a run-level limitation"
 
     # The entries describe the run, so how many there are tracks the run's own
@@ -89,7 +89,7 @@ def test_signals_that_do_not_apply_are_not_run_level_limitations(report):
 
 def test_a_signal_that_did_not_apply_still_says_why_on_its_document(report):
     document = next(d for d in report.documents if d.relative_path == "sample.docx")
-    skipped = [s for s in document.difficulty.signals if s.rating is None]
+    skipped = [s for s in document.readiness.signals if s.rating is None]
     assert skipped
     assert all(s.reason for s in skipped)
 
@@ -109,7 +109,7 @@ def test_one_entry_per_distinct_tokenizer_note(report):
 def test_an_unopenable_document_reports_no_table_count(loader, config):
     """Counting zero tables in a file nobody could open is a false measurement."""
     document = loader("encrypted.pdf")
-    result = analyse(document, config.difficulty)
+    result = analyse(document, config.readiness)
     signal = next(s for s in result.signals if s.id == "table_count")
     assert signal.status is SignalStatus.NOT_APPLICABLE
     assert "could not be opened" in (signal.reason or "")
@@ -117,7 +117,7 @@ def test_an_unopenable_document_reports_no_table_count(loader, config):
 
 def test_an_unopenable_document_scores_from_one_signal(loader, config):
     document = loader("encrypted.pdf")
-    result = analyse(document, config.difficulty)
+    result = analyse(document, config.readiness)
     assert result.score is not None
     assert result.score.signals_counted == 1
     assert result.score.low_confidence is True

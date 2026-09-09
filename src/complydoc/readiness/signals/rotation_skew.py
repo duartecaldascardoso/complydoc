@@ -6,9 +6,9 @@ from typing import NamedTuple
 
 import numpy as np
 
-from complydoc.difficulty.base import Measurement
-from complydoc.difficulty.registry import signal
 from complydoc.ingest.base import Document, DocumentFormat
+from complydoc.readiness.base import Measurement
+from complydoc.readiness.registry import signal
 
 _ANGLE_LIMIT = 5.0
 _ANGLE_STEP = 0.25

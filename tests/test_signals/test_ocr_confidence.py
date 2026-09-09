@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from complydoc.difficulty.analyser import analyse
-from complydoc.difficulty.base import SignalStatus
+from complydoc.readiness.analyser import analyse
+from complydoc.readiness.base import SignalStatus
 
 
 def signal_for(loader, config, name):
     document = loader(name, ocr=True)
-    return next(s for s in analyse(document, config.difficulty).signals if s.id == "ocr_confidence")
+    return next(s for s in analyse(document, config.readiness).signals if s.id == "ocr_confidence")
 
 
 def test_a_scanned_page_reports_the_engines_confidence(loader, config):

@@ -1,6 +1,6 @@
 """Command line interface.
 
-Four commands. `audit` runs everything; `cost`, `difficulty` and `sensitive` run
+Four commands. `audit` runs everything; `cost`, `readiness` and `sensitive` run
 one component each, so someone who only wants the sensitive data scan can have
 exactly that and nothing else.
 
@@ -44,7 +44,7 @@ def main(ctx: typer.Context) -> None:
     """Run `complydoc` on its own to audit the folder you are standing in.
 
     Anything more specific is a subcommand: `complydoc audit <path>`, `cost`,
-    `difficulty`, `sensitive`, `models`, `schema`, `doctor`.
+    `readiness`, `sensitive`, `models`, `schema`, `doctor`.
     """
     if ctx.invoked_subcommand is not None:
         return
@@ -196,8 +196,8 @@ def _summary(report: AuditReport) -> None:
         table.add_row("Annual (text)", f"${aggregate.annual_text_usd:,.2f}")
     if aggregate.annual_vision_usd is not None:
         table.add_row("Annual (vision)", f"${aggregate.annual_vision_usd:,.2f}")
-    if aggregate.mean_difficulty_score is not None:
-        table.add_row("Mean difficulty", f"{aggregate.mean_difficulty_score}/100")
+    if aggregate.mean_readiness_score is not None:
+        table.add_row("Mean readiness", f"{aggregate.mean_readiness_score}/100")
     if "sensitive" in report.run.components_run:
         table.add_row(
             "Sensitive items",
@@ -405,10 +405,10 @@ def cost(
 
 
 @app.command()
-def difficulty(
+def readiness(
     target: TargetArg,
     out: OutDirOpt = DEFAULT_OUT,
-    name: NameOpt = "complydoc-difficulty",
+    name: NameOpt = "complydoc-readiness",
     extracted_text: ExtractedTextOpt = False,
     ocr_compare: OcrCompareOpt = False,
     password: PasswordOpt = "",
@@ -420,10 +420,10 @@ def difficulty(
     print_json: PrintJsonOpt = False,
     quiet: QuietOpt = False,
 ) -> None:
-    """Measure extraction difficulty signals only."""
+    """Measure extraction readiness signals only."""
     _run(
         target,
-        ("difficulty",),
+        ("readiness",),
         out,
         name,
         config_dir,
@@ -534,7 +534,7 @@ def schema() -> None:
                     "config_masking",
                 ],
                 "run": {
-                    "components_run": "list of cost | difficulty | sensitive",
+                    "components_run": "list of cost | readiness | sensitive",
                     "offline_guard": "armed | not_armed",
                     "reveal_used": "bool — true means values are NOT masked",
                     "page_images_used": "bool",
@@ -546,8 +546,8 @@ def schema() -> None:
                     "sha256": "str",
                     "format": "pdf | image | docx | xlsx",
                     "cost.models[]": "per-model text and vision token counts and USD",
-                    "difficulty.signals[]": "id, value, rating, weight, why, status",
-                    "difficulty.score": "value 0-100, higher is easier; label; low_confidence",
+                    "readiness.signals[]": "id, value, rating, weight, why, status",
+                    "readiness.score": "value 0-100, higher is better; label; low_confidence",
                     "sensitive.matches[]": "category, page, line, column, masked, severity",
                     "sensitive.unreadable_pages": "pages that were not searched at all",
                 },

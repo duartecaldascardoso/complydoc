@@ -89,7 +89,7 @@ def dense_text(path: Path) -> None:
     page — which makes them useless for calibrating anything that measures how
     much of a page is covered. A real contract or statement page covers 35-70% of
     the page with word boxes. This fixture is the reference point for that, and
-    the coverage thresholds in difficulty.yaml are set against it.
+    the coverage thresholds in readiness.yaml are set against it.
     """
     _register_font()
     # Kept as prose: far easier to read and edit than a forty-six item list.

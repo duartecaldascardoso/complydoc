@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Rating = Literal["good", "fair", "poor"]
 Severity = Literal["low", "medium", "high"]
-Direction = Literal["higher_is_easier", "lower_is_easier"]
+Direction = Literal["higher_is_better", "lower_is_better"]
 Fidelity = Literal["exact", "approximate"]
 
 
@@ -152,7 +152,7 @@ class PricingConfig(_Base):
 
 
 # --------------------------------------------------------------------------
-# difficulty.yaml
+# readiness.yaml
 # --------------------------------------------------------------------------
 
 
@@ -194,7 +194,7 @@ class Threshold(_Base):
 class SignalConfig(_Base):
     enabled: bool = True
     weight: float = 0.0
-    direction: Direction = "higher_is_easier"
+    direction: Direction = "higher_is_better"
     thresholds: dict[Rating, Threshold] = Field(default_factory=dict)
     why: str | None = None
     """Overrides the default explanation carried by the signal module."""
@@ -230,7 +230,7 @@ class ScoringConfig(_Base):
         return self
 
 
-class DifficultyConfig(_Base):
+class ReadinessConfig(_Base):
     schema_version: int
     scoring: ScoringConfig
     signals: dict[str, SignalConfig]
@@ -292,7 +292,7 @@ class Config(_Base):
     """The three files, loaded together."""
 
     pricing: PricingConfig
-    difficulty: DifficultyConfig
+    readiness: ReadinessConfig
     sensitive: SensitiveConfig
     source_dir: str
     digest: str

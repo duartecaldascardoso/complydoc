@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from complydoc.difficulty.base import Measurement
-from complydoc.difficulty.registry import signal
 from complydoc.ingest.base import Document, DocumentFormat, Page
+from complydoc.readiness.base import Measurement
+from complydoc.readiness.registry import signal
 
 _BINS = 200
 _MIN_GUTTER_FRACTION = 0.035

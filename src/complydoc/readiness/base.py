@@ -1,4 +1,4 @@
-"""What a difficulty signal is.
+"""What a readiness signal is.
 
 A signal measures one specific, nameable property of a document and explains in
 one sentence why that property matters for extraction. It does not produce a
@@ -55,7 +55,7 @@ class Measurement:
 
 @dataclass(frozen=True, slots=True)
 class SignalResult:
-    """One row of the difficulty table."""
+    """One row of the readiness table."""
 
     id: str
     name: str
@@ -77,13 +77,13 @@ class SignalResult:
 
 @runtime_checkable
 class Signal(Protocol):
-    """Implemented by every module under `difficulty/signals/`."""
+    """Implemented by every module under `readiness/signals/`."""
 
     id: str
     name: str
     unit: str | None
     why: str
-    """The default plain-English sentence. difficulty.yaml can override it."""
+    """The default plain-English sentence. readiness.yaml can override it."""
     applies_to: frozenset[DocumentFormat]
 
     def measure(self, document: Document) -> Measurement: ...

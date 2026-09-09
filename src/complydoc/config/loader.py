@@ -12,8 +12,8 @@ import yaml
 
 from complydoc.config.schema import (
     Config,
-    DifficultyConfig,
     PricingConfig,
+    ReadinessConfig,
     SensitiveConfig,
 )
 
@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 DEFAULT_CONFIG_DIR: Final = Path(__file__).parent
-_FILENAMES: Final = ("pricing.yaml", "difficulty.yaml", "sensitive.yaml")
+_FILENAMES: Final = ("pricing.yaml", "readiness.yaml", "sensitive.yaml")
 
 
 class ConfigError(RuntimeError):
@@ -90,7 +90,7 @@ def load_config(config_dir: Path | None = None) -> Config:
     try:
         return Config(
             pricing=PricingConfig.model_validate(parsed["pricing.yaml"]),
-            difficulty=DifficultyConfig.model_validate(parsed["difficulty.yaml"]),
+            readiness=ReadinessConfig.model_validate(parsed["readiness.yaml"]),
             sensitive=SensitiveConfig.model_validate(parsed["sensitive.yaml"]),
             source_dir=str(directory),
             digest=digest,

@@ -1,4 +1,4 @@
-# Extraction difficulty signals.
+# Extraction readiness signals.
 #
 # complydoc reports a TABLE of individually measured signals, not an opaque score.
 # Each row shows the measured value, a rating derived from the thresholds below,
@@ -34,7 +34,7 @@ signals:
   encrypted:
     enabled: true
     weight: 0.10
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { eq: false }
       poor: { eq: true }
@@ -42,7 +42,7 @@ signals:
   text_layer_present:
     enabled: true
     weight: 0.12
-    direction: higher_is_easier
+    direction: higher_is_better
     thresholds:
       good: { eq: true }
       poor: { eq: false }
@@ -59,7 +59,7 @@ signals:
     # document "good" and made the signal say nothing.
     enabled: true
     weight: 0.10
-    direction: higher_is_easier
+    direction: higher_is_better
     thresholds:
       good: { gte: 30 }
       fair: { gte: 10 }
@@ -68,7 +68,7 @@ signals:
   image_area_ratio_pct:
     enabled: true
     weight: 0.09
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 20 }
       fair: { lt: 60 }
@@ -77,7 +77,7 @@ signals:
   garbled_char_rate:
     enabled: true
     weight: 0.09
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 1.0 }
       fair: { lt: 5.0 }
@@ -86,7 +86,7 @@ signals:
   table_count:
     enabled: true
     weight: 0.04
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 3 }
       fair: { lt: 10 }
@@ -95,7 +95,7 @@ signals:
   table_max_header_depth:
     enabled: true
     weight: 0.06
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 2 }
       fair: { lt: 3 }
@@ -104,7 +104,7 @@ signals:
   table_merged_cells:
     enabled: true
     weight: 0.06
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 1 }
       fair: { lt: 10 }
@@ -113,7 +113,7 @@ signals:
   column_count:
     enabled: true
     weight: 0.05
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 2 }
       fair: { lt: 3 }
@@ -122,7 +122,7 @@ signals:
   page_rotation:
     enabled: true
     weight: 0.03
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 1 }
       fair: { lt: 90 }
@@ -131,7 +131,7 @@ signals:
   skew_angle:
     enabled: true
     weight: 0.04
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 0.5 }
       fair: { lt: 2.0 }
@@ -142,7 +142,7 @@ signals:
     # means the characters it returned are not the characters on the page.
     enabled: true
     weight: 0.05
-    direction: higher_is_easier
+    direction: higher_is_better
     thresholds:
       good: { gte: 90 }
       fair: { gte: 75 }
@@ -151,7 +151,7 @@ signals:
   scan_dpi:
     enabled: true
     weight: 0.05
-    direction: higher_is_easier
+    direction: higher_is_better
     thresholds:
       good: { gte: 300 }
       fair: { gte: 200 }
@@ -160,7 +160,7 @@ signals:
   font_count:
     enabled: true
     weight: 0.03
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 5 }
       fair: { lt: 12 }
@@ -169,7 +169,7 @@ signals:
   fonts_embedded:
     enabled: true
     weight: 0.03
-    direction: higher_is_easier
+    direction: higher_is_better
     thresholds:
       good: { eq: true }
       poor: { eq: false }
@@ -177,7 +177,7 @@ signals:
   date_format_consistency:
     enabled: true
     weight: 0.04
-    direction: higher_is_easier
+    direction: higher_is_better
     thresholds:
       good: { gte: 90 }
       fair: { gte: 60 }
@@ -186,7 +186,7 @@ signals:
   page_size_variance:
     enabled: true
     weight: 0.03
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 2 }
       fair: { lt: 3 }
@@ -195,7 +195,7 @@ signals:
   language_count:
     enabled: true
     weight: 0.02
-    direction: lower_is_easier
+    direction: lower_is_better
     thresholds:
       good: { lt: 2 }
       fair: { lt: 3 }
@@ -204,7 +204,7 @@ signals:
   acroform_fields:
     enabled: true
     weight: 0.02
-    direction: higher_is_easier
+    direction: higher_is_better
     thresholds:
       good: { gte: 1 }
       fair: { eq: 0 }

@@ -194,11 +194,11 @@ def test_the_page_is_the_first_thing_on_the_page(html):
     """A pile of prose between the filename and the page defeated the point.
 
     Everything the preamble said — the format, the score, how long it took, the
-    signals rated poor — is a question the signals tab answers, so it is asked
+    signals rated poor — is a question the readiness tab answers, so it is asked
     there instead.
     """
     documents = document_section(html)
-    assert "Difficulty signals across the whole folder" not in documents
+    assert "Readiness signals across the whole folder" not in documents
     block = documents.split(f"<h3>{MULTIPAGE}</h3>")[1].split("<h3>")[0]
     preamble = block.split('class="spread"')[0]
     assert "to read and analyse" not in preamble
@@ -210,7 +210,7 @@ def test_what_the_preamble_used_to_say_is_still_reachable(html):
     # The first match is the tab button; the second is the panel it reveals.
     signals = block.split('<div data-view="signals"')[1]
     assert "to read and analyse" in signals
-    assert "straightforward" in signals or "workable" in signals or "difficult" in signals
+    assert any(band in signals for band in ("ready", "workable", "needs work", "not ready"))
 
 
 def test_the_layout_key_sits_outside_the_panels(html):

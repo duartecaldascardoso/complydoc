@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from complydoc.difficulty.analyser import analyse
-from complydoc.difficulty.base import SignalStatus
+from complydoc.readiness.analyser import analyse
+from complydoc.readiness.base import SignalStatus
 
 
 def measure(document, config, signal_id):
-    report = analyse(document, config.difficulty)
+    report = analyse(document, config.readiness)
     found = next((s for s in report.signals if s.id == signal_id), None)
     assert found is not None, f"{signal_id} was not reported at all"
     return found
@@ -109,7 +109,7 @@ def test_encrypted_pdf_is_reported_not_crashed(loader, config):
 
 
 def test_encrypted_pdf_excludes_unmeasurable_signals_from_its_score(loader, config):
-    report = analyse(loader("encrypted.pdf"), config.difficulty)
+    report = analyse(loader("encrypted.pdf"), config.readiness)
     assert report.score is not None
     assert report.score.low_confidence is True
     assert report.score.signals_excluded > report.score.signals_counted
@@ -186,8 +186,8 @@ def test_a_page_that_is_a_picture_rates_poor_for_coverage(loader, config):
 
 
 def test_dense_page_scores_well_overall(loader, config):
-    from complydoc.difficulty.analyser import analyse
+    from complydoc.readiness.analyser import analyse
 
-    report = analyse(loader("dense_text.pdf"), config.difficulty)
+    report = analyse(loader("dense_text.pdf"), config.readiness)
     assert report.score is not None
-    assert report.score.value >= 75, "a clean dense text page should be straightforward"
+    assert report.score.value >= 75, "a clean dense text page should be ready as it stands"

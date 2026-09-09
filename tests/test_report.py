@@ -130,7 +130,7 @@ def test_limitations_name_the_documents_they_apply_to(report):
 def test_running_one_component_says_so_in_the_limitations(config):
     only_sensitive = run_audit(FIXTURES, config, ("sensitive",))
     entry = next(x for x in only_sensitive.limitations if x.area == "Components not run")
-    assert "cost" in entry.statement and "difficulty" in entry.statement
+    assert "cost" in entry.statement and "readiness" in entry.statement
 
 
 def test_a_run_with_everything_available_does_not_claim_missing_components(report):
@@ -321,7 +321,7 @@ def test_decision_changing_facts_survive_in_the_html(html, report):
 def test_summary_leads_with_the_three_business_figures(html):
     summary = html.split('id="summary"')[1].split("<section")[0]
     assert "Cost per 1,000 documents" in summary
-    assert "Average quality" in summary
+    assert "AI readiness" in summary
     assert "Sensitive items per document" in summary
 
 
@@ -377,7 +377,7 @@ def test_documents_page_carries_no_security_table(html):
     assert "Matched because" not in documents
 
 
-def test_difficulty_is_flagged_on_the_document_itself(html):
+def test_readiness_is_flagged_on_the_document_itself(html):
     documents = html.split('id="documents"')[1].split("</main>")[0]
     assert 'class="doc-meta"' in documents
     assert 'class="concerns"' in documents, "poor signals belong on the document"
@@ -417,7 +417,7 @@ def test_report_does_not_explain_its_own_flags(html):
 
 def test_signal_explanations_are_one_sentence(config):
     """The brief asks for one plain sentence, and prose is what buries a table."""
-    from complydoc.difficulty.registry import all_signals
+    from complydoc.readiness.registry import all_signals
 
     for signal in all_signals():
         assert signal.why.count(".") <= 1, f"{signal.id} runs to more than one sentence"

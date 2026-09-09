@@ -1,7 +1,7 @@
 [project]
 name = "complydoc"
 dynamic = ["version"]
-description = "Offline pre-purchase diagnostic for document automation: LLM cost estimate, extraction difficulty signals, and a masked scan for personal and financial identifiers."
+description = "Offline pre-purchase diagnostic for document automation: LLM cost estimate, extraction readiness signals, and a masked scan for personal and financial identifiers."
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 license = { text = "MIT" }

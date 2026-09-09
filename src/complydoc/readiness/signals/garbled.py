@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import re
 
-from complydoc.difficulty.base import ALL_FORMATS, Measurement
-from complydoc.difficulty.registry import signal
 from complydoc.ingest.base import Document
+from complydoc.readiness.base import ALL_FORMATS, Measurement
+from complydoc.readiness.registry import signal
 
 _REPLACEMENT = "�"
 _LIGATURES = "ﬀﬁﬂﬃﬄﬅﬆ"

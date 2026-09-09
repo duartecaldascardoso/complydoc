@@ -5,23 +5,23 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from complydoc.config.schema import DifficultyConfig, SignalConfig
-from complydoc.difficulty.base import Measurement, Signal, SignalResult, SignalStatus
-from complydoc.difficulty.registry import all_signals
-from complydoc.difficulty.scoring import DifficultyScore, compute_score
+from complydoc.config.schema import ReadinessConfig, SignalConfig
 from complydoc.ingest.base import Document, DocumentFormat
+from complydoc.readiness.base import Measurement, Signal, SignalResult, SignalStatus
+from complydoc.readiness.registry import all_signals
+from complydoc.readiness.scoring import ReadinessScore, compute_score
 
-__all__ = ["DifficultyReport", "analyse"]
+__all__ = ["ReadinessReport", "analyse"]
 
 
 @dataclass(slots=True)
-class DifficultyReport:
+class ReadinessReport:
     path: Path
     format: DocumentFormat
     signals: list[SignalResult] = field(default_factory=list)
-    score: DifficultyScore | None = None
+    score: ReadinessScore | None = None
     unconfigured_signals: list[str] = field(default_factory=list)
-    """Registered signals with no entry in difficulty.yaml. Measured but unrated."""
+    """Registered signals with no entry in readiness.yaml. Measured but unrated."""
 
     @property
     def not_applicable(self) -> list[SignalResult]:
@@ -65,8 +65,8 @@ def _result(
     )
 
 
-def analyse(document: Document, config: DifficultyConfig) -> DifficultyReport:
-    report = DifficultyReport(path=document.path, format=document.format)
+def analyse(document: Document, config: ReadinessConfig) -> ReadinessReport:
+    report = ReadinessReport(path=document.path, format=document.format)
 
     for signal in sorted(all_signals(), key=lambda s: s.id):
         settings = config.for_signal(signal.id)

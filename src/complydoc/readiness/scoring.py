@@ -14,10 +14,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from complydoc.config.schema import ScoringConfig
-from complydoc.difficulty.base import SignalResult
+from complydoc.readiness.base import SignalResult
 from complydoc.text import count
 
-__all__ = ["DifficultyScore", "ScoreComponent", "compute_score"]
+__all__ = ["ReadinessScore", "ScoreComponent", "compute_score"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,9 +32,9 @@ class ScoreComponent:
 
 
 @dataclass(frozen=True, slots=True)
-class DifficultyScore:
+class ReadinessScore:
     value: float
-    """0 (hardest) to 100 (easiest)."""
+    """0 (nothing can be read from it) to 100 (ready to process as it stands)."""
     label: str
     components: list[ScoreComponent]
     signals_counted: int
@@ -46,16 +46,21 @@ class DifficultyScore:
 
 
 def _label(value: float) -> str:
+    """The band, worded so that it reads the same way round as the number.
+
+    The score used to be called difficulty while a high one meant easy, so both
+    the name and half the labels ran against the scale.
+    """
     if value >= 75:
-        return "straightforward"
+        return "ready"
     if value >= 50:
         return "workable"
     if value >= 25:
-        return "difficult"
-    return "very difficult"
+        return "needs work"
+    return "not ready"
 
 
-def compute_score(results: list[SignalResult], config: ScoringConfig) -> DifficultyScore | None:
+def compute_score(results: list[SignalResult], config: ScoringConfig) -> ReadinessScore | None:
     if not config.enabled:
         return None
 
@@ -90,7 +95,7 @@ def compute_score(results: list[SignalResult], config: ScoringConfig) -> Difficu
     value = round(accumulated * 100, 1)
     total_signals = len(counted) + excluded
     low_confidence = total_signals > 0 and len(counted) < total_signals / 2
-    return DifficultyScore(
+    return ReadinessScore(
         value=value,
         label=_label(value),
         components=components,

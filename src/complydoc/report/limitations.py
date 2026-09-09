@@ -14,8 +14,8 @@ from collections import defaultdict
 
 from complydoc.config.loader import StalenessWarning
 from complydoc.config.schema import Config
-from complydoc.difficulty.base import SignalStatus
 from complydoc.ingest.base import SkipRecord
+from complydoc.readiness.base import SignalStatus
 from complydoc.report.models import DocumentReport, Limitation, RunMetadata
 from complydoc.text import count, plural
 
@@ -145,9 +145,9 @@ def build_limitations(
     na_signals: dict[tuple[str, str], list[str]] = {}
     error_signals: dict[tuple[str, str], list[str]] = {}
     for document in documents:
-        if not document.difficulty:
+        if not document.readiness:
             continue
-        for signal in document.difficulty.signals:
+        for signal in document.readiness.signals:
             if signal.status is SignalStatus.NOT_APPLICABLE:
                 bucket = na_signals
             elif signal.status is SignalStatus.ERROR:
@@ -158,7 +158,7 @@ def build_limitations(
             bucket.setdefault(key, []).append(document.relative_path)
 
     # Signals that simply do not apply to a format are a property of the document,
-    # not of the run. They are listed on the document itself; repeating eighteen of
+    # not of the run. They are listed on the document itself; repeating nineteen of
     # them here buried everything that actually needed attention.
     _ = na_signals
 
@@ -180,12 +180,12 @@ def build_limitations(
     aligned = [
         d.relative_path
         for d in documents
-        if d.difficulty
+        if d.readiness
         and any(
             s.id == "table_count"
             and s.status is SignalStatus.MEASURED
             and s.detail.get("aligned_tables")
-            for s in d.difficulty.signals
+            for s in d.readiness.signals
         )
     ]
     if aligned:
@@ -314,22 +314,22 @@ def build_limitations(
     # --- Signals registered but not configured -------------------------------
     unconfigured: set[str] = set()
     for document in documents:
-        if document.difficulty:
-            unconfigured |= set(document.difficulty.unconfigured_signals)
+        if document.readiness:
+            unconfigured |= set(document.readiness.unconfigured_signals)
     if unconfigured:
         limitations.append(
             Limitation(
                 area="Configuration",
                 statement=(
                     "These signals are registered in code but have no entry in "
-                    "difficulty.yaml, so they were measured without a rating or a weight."
+                    "readiness.yaml, so they were measured without a rating or a weight."
                 ),
                 affected=sorted(unconfigured),
             )
         )
 
     # --- Components that were not run at all ---------------------------------
-    all_components = {"cost", "difficulty", "sensitive"}
+    all_components = {"cost", "readiness", "sensitive"}
     not_run = sorted(all_components - set(run.components_run))
     if not_run:
         limitations.append(

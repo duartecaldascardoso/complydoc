@@ -11,7 +11,7 @@ import importlib
 import pkgutil
 from typing import Final, TypeVar
 
-from complydoc.difficulty.base import Signal
+from complydoc.readiness.base import Signal
 
 __all__ = ["all_signals", "signal", "signal_by_id"]
 
@@ -37,9 +37,9 @@ def _discover() -> None:
     if _discovered:
         return
     _discovered = True
-    package = importlib.import_module("complydoc.difficulty.signals")
+    package = importlib.import_module("complydoc.readiness.signals")
     for info in pkgutil.iter_modules(package.__path__):
-        importlib.import_module(f"complydoc.difficulty.signals.{info.name}")
+        importlib.import_module(f"complydoc.readiness.signals.{info.name}")
 
 
 def all_signals() -> list[Signal]:

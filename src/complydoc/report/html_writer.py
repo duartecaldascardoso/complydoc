@@ -161,14 +161,14 @@ def _money(value: float | None, currency: str = "USD") -> str:
     return f"{symbol}{value:,.2f}"
 
 
-def _drivers(difficulty: object, rating: str, limit: int) -> list[object]:
+def _drivers(readiness: object, rating: str, limit: int) -> list[object]:
     """The signals that actually moved the verdict, heaviest first.
 
-    A document has eighteen signals but only a few explain its score. Ranking by
+    A document carries nineteen signals but only a few explain its score. Ranking by
     the weight behind each one answers "which parts make it easy or hard" without
-    making the reader diff two tables of eighteen rows.
+    making the reader diff two tables of nineteen rows.
     """
-    signals = getattr(difficulty, "signals", None) or []
+    signals = getattr(readiness, "signals", None) or []
     matching = [s for s in signals if getattr(s, "rating", None) == rating]
     matching.sort(key=lambda s: (s.weight, s.id), reverse=True)
     return matching[:limit]
@@ -246,7 +246,7 @@ def render_html(report: AuditReport, config: Config) -> str:
         return f'<span class="r {severity_class(severity)}">{escape(severity)}</span>'
 
     def score_band(value: float) -> str:
-        """Match the score bands the difficulty module labels with."""
+        """Match the score bands the readiness module labels with."""
         if value >= 75:
             return "good"
         if value >= 50:

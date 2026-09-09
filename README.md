@@ -7,7 +7,7 @@
 </div>
 
 <div align="center">
-  <h3>Offline document audit: LLM cost, extraction difficulty, and personal data.</h3>
+  <h3>Offline document audit: LLM cost, extraction readiness, and personal data.</h3>
 </div>
 
 <div align="center">
@@ -20,7 +20,7 @@
 <br>
 
 Point complydoc at a folder of business documents and it answers three questions: what they
-would cost to process with an LLM, how hard they are to extract data from, and what personal
+would cost to process with an LLM, how ready they are to extract data from, and what personal
 or financial information they hold. It is a diagnostic you run before buying a document
 automation system, not a pipeline you run in production.
 
@@ -146,12 +146,12 @@ a model. Time *on* the model is not estimated by default: complydoc cannot bench
 endpoint offline. Add `input_tokens_per_second` to a model in `pricing.yaml` from your own
 benchmark and it will.
 
-**Difficulty.** Eighteen signals, each with a measured value, a rating, and one sentence on
+**Readiness.** Nineteen signals, each with a measured value, a rating, and one sentence on
 why it matters. Text layer and coverage, image proportion, garbled characters, tables and
 merged cells, columns, rotation and skew, scan DPI, fonts, date consistency, page sizes,
 language, encryption, and form fields — which count as a *positive* signal.
 
-A weighted score is produced only because every weight is visible in `difficulty.yaml` and
+A weighted score is produced only because every weight is visible in `readiness.yaml` and
 printed beside its row. Signals that cannot be measured are excluded rather than counted as
 failures.
 
@@ -186,7 +186,7 @@ Three files under `src/complydoc/config/`, overridable with `--config-dir`:
 | File | Contents |
 | --- | --- |
 | `pricing.yaml` | Model prices, vision formulas, resolution presets, `last_verified` dates |
-| `difficulty.yaml` | Signal weights, rating thresholds, scoring rules |
+| `readiness.yaml` | Signal weights, rating thresholds, scoring rules |
 | `sensitive.yaml` | Patterns, validators, regions, severities, masking rules |
 
 Every number in a report comes from these files. To add models with current prices:
@@ -213,8 +213,8 @@ complydoc skill --install     # → ~/.claude/skills/complydoc/SKILL.md
 
 ## Adding a signal
 
-One file under `difficulty/signals/` with an `@signal` decorated class, and a weight block in
-`difficulty.yaml`. The package is walked at import time, so there is no central list to
+One file under `readiness/signals/` with an `@signal` decorated class, and a weight block in
+`readiness.yaml`. The package is walked at import time, so there is no central list to
 update. Detectors work the same way with `@detector`, loaders with `register`.
 
 ```python

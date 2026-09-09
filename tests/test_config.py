@@ -10,8 +10,8 @@ from pydantic import ValidationError
 
 from complydoc.config.loader import ConfigError, check_staleness, load_config
 from complydoc.config.schema import (
-    DifficultyConfig,
     PricingConfig,
+    ReadinessConfig,
     ScoringConfig,
     SignalConfig,
     Threshold,
@@ -21,16 +21,16 @@ from tests.helpers import FIXTURES
 
 def test_shipped_config_loads(config):
     assert config.pricing.schema_version == 1
-    assert config.difficulty.signals
+    assert config.readiness.signals
     assert config.sensitive.categories
     assert len(config.digest) == 16
 
 
 def test_every_signal_in_config_has_a_registered_signal(config):
-    from complydoc.difficulty.registry import all_signals
+    from complydoc.readiness.registry import all_signals
 
     registered = {s.id for s in all_signals()}
-    configured = set(config.difficulty.signals)
+    configured = set(config.readiness.signals)
     assert configured == registered, (
         f"config and code disagree: only in config {configured - registered}, "
         f"only in code {registered - configured}"
@@ -119,6 +119,6 @@ def test_missing_config_directory_is_a_clear_error(tmp_path):
 
 def test_unknown_config_key_is_rejected():
     with pytest.raises(ValidationError):
-        DifficultyConfig.model_validate(
+        ReadinessConfig.model_validate(
             {"schema_version": 1, "scoring": {}, "signals": {}, "surprise": 1}
         )

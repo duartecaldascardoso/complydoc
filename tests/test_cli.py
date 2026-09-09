@@ -17,9 +17,9 @@ runner = CliRunner()
     ("command", "expected_components"),
     [
         ("cost", ["cost"]),
-        ("difficulty", ["difficulty"]),
+        ("readiness", ["readiness"]),
         ("sensitive", ["sensitive"]),
-        ("audit", ["cost", "difficulty", "sensitive"]),
+        ("audit", ["cost", "readiness", "sensitive"]),
     ],
 )
 def test_each_component_runs_on_its_own(tmp_path, command, expected_components):

@@ -433,14 +433,14 @@
   </div>
 
   <div class="tile">
-    <div class="k">Average quality</div>
-    {% if agg.mean_difficulty_score is not none %}
-      <div class="v">{{ agg.mean_difficulty_score | round | int }}<span class="u">/100</span></div>
+    <div class="k">AI readiness</div>
+    {% if agg.mean_readiness_score is not none %}
+      <div class="v">{{ agg.mean_readiness_score | round | int }}<span class="u">/100</span></div>
       <div class="s">
-        {% set bands = agg.difficulty_bands %}
-        {{ bands.get("straightforward", 0) + bands.get("workable", 0) }} of
-        {{ agg.documents_audited }} are workable or better. Higher is easier.</div>
-    {% else %}<div class="v">—</div><div class="s">difficulty was not part of this run</div>{% endif %}
+        {% set bands = agg.readiness_bands %}
+        {{ bands.get("ready", 0) + bands.get("workable", 0) }} of
+        {{ agg.documents_audited }} are workable or better. Higher is better.</div>
+    {% else %}<div class="v">—</div><div class="s">readiness was not part of this run</div>{% endif %}
   </div>
 
   <div class="tile">
@@ -611,17 +611,17 @@ before reading that as an all-clear.</p>
     <div class="count" id="doccount"></div>
     <ul id="filelist">
     {% for doc in report.documents %}
-      {%- set poor = doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty else [] -%}
+      {%- set poor = doc.readiness.signals | selectattr("rating", "equalto", "poor") | list if doc.readiness else [] -%}
       {%- set sources = doc.extracted_text | map(attribute="source") | list -%}
       {%- set haystack = [doc.relative_path, doc.format]
             + (poor | map(attribute="name") | list)
             + sources
-            + ([doc.difficulty.score.label] if doc.difficulty and doc.difficulty.score else []) -%}
+            + ([doc.readiness.score.label] if doc.readiness and doc.readiness.score else []) -%}
       <li data-search="{{ haystack | join(' ') | lower }}">
         <button type="button" data-doc="{{ loop.index0 }}">
           <span class="nm">{{ doc.relative_path }}</span>
-          {% if doc.difficulty and doc.difficulty.score %}
-            <span class="sc r r-{{ score_band(doc.difficulty.score.value) }}">{{ doc.difficulty.score.value | round | int }}</span>
+          {% if doc.readiness and doc.readiness.score %}
+            <span class="sc r r-{{ score_band(doc.readiness.score.value) }}">{{ doc.readiness.score.value | round | int }}</span>
           {% else %}<span class="sc r r-na">—</span>{% endif %}
         </button>
       </li>
@@ -775,10 +775,10 @@ before reading that as an all-clear.</p>
           <div class="notice"><strong>Reading this document was incomplete.</strong>
             <ul>{% for w in doc.load_warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
         {% endif %}
-        <p class="doc-meta">{{ doc.format }} · {{ plural(doc.page_count, "page") }}{% if not doc.page_count_known %}, not fixed{% endif %}{% if doc.difficulty and doc.difficulty.score %} ·
-          <span class="{{ 'attn' if score_band(doc.difficulty.score.value) == 'poor' else '' }}">{{ doc.difficulty.score.label }}, {{ doc.difficulty.score.value }}/100</span>{% endif %}{% if doc.timing %} ·
+        <p class="doc-meta">{{ doc.format }} · {{ plural(doc.page_count, "page") }}{% if not doc.page_count_known %}, not fixed{% endif %}{% if doc.readiness and doc.readiness.score %} ·
+          <span class="{{ 'attn' if score_band(doc.readiness.score.value) == 'poor' else '' }}">{{ doc.readiness.score.label }}, {{ doc.readiness.score.value }}/100</span>{% endif %}{% if doc.timing %} ·
           {{ duration(doc.timing.total_seconds) }} to read and analyse{% endif %}</p>
-        {% set concerns = doc.difficulty.signals | selectattr("rating", "equalto", "poor") | list if doc.difficulty else [] %}
+        {% set concerns = doc.readiness.signals | selectattr("rating", "equalto", "poor") | list if doc.readiness else [] %}
         {% if concerns or (doc.sensitive and doc.sensitive.unreadable_pages) %}
         <p class="concerns">
           {%- for s in concerns %}<span title="{{ s.why }}">{{ s.name | lower }} — {{ s.display }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
@@ -790,12 +790,12 @@ before reading that as an all-clear.</p>
           text and {{ "was" if doc.sensitive.unreadable_pages | length == 1 else "were" }} not
           searched. Nothing was found there because nothing looked.</p>
         {% endif %}
-        {% if doc.difficulty %}
+        {% if doc.readiness %}
         <div class="scroll"><table>
           <thead><tr><th>Signal</th><th>Measured</th><th>Rating</th>
             {% if report.signal_weights %}<th class="n">Weight</th>{% endif %}<th>Why it matters</th></tr></thead>
           <tbody>
-          {% for s in doc.difficulty.signals %}
+          {% for s in doc.readiness.signals %}
             <tr><td>{{ s.name }}</td>
               <td>{{ s.display }}{% if s.reason %}<div class="why">{{ s.reason }}</div>{% endif %}</td>
               <td>{% if s.rating %}<span class="r r-{{ s.rating }}">{{ s.rating }}</span>{% else %}<span class="r r-na">{{ s.status.replace("_", " ") }}</span>{% endif %}</td>
@@ -804,7 +804,7 @@ before reading that as an all-clear.</p>
           {% endfor %}
           </tbody>
         </table></div>
-        {% set skipped = doc.difficulty.signals | rejectattr("rating") | list %}
+        {% set skipped = doc.readiness.signals | rejectattr("rating") | list %}
         {% if skipped %}
         <details class="more">
           <summary>{{ plural(skipped | length, "signal") }} not measured for this document</summary>

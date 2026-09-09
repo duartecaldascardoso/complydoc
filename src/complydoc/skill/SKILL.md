@@ -1,12 +1,12 @@
 ---
 name: complydoc
-description: Audit a folder of documents offline for LLM processing cost, extraction difficulty, and personal or financial identifiers (national IDs across the UK, US and EU, payment cards, IBANs, bank details). Use when asked what documents would cost to process with an LLM, how hard they are to extract from, whether a folder contains personal data, or to check documents for PII before sending them anywhere. Runs locally and makes no network calls.
+description: Audit a folder of documents offline for LLM processing cost, extraction readiness, and personal or financial identifiers (national IDs across the UK, US and EU, payment cards, IBANs, bank details). Use when asked what documents would cost to process with an LLM, how ready they are to extract from, whether a folder contains personal data, or to check documents for PII before sending them anywhere. Runs locally and makes no network calls.
 ---
 
 # complydoc
 
 `complydoc` audits a folder of business documents and reports three things: what they
-would cost to process with an LLM, how hard they are to extract structured data from,
+would cost to process with an LLM, how ready they are for extracting structured data from,
 and which personal or financial identifiers they contain. It makes no network calls, so
 it is safe to run on material that must not leave the machine.
 
@@ -26,7 +26,7 @@ Run `complydoc` with no arguments to audit the current directory.
 | --- | --- |
 | `complydoc audit <path>` | All three components |
 | `complydoc cost <path>` | Cost only |
-| `complydoc difficulty <path>` | Extraction difficulty only |
+| `complydoc readiness <path>` | Extraction readiness only |
 | `complydoc sensitive <path>` | Identifiers only |
 | `complydoc models` | Which models can be priced against |
 | `complydoc doctor` | What is installed |
@@ -56,7 +56,7 @@ complydoc sensitive ./invoices --print-json | jq '{
 - `run.components_run` — which components actually ran.
 - `run.offline_guard` — `armed` means nothing could have left the machine.
 - `aggregate.sensitive_by_category` / `sensitive_by_severity` — folder totals.
-- `documents[].difficulty.score` — 0-100, higher is easier; check `low_confidence`.
+- `documents[].readiness.score` — 0-100, higher is better; check `low_confidence`.
 - `documents[].sensitive.matches[]` — `category`, `region`, `page`, `line`, `masked`,
   `severity`.
 - `documents[].cost.models[]` — token counts and USD per model, with `last_verified`
@@ -96,6 +96,6 @@ unless someone has configured a measured throughput.
 ## Reporting back
 
 Lead with the three figures a decision rests on: cost per 1,000 documents, the mean
-difficulty score, and how many documents hold sensitive data. Then name anything in
+readiness score, and how many documents hold sensitive data. Then name anything in
 `limitations[]` marked `important`, because those are the things that would change the
 conclusion. Do not print identifier values.

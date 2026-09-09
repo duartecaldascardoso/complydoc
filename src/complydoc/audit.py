@@ -29,11 +29,11 @@ from complydoc import __version__, offline
 from complydoc.config.loader import check_staleness
 from complydoc.config.schema import Config, ModelPricing
 from complydoc.cost.estimator import estimate_document, folder_from_estimates, resolve_models
-from complydoc.difficulty.analyser import analyse
 from complydoc.discovery import discover
 from complydoc.ingest import ocr as ocr_module
 from complydoc.ingest.base import IngestOptions, LoaderError, SkipRecord
 from complydoc.ingest.registry import load_document
+from complydoc.readiness.analyser import analyse
 from complydoc.report.limitations import build_limitations
 from complydoc.report.models import (
     SCHEMA_VERSION,
@@ -50,7 +50,7 @@ from complydoc.sensitive.scanner import scan
 
 __all__ = ["COMPONENTS", "resolve_jobs", "run_audit"]
 
-COMPONENTS = ("cost", "difficulty", "sensitive")
+COMPONENTS = ("cost", "readiness", "sensitive")
 
 _MAX_TEXT_CHARS = 20_000
 """Per page, so one enormous document cannot make the report unopenable."""
@@ -134,8 +134,8 @@ def _process(path: Path, work: _Work) -> _Outcome:
     )
 
     analyse_started = time.perf_counter()
-    if "difficulty" in work.requested:
-        entry.difficulty = analyse(document, work.config.difficulty)
+    if "readiness" in work.requested:
+        entry.readiness = analyse(document, work.config.readiness)
     analyse_seconds = time.perf_counter() - analyse_started
 
     scan_started = time.perf_counter()
@@ -290,11 +290,11 @@ def run_audit(
 
     # Rasterising is only worth the memory when something will actually look at
     # the pixels — OCR, or the skew signal.
-    wants_raster = ocr or page_images or ocr_compare or "difficulty" in requested
+    wants_raster = ocr or page_images or ocr_compare or "readiness" in requested
     options = IngestOptions(
         ocr=ocr,
         render_dpi=render_dpi,
-        extract_tables="difficulty" in requested,
+        extract_tables="readiness" in requested,
         render_all_pages=page_images or ocr_compare,
         ocr_compare=ocr_compare,
         max_render_pages=50 if (wants_raster or page_images) else 0,
@@ -373,10 +373,10 @@ def run_audit(
         staleness_warnings=[w.message for w in staleness],
         config_masking=config.sensitive.masking,
     )
-    if "difficulty" in requested and config.difficulty.scoring.enabled:
+    if "readiness" in requested and config.readiness.scoring.enabled:
         report.signal_weights = {
             sid: settings.weight
-            for sid, settings in config.difficulty.signals.items()
+            for sid, settings in config.readiness.signals.items()
             if settings.enabled
         }
     report.limitations = build_limitations(run, documents, skipped, staleness, config)

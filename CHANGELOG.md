@@ -8,6 +8,15 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Changed
+
+- The difficulty component is called readiness. A high score always meant a document
+  that was easy to process, which read backwards under a name promising the opposite.
+  The command is `complydoc readiness`, the config file is `readiness.yaml`, the JSON
+  carries `readiness` where it carried `difficulty`, and `schema_version` is 2. The
+  score bands read the same way round as the number now: ready, workable, needs work,
+  not ready. Signal directions are `higher_is_better` and `lower_is_better`.
+
 ### Performance
 
 Measured on this machine: a folder of 102 documents 17.6s to 10.9s with OCR and
@@ -46,7 +55,7 @@ Measured on this machine: a folder of 102 documents 17.6s to 10.9s with OCR and
 - Every page starts the same distance below the tab bar, whether or not it opens on
   a heading.
 - The Documents page is the file list and the two panels, and nothing else. The
-  folder-wide table of difficulty signals, the per-document summary line and the list
+  folder-wide table of readiness signals, the per-document summary line and the list
   of poorly rated signals moved to that document's own Signals tab, where they answer
   a question the reader has actually asked.
 
@@ -62,13 +71,13 @@ First release.
 
 ### Audit
 
-- Three independent components — cost, extraction difficulty, sensitive data — run
+- Three independent components — cost, extraction readiness, sensitive data — run
   together or one at a time. The report states which of them ran.
 - Cost estimated from measured page geometry and a real tokenizer, across text, OCR and
   vision paths for every priced model. Vision formulas and prices live in
   `pricing.yaml` with a `last_verified` date; a price older than 90 days is reported as
   stale rather than quoted plainly.
-- Nineteen difficulty signals, each contributing a measured value, a rating and one
+- Nineteen readiness signals, each contributing a measured value, a rating and one
   sentence saying why. Weights and thresholds are configuration, not code, and are
   printed alongside any score. A new signal is one new file plus a registration.
 - Sensitive data scan covering national identifiers for the UK, US, IE, NL, PT, ES, FR

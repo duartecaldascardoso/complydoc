@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from complydoc.difficulty.base import Measurement
-from complydoc.difficulty.registry import signal
 from complydoc.geometry import coverage_fraction
 from complydoc.ingest.base import Document, DocumentFormat
+from complydoc.readiness.base import Measurement
+from complydoc.readiness.registry import signal
 
 _IMAGE_DOMINANT = 0.5
 

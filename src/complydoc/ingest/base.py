@@ -1,7 +1,7 @@
 """The normalised document model every component reads.
 
 Format-specific code lives in the loader modules and stops there. Cost
-estimation, difficulty signals and the sensitive data scan all consume the
+estimation, readiness signals and the sensitive data scan all consume the
 `Document` produced here and never touch a PDF or a spreadsheet directly.
 """
 

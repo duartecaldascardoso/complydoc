@@ -62,3 +62,31 @@ def test_the_facade_still_counts_what_it_read():
     ocr.add_stats(4, 2.0)
     assert ocr.stats() == (4, 2.0)
     ocr.reset_stats()
+
+
+def test_the_engine_registers_its_own_cleanup():
+    """The native threads are freed by the module that creates them.
+
+    Deferring that to another module meant importing this one during
+    interpreter shutdown, when the import machinery may already be gone — and
+    a run that had already succeeded would abort with a mutex error.
+    """
+    import atexit
+    import inspect
+
+    from complydoc.ingest.engines import rapidocr
+
+    source = inspect.getsource(rapidocr)
+    assert "atexit.register(release)" in source
+    assert source.index("atexit.register(release)") > source.index("def _pipeline"), (
+        "registered where the engine is built, not merely on import"
+    )
+    assert callable(rapidocr.release)
+    del atexit
+
+
+def test_releasing_without_ever_building_is_harmless():
+    from complydoc.ingest.engines import rapidocr
+
+    rapidocr.release()
+    rapidocr.release()

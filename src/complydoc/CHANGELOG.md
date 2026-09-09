@@ -53,6 +53,10 @@ branch on when reading reports programmatically.
 
 ### Fixed
 
+- The OCR engine registers its own shutdown cleanup, at the point it creates the
+  native threads, instead of relying on another module importing it during
+  interpreter teardown — when the import machinery may already be gone, and a run
+  that had already succeeded aborts with a mutex error.
 - The file list sat in the right place only some of the time. `.spread:not([hidden])` also
   matched a panel hidden along with the whole Pages view, because the attribute sits on the
   container, so the list was being centred on a zero-height ghost whenever the signals tab

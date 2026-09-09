@@ -14,7 +14,6 @@ how long it took.
 
 from __future__ import annotations
 
-import atexit
 import time
 from typing import TYPE_CHECKING
 
@@ -54,21 +53,6 @@ def select(engine_id: str | None) -> None:
 
 def _engine() -> Engine | None:
     return engine_by_id(_selected)
-
-
-def _release() -> None:
-    """Drop the engine before the interpreter tears itself down.
-
-    RapidOCR holds native ONNX Runtime threads. Letting those be collected during
-    interpreter shutdown occasionally aborts the process with a mutex error after
-    the work has already finished, which turns a green test run into exit 134.
-    """
-    from complydoc.ingest.engines import rapidocr
-
-    rapidocr.release()
-
-
-atexit.register(_release)
 
 
 def available() -> bool:

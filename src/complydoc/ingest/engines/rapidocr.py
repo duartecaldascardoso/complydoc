@@ -6,6 +6,7 @@ access at any point — which is why it is the one complydoc ships with.
 
 from __future__ import annotations
 
+import atexit
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
@@ -33,10 +34,15 @@ def _pipeline() -> Any | None:
         else {}
     )
     try:
-        return RapidOCR(**options)
+        built = RapidOCR(**options)
     except Exception as exc:  # pragma: no cover - engine init is environment-specific
         _IMPORT_ERROR = f"RapidOCR failed to initialise: {exc}"
         return None
+    # Registered here, where the native threads are actually created, rather
+    # than from a module that would have to import this one during interpreter
+    # shutdown — by which point the import machinery may already be gone.
+    atexit.register(release)
+    return built
 
 
 def release() -> None:
@@ -44,7 +50,8 @@ def release() -> None:
 
     It holds native ONNX Runtime threads. Letting those be collected during
     interpreter shutdown occasionally aborts the process with a mutex error
-    after the work has already finished.
+    after the work has already finished — exit 134 on a run that had already
+    succeeded.
     """
     _pipeline.cache_clear()
 

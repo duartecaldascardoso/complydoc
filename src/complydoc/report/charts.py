@@ -66,6 +66,7 @@ class ArchitectureCost:
 class ModelComparison:
     model_id: str
     display_name: str
+    provider: str = ""
     architectures: list[ArchitectureCost] = field(default_factory=list)
 
     def by_key(self, key: str) -> ArchitectureCost | None:
@@ -122,7 +123,12 @@ def build_comparison(report: AuditReport) -> list[ModelComparison]:
                 )
             )
         comparisons.append(
-            ModelComparison(model_id=model_id, display_name=display, architectures=architectures)
+            ModelComparison(
+                model_id=model_id,
+                display_name=display,
+                provider=report.cost.documents[0].models[index].provider,
+                architectures=architectures,
+            )
         )
     return comparisons
 
@@ -146,29 +152,34 @@ def grouped_bars_svg(
 ) -> str:
     """Horizontal grouped bars: one group per model, one bar per architecture.
 
-    Values are labelled directly on every bar, and the same numbers appear in the
-    table underneath. Two of the three series sit below 3:1 against the page, so
-    identity never rests on the fill alone.
+    Each bar is labelled with its value and with how many documents that
+    architecture can actually serve, because the cheapest option is regularly the
+    one that reaches fewest documents. Groups carry their provider so the page can
+    filter them, and re-stack themselves when it does.
     """
     rows = [
-        (c, [(k, label, colour, getattr(c.by_key(k), value, None)) for k, label, colour in SERIES])
-        for c in comparisons
+        (c, [(k, label, colour, c.by_key(k)) for k, label, colour in SERIES]) for c in comparisons
     ]
-    values = [v for _, series in rows for *_, v in series if v is not None]
+    values = [
+        getattr(a, value)
+        for _, series in rows
+        for *_, a in series
+        if a is not None and getattr(a, value) is not None
+    ]
     if not values:
         return ""
 
     peak = max(values)
-    bar_h, gap, group_gap = 14, 2, 22
-    label_w, right_pad, top = 132, 96, 34
-    plot_w = 420
+    bar_h, gap, group_gap = 14, 2, 24
+    label_w, right_pad, top = 168, 150, 26
+    plot_w = 380
     group_h = len(SERIES) * bar_h + (len(SERIES) - 1) * gap
-    height = top + len(rows) * (group_h + group_gap)
+    step = group_h + group_gap
+    height = top + len(rows) * step
     width = label_w + plot_w + right_pad
 
     # One precision for the whole chart, chosen from its largest value. Mixing
-    # "$0.00848" and "$0.01" in the same group reads as two different accuracies
-    # when it is one.
+    # "$0.00848" and "$0.01" reads as two accuracies when it is one.
     decimals = 2 if peak >= 1 else (4 if peak >= 0.01 else 6)
 
     def money(v: float) -> str:
@@ -176,38 +187,47 @@ def grouped_bars_svg(
 
     parts = [
         f'<svg class="chart" viewBox="0 0 {width} {height}" width="100%" '
-        f'height="{height}" role="img" aria-label="{title}">'
+        f'height="{height}" data-step="{step}" data-top="{top}" '
+        f'role="img" aria-label="{title}">'
     ]
-    # Recessive axis only; no grid competing with the marks.
     parts.append(
-        f'<line x1="{label_w}" y1="{top - 10}" x2="{label_w}" y2="{height - 12}" '
-        f'stroke="var(--line)" stroke-width="1"/>'
+        f'<line class="axis" x1="{label_w}" y1="{top - 8}" x2="{label_w}" '
+        f'y2="{height - 16}" stroke="var(--line)" stroke-width="1"/>'
     )
 
-    y = top
-    for comparison, series in rows:
+    for index, (comparison, series) in enumerate(rows):
+        y = top + index * step
         parts.append(
-            f'<text x="{label_w - 10}" y="{y + group_h / 2 + 4}" text-anchor="end" '
-            f'font-size="12" font-weight="600" fill="var(--ink)">{comparison.display_name}</text>'
+            f'<g class="grp" data-provider="{comparison.provider}" transform="translate(0,{y})">'
         )
-        for _key, label, colour, amount in series:
-            if amount is None:
+        parts.append(
+            f'<text x="{label_w - 10}" y="{group_h / 2 + 4}" text-anchor="end" '
+            f'font-size="11.5" font-weight="600" fill="var(--ink)">'
+            f"{comparison.display_name}</text>"
+        )
+        row_y = 0.0
+        for _key, label, colour, architecture in series:
+            amount = getattr(architecture, value, None) if architecture else None
+            if architecture is None or amount is None:
                 parts.append(
-                    f'<text x="{label_w + 6}" y="{y + bar_h - 3}" font-size="10" '
+                    f'<text x="{label_w + 6}" y="{row_y + bar_h - 3}" font-size="10" '
                     f'fill="var(--muted)">{label} — not applicable</text>'
                 )
             else:
                 bar_w = (amount / peak) * plot_w if peak else 0
+                reach = f"{architecture.documents_served}/{architecture.documents_total}"
                 parts.append(
-                    f'<path d="{_bar_path(label_w, y, bar_w, bar_h)}" fill="{colour}">'
-                    f"<title>{comparison.display_name} · {label} · {money(amount)}</title></path>"
+                    f'<path d="{_bar_path(label_w, row_y, bar_w, bar_h)}" fill="{colour}">'
+                    f"<title>{comparison.display_name} · {label} · {money(amount)} · "
+                    f"reaches {reach} documents. {architecture.note}</title></path>"
                 )
                 parts.append(
-                    f'<text x="{label_w + bar_w + 8}" y="{y + bar_h - 3}" font-size="10.5" '
-                    f'fill="var(--ink-2)">{money(amount)}</text>'
+                    f'<text x="{label_w + bar_w + 8}" y="{row_y + bar_h - 3}" '
+                    f'font-size="10.5" fill="var(--ink-2)">{money(amount)}'
+                    f'<tspan fill="var(--faint)" dx="6">{reach}</tspan></text>'
                 )
-            y += bar_h + gap
-        y += group_gap - gap
+            row_y += bar_h + gap
+        parts.append("</g>")
 
     parts.append("</svg>")
     return "".join(parts)

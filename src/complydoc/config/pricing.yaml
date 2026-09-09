@@ -147,12 +147,12 @@ models:
       serves an OpenAI-compatible API; confirm it before relying on the
       vision figures.
 
-  - id: gemini/gemini-2.0-flash
+  - id: gemini/gemini-3.7-flash
     provider: gemini
-    display_name: "gemini/gemini-2.0-flash"
+    display_name: "gemini/gemini-3.7-flash"
     enabled: true
-    input_per_mtok_usd: 0.1
-    output_per_mtok_usd: 0.4
+    input_per_mtok_usd: 0.75
+    output_per_mtok_usd: 3.75
     supports_vision: true
     vision_formula: flat_then_tiled
     tokenizer:
@@ -165,12 +165,30 @@ models:
     last_verified: 2026-09-09
     source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
 
-  - id: moonshot/kimi-k2.5
-    provider: moonshot
-    display_name: "moonshot/kimi-k2.5"
+  - id: gemini/gemini-3.1-pro-preview
+    provider: gemini
+    display_name: "gemini/gemini-3.1-pro-preview"
     enabled: true
-    input_per_mtok_usd: 0.6
-    output_per_mtok_usd: 3.0
+    input_per_mtok_usd: 2.0
+    output_per_mtok_usd: 12.0
+    supports_vision: true
+    vision_formula: flat_then_tiled
+    tokenizer:
+      encoding: o200k_base
+      fidelity: approximate
+      approximate_ratio: 1.0
+      approximation_note: >
+        gemini does not publish an offline tokenizer; token counts are
+        approximated with the o200k_base encoding.
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
+
+  - id: moonshot/kimi-k3
+    provider: moonshot
+    display_name: "moonshot/kimi-k3"
+    enabled: true
+    input_per_mtok_usd: 3.0
+    output_per_mtok_usd: 15.0
     supports_vision: true
     vision_formula: tiled_512
     tokenizer:
@@ -188,40 +206,40 @@ models:
       serves an OpenAI-compatible API; confirm it before relying on the
       vision figures.
 
-  - id: gpt-4o-mini
+  - id: gpt-5-mini
     provider: openai
-    display_name: "gpt-4o-mini"
+    display_name: "gpt-5-mini"
+    enabled: true
+    input_per_mtok_usd: 0.25
+    output_per_mtok_usd: 2.0
+    supports_vision: true
+    vision_formula: tiled_512
+    tokenizer:
+      encoding: o200k_base
+      fidelity: exact
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
+
+  - id: gpt-5.2
+    provider: openai
+    display_name: "gpt-5.2"
+    enabled: true
+    input_per_mtok_usd: 1.75
+    output_per_mtok_usd: 14.0
+    supports_vision: true
+    vision_formula: tiled_512
+    tokenizer:
+      encoding: o200k_base
+      fidelity: exact
+    last_verified: 2026-09-09
+    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
+
+  - id: zai/glm-5.3-flash
+    provider: zai
+    display_name: "zai/glm-5.3-flash"
     enabled: true
     input_per_mtok_usd: 0.15
-    output_per_mtok_usd: 0.6
-    supports_vision: true
-    vision_formula: tiled_512
-    tokenizer:
-      encoding: o200k_base
-      fidelity: exact
-    last_verified: 2026-09-09
-    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
-
-  - id: gpt-4o
-    provider: openai
-    display_name: "gpt-4o"
-    enabled: true
-    input_per_mtok_usd: 2.5
-    output_per_mtok_usd: 10.0
-    supports_vision: true
-    vision_formula: tiled_512
-    tokenizer:
-      encoding: o200k_base
-      fidelity: exact
-    last_verified: 2026-09-09
-    source_url: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
-
-  - id: zai/glm-4.5v
-    provider: zai
-    display_name: "zai/glm-4.5v"
-    enabled: true
-    input_per_mtok_usd: 0.6
-    output_per_mtok_usd: 1.8
+    output_per_mtok_usd: 0.5
     supports_vision: true
     vision_formula: tiled_512
     tokenizer:

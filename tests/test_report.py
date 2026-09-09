@@ -180,14 +180,16 @@ def test_default_report_embeds_no_page_images(html, report):
     assert "data:image/jpeg" not in html
 
 
-def test_page_images_are_stamped_when_used(config):
+def test_page_images_are_recorded_in_the_run_options(config):
+    """A picture of every page is worth recording, not worth a banner."""
     from complydoc.report.html_writer import render_html
 
     with_images = run_audit(FIXTURES, config, COMPONENTS, page_images=True)
     assert with_images.run.page_images_used is True
     page = render_html(with_images, config)
     assert "data:image/jpeg" in page
-    assert "contains pictures of the documents" in page
+    options = page.split('class="opts">')[1].split("<")[0]
+    assert "--page-images" in options
 
 
 # --- filter and pagination -------------------------------------------------
@@ -238,8 +240,9 @@ def test_extracted_text_is_included_and_stamped_when_asked_for(config):
     assert "EMPLOYEE RECORD" in document.extracted_text[0].text
 
     page = render_html(with_text, config)
-    assert "contains the extracted text" in page
     assert 'class="text"' in page
+    options = page.split('class="opts">')[1].split("<")[0]
+    assert "--extracted-text" in options
 
 
 def test_extracted_text_records_how_each_page_was_read(config):
@@ -326,7 +329,32 @@ def test_cost_page_carries_the_charts(html):
     cost = html.split('id="cost"')[1].split("<section")[0]
     assert 'class="chart"' in cost
     assert "Text + local OCR" in cost
-    assert "Reach" in cost
+
+
+def test_reach_is_on_the_bars_not_in_a_second_table(html):
+    """Cost alone favours the text layer; reach is what stops that misleading."""
+    cost = html.split('id="cost"')[1].split("<section")[0]
+    assert "The same numbers" not in cost
+    assert 'tspan fill="var(--faint)"' in cost, "each bar should carry its reach"
+    assert "reaches" in cost, "the note belongs on hover"
+
+
+def test_charts_can_be_filtered_by_provider(html, report):
+    cost = html.split('id="cost"')[1].split("<section")[0]
+    providers = {m.provider for d in report.documents if d.cost for m in d.cost.models}
+    if len(providers) > 1:
+        assert 'id="providers"' in cost
+        for provider in providers:
+            assert f'data-provider="{provider}"' in cost
+
+
+def test_reveal_still_gets_a_banner(config):
+    """--reveal prints identifiers verbatim; that is not a footnote."""
+    from complydoc.report.html_writer import render_html
+
+    revealed = run_audit(FIXTURES, config, ("sensitive",), reveal=True)
+    page = render_html(revealed, config)
+    assert "unmasked sensitive values" in page
 
 
 def test_security_page_lists_every_occurrence(html, report):
@@ -386,3 +414,14 @@ def test_footer_carries_the_run_and_the_guarantee(html):
     assert "No document content left this machine" in footer
     assert "Audited" in footer and "Finished" in footer
     assert "network guard" in footer
+
+
+def test_run_options_record_exactly_what_was_asked_for(config):
+    from complydoc.report.html_writer import render_html
+
+    report = run_audit(FIXTURES, config, COMPONENTS, ocr=False, monthly_volume=500)
+    options = render_html(report, config).split('class="opts">')[1].split("<")[0]
+    assert "--no-ocr" in options
+    assert "--monthly-volume 500" in options
+    assert "--page-images" not in options
+    assert "--reveal" not in options

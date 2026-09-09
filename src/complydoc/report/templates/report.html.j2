@@ -265,7 +265,17 @@
             margin: 0 0 0.5rem; }
   .legend span { display: inline-flex; align-items: center; gap: 0.375rem; }
   .legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
-  .chart { display: block; max-width: 100%; margin: 0.25rem 0 0.5rem; }
+  .chart { display: block; max-width: 100%; margin: 0.25rem 0 1rem; }
+  .chart .grp { transition: transform 0.15s ease; }
+  .providers { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0 0 1rem; }
+  .providers button { font: inherit; font-size: 0.75rem; padding: 0.1875rem 0.625rem;
+                      border: 1px solid var(--line-2); background: var(--panel);
+                      color: var(--muted); border-radius: 3px; cursor: pointer; }
+  .providers button:hover { color: var(--ink); }
+  .providers button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent);
+                                           color: #fff; }
+  .foot-meta dd.opts { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                       font-size: 0.6875rem; }
   .lims { max-height: none; }
   .pair-text { display: flex; gap: 0.75rem; }
   .pair-text .half-text { flex: 1 1 0; min-width: 0; }
@@ -319,15 +329,6 @@
 <div class="box"><strong>This report contains unmasked sensitive values.</strong>
   <p>Generated with <code>--reveal</code>. Handle it with the same care as the documents it
   describes.</p></div>
-{% endif %}
-{% if report.run.page_images_used %}
-<div class="box"><strong>This report contains pictures of the documents.</strong>
-  <p>Generated with <code>--page-images</code>, so it carries the page content itself.</p></div>
-{% endif %}
-{% if report.run.extracted_text_used %}
-<div class="box"><strong>This report contains the extracted text.</strong>
-  <p>Generated with <code>--extracted-text</code>. The text read off every page is reproduced
-  in full, so masking the values in the tables no longer protects them.</p></div>
 {% endif %}
 
 {% set agg = report.aggregate %}
@@ -433,6 +434,15 @@
     <span><i style="background:{{ colour }}"></i>{{ label }}</span>
   {% endfor %}
 </div>
+{% set providers = comparisons | map(attribute="provider") | unique | sort | list %}
+{% if providers | length > 1 %}
+<div class="providers" id="providers">
+  <button type="button" data-provider="" aria-pressed="true">All providers</button>
+  {% for provider in providers %}
+    <button type="button" data-provider="{{ provider }}" aria-pressed="false">{{ provider }}</button>
+  {% endfor %}
+</div>
+{% endif %}
 <h3>Cost for this folder</h3>
 {{ folder_chart | safe }}
 {% if annual_chart %}
@@ -440,47 +450,23 @@
 {{ annual_chart | safe }}
 {% endif %}
 
-<h3>The same numbers</h3>
-<div class="scroll"><table>
-  <thead><tr><th>Model</th><th>Architecture</th><th class="n">Per document</th>
-    <th class="n">This folder</th>{% if report.run.monthly_volume %}<th class="n">Annual</th>{% endif %}
-    <th class="n">Reach</th><th>Note</th></tr></thead>
-  <tbody>
-  {% for c in comparisons %}{% for a in c.architectures %}
-    <tr>
-      <td>{% if loop.first %}{{ c.display_name }}{% endif %}</td>
-      <td>{{ a.label }}</td>
-      <td class="n">{{ money(a.per_document_usd) if a.per_document_usd is not none else "n/a" }}</td>
-      <td class="n">{{ money(a.folder_usd) if a.folder_usd is not none else "n/a" }}</td>
-      {% if report.run.monthly_volume %}
-      <td class="n">{{ money(a.annual_usd) if a.annual_usd is not none else "n/a" }}</td>{% endif %}
-      <td class="n">{{ a.documents_served }}/{{ a.documents_total }}</td>
-      <td class="why">{{ a.note }}</td>
-    </tr>
-  {% endfor %}{% endfor %}
-  </tbody>
-</table></div>
-{% if report.cost and report.cost.volume %}
-<p class="note">{{ report.cost.volume.basis }}</p>
-{% endif %}
-<p class="note">Input tokens only; output cost depends on your prompt.</p>
-
 <h3>Per document</h3>
+{% set cheapest = comparisons | last %}
 <div class="scroll"><table data-paginate="20">
   <thead><tr><th>Document</th><th class="n">Pages</th>
-    {% for c in comparisons %}<th class="n">{{ c.display_name }}, text</th>
-    <th class="n">{{ c.display_name }}, vision</th>{% endfor %}</tr></thead>
+    <th class="n">Text</th><th class="n">Vision</th></tr></thead>
   <tbody>
   {% for doc in report.documents %}{% if doc.cost %}
+    {% set m = doc.cost.models | selectattr("model_id", "equalto", cheapest.model_id) | first %}
     <tr><td class="mono">{{ doc.relative_path }}</td><td class="n">{{ doc.page_count }}</td>
-      {% for m in doc.cost.models %}
-        <td class="n">{{ money(m.text_path_input_usd) if m.text_path_input_usd is not none else "n/a" }}</td>
-        <td class="n">{{ money(m.vision_input_usd_by_resolution.get(report.cost.headline_resolution)) if m.vision_input_usd_by_resolution.get(report.cost.headline_resolution) is not none else "n/a" }}</td>
-      {% endfor %}
+      <td class="n">{{ money(m.text_path_input_usd) if m and m.text_path_input_usd is not none else "n/a" }}</td>
+      <td class="n">{{ money(m.vision_input_usd_by_resolution.get(report.cost.headline_resolution)) if m and m.vision_input_usd_by_resolution.get(report.cost.headline_resolution) is not none else "n/a" }}</td>
     </tr>
   {% endif %}{% endfor %}
   </tbody>
 </table></div>
+<p class="note">Priced on {{ cheapest.display_name }}, the cheapest model in the comparison.
+Multiply by the ratio in the chart above for any other.</p>
 {% else %}
 <p class="note">Cost was not part of this run.</p>
 {% endif %}
@@ -750,7 +736,8 @@ before reading that as an all-clear.</p>
       <dt>Finished</dt><dd>{{ report.run.finished_at }} in {{ "%.1f"|format(report.run.duration_seconds) }}s</dd>
       <dt>Documents</dt><dd>{{ agg.documents_audited }} across {{ agg.pages_total }} page{{ "" if agg.pages_total == 1 else "s" }}{% if agg.documents_skipped %}, {{ agg.documents_skipped }} skipped{% endif %}</dd>
       <dt>Read by</dt><dd>text layer{% if report.run.ocr_available and report.run.ocr_requested %}, local OCR{% endif %}{% if report.run.ner_available %}, local name detection{% endif %}</dd>
-      <dt>Priced against</dt><dd>{{ comparisons | length }} model{{ "" if comparisons | length == 1 else "s" }}</dd>
+      <dt>Priced against</dt><dd>{{ plural(comparisons | length, "model") }}</dd>
+      <dt>Options</dt><dd class="opts">{{ run_options }}</dd>
     </dl>
   </div>
   <div class="foot-rule">
@@ -766,6 +753,44 @@ before reading that as an all-clear.</p>
    large enough that scrolling stops working. */
 (function () {
   "use strict";
+
+
+  function providerFilter() {
+    var bar = document.getElementById("providers");
+    if (!bar) return;
+    var buttons = Array.prototype.slice.call(bar.querySelectorAll("button"));
+    var charts = Array.prototype.slice.call(document.querySelectorAll("svg.chart"));
+
+    function apply(provider) {
+      buttons.forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-provider") === provider));
+      });
+      charts.forEach(function (svg) {
+        var step = parseFloat(svg.getAttribute("data-step"));
+        var top = parseFloat(svg.getAttribute("data-top"));
+        var groups = Array.prototype.slice.call(svg.querySelectorAll("g.grp"));
+        var shown = 0;
+        groups.forEach(function (g) {
+          var keep = !provider || g.getAttribute("data-provider") === provider;
+          g.style.display = keep ? "" : "none";
+          if (keep) {
+            // Re-stack so removing a model closes the gap it leaves behind.
+            g.setAttribute("transform", "translate(0," + (top + shown * step) + ")");
+            shown++;
+          }
+        });
+        var box = svg.getAttribute("viewBox").split(" ");
+        var height = top + Math.max(shown, 1) * step;
+        svg.setAttribute("viewBox", box[0] + " " + box[1] + " " + box[2] + " " + height);
+        svg.setAttribute("height", height);
+        var axis = svg.querySelector("line.axis");
+        if (axis) axis.setAttribute("y2", height - 16);
+      });
+    }
+    buttons.forEach(function (b) {
+      b.addEventListener("click", function () { apply(b.getAttribute("data-provider")); });
+    });
+  }
 
   function explorer() {
     var root = document.getElementById("explorer");
@@ -971,6 +996,7 @@ before reading that as an all-clear.</p>
     document.querySelectorAll("[data-paginate-list]"), paginateList
   );
   explorer();
+  providerFilter();
   theme();
   Array.prototype.forEach.call(
     document.querySelectorAll("table[data-paginate]"), paginate

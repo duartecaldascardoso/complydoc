@@ -175,9 +175,26 @@ def render_html(report: AuditReport, config: Config) -> str:
         return "r-poor"
 
     comparisons = build_comparison(report)
+    run = report.run
+    options = [f"complydoc {' '.join(run.components_run)}"]
+    if run.ocr_requested:
+        options.append("--ocr" if run.ocr_available else "--ocr (unavailable)")
+    else:
+        options.append("--no-ocr")
+    for flag, used in (
+        ("--ocr-compare", run.ocr_compare_used),
+        ("--page-images", run.page_images_used),
+        ("--extracted-text", run.extracted_text_used),
+        ("--reveal", run.reveal_used),
+    ):
+        if used:
+            options.append(flag)
+    if run.monthly_volume:
+        options.append(f"--monthly-volume {run.monthly_volume:,}")
     template = environment.get_template("report.html.j2")
     return template.render(
         comparisons=comparisons,
+        run_options=" ".join(options),
         series=SERIES,
         folder_chart=grouped_bars_svg(
             comparisons, "folder_usd", "Cost for this folder, by model and architecture"

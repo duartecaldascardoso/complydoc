@@ -121,7 +121,11 @@ def test_unavailable_detectors_are_reported_as_unscanned_not_zero(loader, config
     import complydoc.sensitive.detectors.ner as ner_module
 
     original = ner_module._load
+    # Two caches sit in front of the model: the loaded pipeline and the parse of
+    # the page in hand. Both have to go, or the run under test is served an
+    # answer from before the model was taken away.
     ner_module._load.cache_clear()
+    ner_module._parse.cache_clear()
 
     def unavailable(name: str):
         from complydoc.sensitive.registry import DetectorUnavailableError
@@ -134,6 +138,7 @@ def test_unavailable_detectors_are_reported_as_unscanned_not_zero(loader, config
     finally:
         ner_module._load = original  # type: ignore[assignment]
         ner_module._load.cache_clear()
+        ner_module._parse.cache_clear()
 
     assert "person_name" not in result.counts_by_category
     unscanned = {u.category for u in result.unscanned_categories}

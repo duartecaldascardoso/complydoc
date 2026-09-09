@@ -36,7 +36,13 @@ def _load(model_name: str) -> Any:
             "(install with: uv sync --extra ner)"
         ) from exc
     try:
-        return spacy.load(model_name, disable=["lemmatizer", "textcat"])
+        # Entity recognition needs the embeddings and the entity head; the
+        # tagger, the dependency parser, the attribute ruler and the lemmatiser
+        # are a third of the run's time and nothing here reads their output.
+        return spacy.load(
+            model_name,
+            exclude=["tagger", "parser", "attribute_ruler", "lemmatizer", "senter", "textcat"],
+        )
     except OSError as exc:
         # `spacy download` shells out to pip, which a uv tool environment does
         # not have, so the instruction that works in a checkout does nothing for
@@ -46,6 +52,18 @@ def _load(model_name: str) -> Any:
             f"uv run python -m spacy download {model_name}. For a tool install, see "
             f"Install in the README"
         ) from exc
+
+
+@lru_cache(maxsize=2)
+def _parse(model_name: str, text: str) -> Any:
+    """Run the model over one page, once.
+
+    Every category that uses this detector asks about the same page, so without
+    this the page is parsed once per category — twice over, for names and for
+    organisations, at no benefit. The cache holds the page in hand and the one
+    before it; it is not a store.
+    """
+    return _load(model_name)(text)
 
 
 def model_available(model_name: str) -> tuple[bool, str | None]:
@@ -66,11 +84,10 @@ class NerDetector:
             raise DetectorUnavailableError(
                 f"category {context.category_id!r} uses the NER detector but names no model"
             )
-        nlp = _load(spec.name)
         wanted = {label.upper() for label in spec.entity_labels}
 
         findings: list[Finding] = []
-        document = nlp(text[:_MAX_CHARS])
+        document = _parse(spec.name, text[:_MAX_CHARS])
         for entity in document.ents:
             if entity.label_.upper() not in wanted:
                 continue

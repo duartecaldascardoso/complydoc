@@ -209,15 +209,10 @@ def _aligned_tables(plumber_page: Any) -> list[TableInfo]:
 
     found: list[TableInfo] = []
     for candidate in candidates:
-        try:
-            grid = [[(cell or "").strip() for cell in row] for row in candidate.extract()]
-        except Exception:
-            continue
-        filled = [row for row in grid if any(row)]
-        columns = max((len(row) for row in filled), default=0)
-        if len(filled) < _MIN_ALIGNED_ROWS or columns < _MIN_ALIGNED_COLS:
-            continue
-
+        # The gutter test first, because it is geometry and costs nothing, while
+        # pulling the text out of a candidate walks every character against every
+        # cell. On a page of prose the candidate is rejected here, and a book of
+        # prose is most of what this ever sees.
         edges = sorted(
             {round(c[0], 1) for row in candidate.rows for c in row.cells if c}
             | {round(c[2], 1) for row in candidate.rows for c in row.cells if c}
@@ -229,6 +224,15 @@ def _aligned_tables(plumber_page: Any) -> list[TableInfo]:
             1 for w in words if any(w["x0"] + 0.5 < edge < w["x1"] - 0.5 for edge in interior)
         )
         if cut / len(words) > _MAX_WORDS_CUT:
+            continue
+
+        try:
+            grid = [[(cell or "").strip() for cell in row] for row in candidate.extract()]
+        except Exception:
+            continue
+        filled = [row for row in grid if any(row)]
+        columns = max((len(row) for row in filled), default=0)
+        if len(filled) < _MIN_ALIGNED_ROWS or columns < _MIN_ALIGNED_COLS:
             continue
 
         found.append(

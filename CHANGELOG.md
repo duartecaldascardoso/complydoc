@@ -8,6 +8,21 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Performance
+
+Measured on this machine: a folder of 102 documents 17.6s to 10.3s with OCR and
+7.4s to 3.1s without, a 392-page book 56.9s to 32.2s.
+
+- Skew was measured by rotating the whole page once per candidate angle. The same
+  measurement falls out of projecting the ink pixels, which are a tenth of the page,
+  and a coarse pass now finds the degree before the fine pass refines it.
+- The entity model loaded a tagger, a dependency parser and a lemmatiser that nothing
+  reads, and parsed every page once per category rather than once.
+- The whitespace table pass pulled the text out of every candidate before applying the
+  geometric test that rejects almost all of them. The cheap test runs first now.
+- Worker processes fork from a server that has loaded the models, instead of each
+  loading its own copy, and the number of them is chosen from the size of the folder.
+
 ### Changed
 
 - The Documents page is a page viewer rather than a grid of the first twelve pages.

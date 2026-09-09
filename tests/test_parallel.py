@@ -61,11 +61,30 @@ def test_the_run_records_how_many_workers_it_used(parallel):
 
 
 def test_jobs_resolve_to_something_usable():
-    assert resolve_jobs(0, 40) > 1, "0 means one per CPU"
     assert resolve_jobs(1, 40) == 1
     assert resolve_jobs(8, 3) == 3, "never more workers than documents"
     assert resolve_jobs(0, 0) == 1
     assert resolve_jobs(-4, 10) == 1
+
+
+def test_a_small_folder_is_left_in_one_process():
+    """Spreading fifteen documents over eleven cores was slower than not.
+
+    Each worker loads its own OCR engine, so below a dozen documents a worker
+    costs more to start than the documents it would go on to read.
+    """
+    assert resolve_jobs(0, 1) == 1
+    assert resolve_jobs(0, 15) == 1
+
+
+def test_a_large_folder_uses_the_machine():
+    assert resolve_jobs(0, 120) > 1
+    assert resolve_jobs(0, 1200) >= resolve_jobs(0, 120)
+
+
+def test_asking_for_workers_overrides_the_judgement():
+    """A number given on the command line is an instruction, not a hint."""
+    assert resolve_jobs(4, 15) == 4
 
 
 def test_a_sample_audits_fewer_documents(config, serial):

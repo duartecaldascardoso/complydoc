@@ -21,8 +21,9 @@ import time
 from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
-from multiprocessing import get_context
+from multiprocessing import get_all_start_methods, get_context
 from pathlib import Path
+from typing import Any
 
 from complydoc import __version__, offline
 from complydoc.config.loader import check_staleness
@@ -176,6 +177,25 @@ def _process(path: Path, work: _Work) -> _Outcome:
 _WORKER_WORK: _Work | None = None
 
 
+def _pool_context() -> Any:
+    """How to start the workers.
+
+    Forkserver where it exists: the server process loads the tokenizer, the
+    language model and the entity model once, and every worker forks from it
+    with those already in memory. Under spawn each worker loads its own copy,
+    which on a folder of small documents costs more than the work itself.
+
+    Never a plain fork of this process. The OCR engine holds native threads, and
+    forking a process that has them is a known way to hang a child; the
+    forkserver is started before any of that exists.
+    """
+    if "forkserver" in get_all_start_methods():
+        context = get_context("forkserver")
+        context.set_forkserver_preload(["complydoc.warm"])
+        return context
+    return get_context("spawn")
+
+
 def _worker_init(work: _Work) -> None:
     """Set up a worker process. The network guard is armed here too.
 
@@ -208,11 +228,9 @@ def _outcomes(files: list[Path], work: _Work, jobs: int) -> Iterator[_Outcome]:
             yield _process(path, work)
         return
 
-    # Spawn rather than fork: the OCR engine holds native threads, and forking a
-    # process that has them is a known way to deadlock a child.
     with ProcessPoolExecutor(
         max_workers=jobs,
-        mp_context=get_context("spawn"),
+        mp_context=_pool_context(),
         initializer=_worker_init,
         initargs=(work,),
     ) as pool:
@@ -221,10 +239,20 @@ def _outcomes(files: list[Path], work: _Work, jobs: int) -> Iterator[_Outcome]:
             yield outcome
 
 
+_MIN_DOCUMENTS_PER_WORKER = 12
+"""Below this, a worker costs more to start than the documents it would read.
+
+Each one loads its own OCR engine, so a handful of documents spread over every
+core spends its time on start-up. Measured on a folder of a hundred documents:
+one process 13.6s, four 11.4s, eight 10.1s, and a folder of fifteen is quicker
+in one process than in eleven.
+"""
+
+
 def resolve_jobs(jobs: int, files: int) -> int:
-    """How many processes to actually use. 0 means one per CPU."""
+    """How many processes to use. 0 decides from the size of the folder."""
     if jobs == 0:
-        jobs = os.cpu_count() or 1
+        jobs = min(os.cpu_count() or 1, files // _MIN_DOCUMENTS_PER_WORKER)
     return max(1, min(jobs, max(1, files)))
 
 

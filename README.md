@@ -97,12 +97,16 @@ pages are still readable; `--no-ocr` is faster.
 On a large folder:
 
 ```bash
-complydoc audit ~/invoices --jobs 0        # one worker process per CPU
+complydoc audit ~/invoices --jobs 1        # one process, for a reproducible profile
 complydoc audit ~/invoices --sample 200    # 200 documents, keeping each file type's share
 complydoc audit ~/invoices --password s3cret   # try this on encrypted PDFs
 ```
 
-`--jobs` changes how long the run takes and nothing about what it finds. `--sample` does
+A folder large enough to be worth it is spread across the machine already: the run
+reads how many documents there are and picks a worker count, and small folders stay
+in one process because a worker costs more to start than a few documents take to
+read. `--jobs N` overrides that. It changes how long the run takes and nothing about
+what it finds. `--sample` does
 change what it finds, so the report says on its front page that it read a sample and how
 many documents it skipped. The choice is deterministic — two runs of the same folder pick
 the same documents, so their reports compare.

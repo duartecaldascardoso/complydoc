@@ -122,8 +122,9 @@ JobsOpt = Annotated[
     typer.Option(
         "--jobs",
         "-j",
-        help="Documents to process at once. 0 uses one process per CPU. "
-        "Changes how long the run takes and nothing about what it finds.",
+        help="Documents to process at once. The default reads the size of the "
+        "folder and decides; 1 forces one process. Changes how long the run "
+        "takes and nothing about what it finds.",
     ),
 ]
 SampleOpt = Annotated[
@@ -235,7 +236,7 @@ def _run(
     ocr_compare: bool = False,
     print_json: bool = False,
     password: str = "",
-    jobs: int = 1,
+    jobs: int = 0,
     sample: int | None = None,
 ) -> None:
     offline.arm()
@@ -329,7 +330,7 @@ def audit(
     extracted_text: ExtractedTextOpt = False,
     ocr_compare: OcrCompareOpt = False,
     password: PasswordOpt = "",
-    jobs: JobsOpt = 1,
+    jobs: JobsOpt = 0,
     sample: SampleOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
@@ -375,7 +376,7 @@ def cost(
     ] = "medium",
     model: ModelOpt = None,
     password: PasswordOpt = "",
-    jobs: JobsOpt = 1,
+    jobs: JobsOpt = 0,
     sample: SampleOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
@@ -411,7 +412,7 @@ def difficulty(
     extracted_text: ExtractedTextOpt = False,
     ocr_compare: OcrCompareOpt = False,
     password: PasswordOpt = "",
-    jobs: JobsOpt = 1,
+    jobs: JobsOpt = 0,
     sample: SampleOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,
@@ -453,7 +454,7 @@ def sensitive(
     page_images: PageImagesOpt = False,
     extracted_text: ExtractedTextOpt = False,
     password: PasswordOpt = "",
-    jobs: JobsOpt = 1,
+    jobs: JobsOpt = 0,
     sample: SampleOpt = None,
     config_dir: ConfigOpt = None,
     ocr: OcrOpt = True,

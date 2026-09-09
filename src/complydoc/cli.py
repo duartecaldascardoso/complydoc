@@ -95,9 +95,10 @@ PageImagesOpt = Annotated[
 ExtractedTextOpt = Annotated[
     bool,
     typer.Option(
-        "--extracted-text",
-        help="Include the text read off each page, so extraction quality can be "
-        "checked. Off by default: the extracted text is the document.",
+        "--extracted-text/--no-extracted-text",
+        help="Include the text read off each page, so it can be read beside the "
+        "page it came from. On by default; --no-extracted-text leaves the report "
+        "carrying no document content.",
     ),
 ]
 OcrCompareOpt = Annotated[
@@ -232,7 +233,7 @@ def _run(
     resolution: str = "medium",
     select_models: list[str] | None = None,
     page_images: bool = False,
-    extracted_text: bool = False,
+    extracted_text: bool = True,
     ocr_compare: bool = False,
     print_json: bool = False,
     password: str = "",
@@ -260,11 +261,6 @@ def _run(
         errors.print(
             "[bold yellow]--page-images is set.[/] The HTML report will contain a picture "
             "of every page, so it carries the document content itself."
-        )
-    if extracted_text or ocr_compare:
-        errors.print(
-            "[bold yellow]--extracted-text is set.[/] The reports will contain the text read "
-            "off every page, which is the document content in full."
         )
 
     def progress(index: int, total: int, path: Path) -> None:
@@ -327,7 +323,7 @@ def audit(
     ] = False,
     model: ModelOpt = None,
     page_images: PageImagesOpt = False,
-    extracted_text: ExtractedTextOpt = False,
+    extracted_text: ExtractedTextOpt = True,
     ocr_compare: OcrCompareOpt = False,
     password: PasswordOpt = "",
     jobs: JobsOpt = 0,
@@ -409,7 +405,7 @@ def readiness(
     target: TargetArg,
     out: OutDirOpt = DEFAULT_OUT,
     name: NameOpt = "complydoc-readiness",
-    extracted_text: ExtractedTextOpt = False,
+    extracted_text: ExtractedTextOpt = True,
     ocr_compare: OcrCompareOpt = False,
     password: PasswordOpt = "",
     jobs: JobsOpt = 0,
@@ -452,7 +448,7 @@ def sensitive(
         ),
     ] = False,
     page_images: PageImagesOpt = False,
-    extracted_text: ExtractedTextOpt = False,
+    extracted_text: ExtractedTextOpt = True,
     password: PasswordOpt = "",
     jobs: JobsOpt = 0,
     sample: SampleOpt = None,

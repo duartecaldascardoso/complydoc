@@ -175,6 +175,9 @@
          color: var(--faint); margin: 0.375rem 0 0; align-items: center; }
   .key span { display: inline-flex; align-items: center; gap: 0.3125rem; }
   .sw { width: 11px; height: 11px; display: inline-block; border: 1px solid var(--line-2); }
+  /* The marks carry their own explanation, so say they are worth pointing at. */
+  .pv-mark { cursor: help; }
+  .pv-mark:hover rect { stroke-width: 2.4; }
   .filter { display: flex; gap: 0.5rem; align-items: baseline; margin: 0 0 0.75rem; }
   .filter input { font: inherit; font-size: 0.875rem; padding: 0.3125rem 0.5rem;
                   border: 1px solid var(--line-2); background: var(--panel); color: inherit;
@@ -563,6 +566,21 @@ Multiply by the ratio in the chart above for any other.</p>
 {% else %}
 <p class="note">Masked to the last {{ report.config_masking.reveal_tail_chars }} characters{% if report.config_masking.never_reveal %};
 {{ report.config_masking.never_reveal | join(" and ") }} never shown in full{% endif %}.</p>
+{# Saying "masked" and nothing else would be a half-truth in a report that also
+   carries the pages these values were read off. #}
+{% if report.run.extracted_text_used or report.run.page_images_used %}
+<div class="notice"><strong>The masking applies to this table, not to the whole file.</strong>
+  <p>This report also carries
+  {%- if report.run.extracted_text_used %} the text read off each page{% endif %}
+  {%- if report.run.extracted_text_used and report.run.page_images_used %} and{% endif %}
+  {%- if report.run.page_images_used %} a picture of each page{% endif %}, on the Documents
+  page, where these values appear as they do in the document. Treat the file as you would
+  treat the documents themselves. Run with
+  {%- if report.run.extracted_text_used %} <code>--no-extracted-text</code>{% endif %}
+  {%- if report.run.extracted_text_used and report.run.page_images_used %} and{% endif %}
+  {%- if report.run.page_images_used %} without <code>--page-images</code>{% endif %}
+  for a report that carries no document content.</p></div>
+{% endif %}
 
 {% if agg.sensitive_by_category %}
 <h3>By category</h3>
@@ -748,8 +766,9 @@ before reading that as an all-clear.</p>
                 text layer, and {% if report.run.ocr_requested %}OCR found nothing on it
                 {%- else %}OCR was not run — pass <code>--ocr</code>{% endif %}.</p></div>
               {% else %}
-                <div class="body"><p class="note">The text is not in this report. Run with
-                <code>--extracted-text</code> to put what was read off each page beside it.</p></div>
+                <div class="body"><p class="note">This run was asked not to keep the text
+                (<code>--no-extracted-text</code>), so there is nothing to show beside the
+                page.</p></div>
               {% endif %}
             </div>
           </div>

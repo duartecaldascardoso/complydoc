@@ -90,12 +90,12 @@ def test_ocr_compare_offers_both_readings(config):
     assert 'data-face="ocr"' in block
 
 
-def test_the_default_report_says_which_flag_shows_the_text(config):
-    """Content is opt-in, so the empty half names the flag rather than sitting blank."""
-    report = run_audit(FIXTURES, config, COMPONENTS)
+def test_a_report_without_the_text_says_so(config):
+    """Turning it off is now the deviation, so the empty half names that flag."""
+    report = run_audit(FIXTURES, config, COMPONENTS, extracted_text=False)
     html = render_html(report, config)
     block = document_section(html).split(f"<h3>{MULTIPAGE}</h3>")[1].split("<h3>")[0]
-    assert "--extracted-text" in block
+    assert "--no-extracted-text" in block
     assert spreads(html, MULTIPAGE) == ["1", "2", "3"], "pages stay traversable regardless"
 
 

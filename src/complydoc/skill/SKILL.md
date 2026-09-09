@@ -33,7 +33,8 @@ Run `complydoc` with no arguments to audit the current directory.
 
 Flags worth knowing: `--monthly-volume N` extrapolates cost, `--model <id>` (repeatable)
 narrows the comparison, `--no-ocr` is faster, `--out <dir>` moves the reports,
-`--password <pw>` is tried on encrypted PDFs.
+`--password <pw>` is tried on encrypted PDFs, `--no-extracted-text` leaves the
+document content out of the report.
 
 On a folder large enough to be slow, `--jobs 0` spreads the work over every CPU and
 `--sample N` audits N documents instead of all of them. Prefer `--jobs`: it changes only
@@ -73,9 +74,12 @@ complydoc sensitive ./invoices --print-json | jq '{
 category in `aggregate.categories_not_scanned` was never searched for. Both report zero
 and neither is an all-clear. Say so when reporting a clean result.
 
-**Values are masked and should stay masked.** `masked` shows at most the last four
-characters. Only pass `--reveal` if the user explicitly asks for unmasked values, and
-tell them the report file will then contain them.
+**Values are masked; the report is not.** `masked` shows at most the last four
+characters, and that is what to quote. But the report carries the text read off each
+page by default, so the file itself holds those values in full whether or not
+`--reveal` was passed — treat it as you would treat the documents. `--no-extracted-text`
+produces a report with no document content in it. Only pass `--reveal` if the user
+explicitly asks for unmasked values in the findings table.
 
 **Costs are input tokens only.** Output cost depends on the prompt, which complydoc
 cannot know, so the real bill is higher. Prices carry `last_verified`; report a stale

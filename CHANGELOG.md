@@ -10,6 +10,13 @@ branch on when reading reports programmatically.
 
 ### Changed
 
+- The text read off each page is in the report by default. Reading a page beside what
+  was extracted from it is the point of the tool, and it was behind a flag. The report
+  says on its security page that the masking covers the findings table and not the file,
+  since the file now reproduces the pages those values were read off.
+  `--no-extracted-text` restores a report with no document content.
+- Sensitive marks on the page layout explain themselves on hover: what was found, why it
+  was reported, and why that matters. The value itself is never in the explanation.
 - The difficulty component is called readiness. A high score always meant a document
   that was easy to process, which read backwards under a name promising the opposite.
   The command is `complydoc readiness`, the config file is `readiness.yaml`, the JSON

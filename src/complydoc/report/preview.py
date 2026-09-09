@@ -15,7 +15,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from complydoc.config.schema import SensitiveConfig
 from complydoc.ingest.base import Document, Page, Rect
+from complydoc.sensitive.base import SensitiveMatch
 from complydoc.sensitive.scanner import ScanResult
 
 __all__ = ["Box", "PagePreview", "build_previews"]
@@ -45,15 +47,25 @@ class Box:
     w: float
     h: float
     label: str | None = None
+    title: str | None = None
+    """Why this mark is here, shown when the reader points at it."""
 
     @classmethod
-    def normalised(cls, rect: Rect, width: float, height: float, label: str | None = None) -> Box:
+    def normalised(
+        cls,
+        rect: Rect,
+        width: float,
+        height: float,
+        label: str | None = None,
+        title: str | None = None,
+    ) -> Box:
         return cls(
             x=round(max(0.0, rect.x0 / width), 4),
             y=round(max(0.0, rect.y0 / height), 4),
             w=round(min(1.0, (rect.x1 - rect.x0) / width), 4),
             h=round(min(1.0, (rect.y1 - rect.y0) / height), 4),
             label=label,
+            title=title,
         )
 
 
@@ -256,8 +268,36 @@ def _attach_image(preview: PagePreview, raster: object) -> None:
     preview.image_data_uri, preview.image_width_px, preview.image_height_px = encoded
 
 
+def _why_sensitive(match: SensitiveMatch, config: SensitiveConfig | None) -> str:
+    """What this mark is, why it was reported, and why it matters.
+
+    A rectangle on a wireframe says only that something was found. The reader
+    pointing at it wants the three things the table would have told them, and
+    none of them is the value itself.
+    """
+    lines = [f"{match.label} — {match.severity} severity"]
+    entry = config.categories.get(match.category) if config is not None else None
+
+    if match.validators_passed:
+        lines.append(f"Reported because it passed {', '.join(match.validators_passed)}.")
+    elif match.context_term:
+        lines.append(f'Reported because it sits near "{match.context_term}".')
+    elif entry is not None and entry.detector == "ner":
+        lines.append("Recognised by the local name model, which carries no checksum to pass.")
+    else:
+        lines.append("Reported on the pattern alone, with nothing else to confirm it.")
+
+    note = (entry.gdpr_note or "").strip() if entry is not None else ""
+    if note:
+        lines.append(note)
+    return "\n".join(lines)
+
+
 def build_previews(
-    document: Document, scan: ScanResult | None, page_images: bool = False
+    document: Document,
+    scan: ScanResult | None,
+    page_images: bool = False,
+    categories: SensitiveConfig | None = None,
 ) -> list[PagePreview]:
     """One wireframe per page.
 
@@ -265,12 +305,10 @@ def build_previews(
     embedded as an image. That is opt-in because it puts real document content
     into a file the report is otherwise safe to forward.
     """
-    by_page: dict[int, list[tuple[int, int, int, str]]] = {}
+    by_page: dict[int, list[SensitiveMatch]] = {}
     if scan is not None:
         for match in scan.matches:
-            by_page.setdefault(match.page, []).append(
-                (match.line, match.column, match.length, match.severity)
-            )
+            by_page.setdefault(match.page, []).append(match)
 
     previews: list[PagePreview] = []
     for page in document.pages:
@@ -296,14 +334,22 @@ def build_previews(
         ]
         preview.gutters = _gutters(page)
 
-        for line, column, length, severity in by_page.get(page.number, []):
+        for match in by_page.get(page.number, []):
             preview.sensitive_count += 1
-            value = _value_at(page, line, column, length)
+            value = _value_at(page, match.line, match.column, match.length)
             rect = _locate(value, page) if value else None
             if rect is None:
                 preview.unlocated_sensitive += 1
                 continue
-            preview.sensitive.append(Box.normalised(rect, width, height, label=severity))
+            preview.sensitive.append(
+                Box.normalised(
+                    rect,
+                    width,
+                    height,
+                    label=match.severity,
+                    title=_why_sensitive(match, categories),
+                )
+            )
 
         from complydoc.geometry import coverage_fraction
 

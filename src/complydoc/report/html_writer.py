@@ -207,7 +207,13 @@ def page_preview_svg(preview: PagePreview, width: int = _PREVIEW_WIDTH) -> str:
         parts.append(rect(box, fill="var(--pv-text)"))
     for box in preview.sensitive:
         stroke = "var(--poor)" if box.label == "high" else "var(--fair)"
-        parts.append(rect(box, fill="none", stroke=stroke, stroke_width="1.2"))
+        mark = rect(box, fill="none", stroke=stroke, stroke_width="1.2")
+        if box.title:
+            # A <title> inside the shape is the browser's own tooltip: it needs
+            # no script, survives being saved to disk, and screen readers read it.
+            parts.append(f'<g class="pv-mark"><title>{escape(box.title)}</title>{mark}</g>')
+        else:
+            parts.append(mark)
 
     if preview.unreadable:
         parts.append(

@@ -480,3 +480,34 @@ def test_every_page_starts_the_same_distance_below_the_tabs(html):
     """
     styles = html.split("<style>")[1].split("</style>")[0]
     assert "section[data-page] > :first-child { margin-top:" in styles.replace("\n", " ")
+
+
+def test_the_text_is_in_the_report_unless_it_is_turned_off():
+    """Reading the page beside what was read off it is the point of the tool."""
+    from typer.testing import CliRunner
+
+    from complydoc.cli import app
+
+    for command in ("audit", "readiness", "sensitive"):
+        help_text = CliRunner().invoke(app, [command, "--help"]).output
+        assert "--no-extracted-text" in help_text, command
+
+
+def test_masking_does_not_claim_more_than_it_covers(config):
+    """The findings are masked; the pages the report also carries are not.
+
+    Saying "masked to the last four characters" and stopping there would be a
+    half-truth in a file that reproduces the page those values were read off.
+    """
+    from complydoc.audit import COMPONENTS, run_audit
+    from complydoc.report.html_writer import render_html
+    from tests.helpers import FIXTURES
+
+    with_text = render_html(run_audit(FIXTURES, config, COMPONENTS, extracted_text=True), config)
+    security = with_text.split('id="security"')[1].split("</section>")[0]
+    assert "masking applies to this table, not to the whole file" in security
+    assert "--no-extracted-text" in security
+
+    without = render_html(run_audit(FIXTURES, config, COMPONENTS, extracted_text=False), config)
+    quiet = without.split('id="security"')[1].split("</section>")[0]
+    assert "not to the whole file" not in quiet, "nothing to warn about"

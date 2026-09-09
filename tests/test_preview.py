@@ -164,3 +164,62 @@ def test_a_format_with_no_raster_gets_no_image(loader, config):
     document = loader("sample.docx")
     previews = build_previews(document, scan(document, config.sensitive), page_images=True)
     assert previews[0].image_data_uri is None
+
+
+def test_a_sensitive_mark_explains_itself(loader, config):
+    """A rectangle on a wireframe says only that something was found.
+
+    Pointing at it should answer what it is, why it was reported, and why that
+    matters — none of which is the value.
+    """
+    from complydoc.report.preview import build_previews
+    from complydoc.sensitive.scanner import scan
+
+    document = loader("sensitive_sample.pdf")
+    result = scan(document, config.sensitive)
+    previews = build_previews(document, result, categories=config.sensitive)
+
+    marks = [box for preview in previews for box in preview.sensitive]
+    assert marks, "the fixture carries locatable identifiers"
+    for box in marks:
+        assert box.title
+        heading, reason, *rest = box.title.split("\n")
+        assert "severity" in heading
+        assert reason.startswith(("Reported", "Recognised"))
+        assert rest, "and why it matters at all"
+
+
+def test_the_explanation_never_carries_the_value(loader, config):
+    """The whole point of the wireframe is that it reproduces no content.
+
+    Asserted on the explanation itself rather than by searching the output for
+    the values: an organisation the model found may legitimately share words
+    with a category's own label, and that is not a leak.
+    """
+    from complydoc.report.preview import _why_sensitive
+    from complydoc.sensitive.scanner import scan
+
+    document = loader("sensitive_sample.pdf")
+    revealed = scan(document, config.sensitive, reveal=True)
+    masked = scan(document, config.sensitive)
+
+    assert any(m.revealed for m in revealed.matches), "there is something to leak"
+    for hidden, shown in zip(masked.matches, revealed.matches, strict=True):
+        assert _why_sensitive(hidden, config.sensitive) == _why_sensitive(
+            shown, config.sensitive
+        ), "the explanation changed when the value was unmasked"
+        explanation = _why_sensitive(shown, config.sensitive)
+        assert shown.masked not in explanation
+        if shown.revealed and len(shown.revealed) > 6:
+            assert shown.revealed not in explanation
+
+
+def test_a_name_from_the_model_is_not_called_a_pattern(loader, config):
+    from complydoc.report.preview import _why_sensitive
+    from complydoc.sensitive.scanner import scan
+
+    document = loader("sensitive_sample.pdf")
+    result = scan(document, config.sensitive)
+    ner = [m for m in result.matches if config.sensitive.categories[m.category].detector == "ner"]
+    for match in ner:
+        assert "pattern" not in _why_sensitive(match, config.sensitive)

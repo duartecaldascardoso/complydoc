@@ -146,7 +146,12 @@ def _process(path: Path, work: _Work) -> _Outcome:
     if work.models is not None:
         entry.cost = estimate_document(document, work.config.pricing, work.today, list(work.models))
     if work.previews:
-        entry.previews = build_previews(document, entry.sensitive, page_images=work.page_images)
+        entry.previews = build_previews(
+            document,
+            entry.sensitive,
+            page_images=work.page_images,
+            categories=work.config.sensitive,
+        )
     if work.extracted_text:
         entry.extracted_text = [
             PageText(

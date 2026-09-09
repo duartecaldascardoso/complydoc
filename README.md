@@ -85,7 +85,8 @@ hidden so a second run does not pick up the first run's reports.
 ```bash
 complydoc audit ~/invoices --monthly-volume 2500   # extrapolate to a monthly bill
 complydoc sensitive ~/invoices                     # only the identifier scan
-complydoc audit ~/invoices --page-images           # show each page beside the extraction
+complydoc audit ~/invoices --page-images           # add a picture of each page
+complydoc audit ~/invoices --no-extracted-text    # a report carrying no document content
 complydoc models                                   # which models can be priced against
 complydoc doctor                                   # what is installed
 ```

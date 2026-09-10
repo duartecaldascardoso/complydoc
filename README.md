@@ -64,6 +64,20 @@ The second line puts the spaCy model inside the tool's own environment, which
 `spacy download` cannot do because it shells out to pip and a uv tool environment has
 none. `complydoc doctor` says which extras it can see.
 
+### Keeping it up to date
+
+Re-run the install command with `--force --reinstall`. `--reinstall` matters as much as
+`--force`: without it uv reuses the environment it already built for this version number,
+and a change that leaves the version alone is silently ignored.
+
+```bash
+uv tool install --force --reinstall git+https://github.com/duartecaldascardoso/complydoc
+```
+
+Rebuilding the environment drops the optional extras, so if you use OCR or name detection,
+repeat the lines above that install them. `complydoc doctor` tells you what the install can
+see, and is worth running afterwards.
+
 ## Use
 
 ```bash

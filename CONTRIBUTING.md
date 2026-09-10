@@ -12,6 +12,11 @@ make               # list every target
 as well as `--force`, because uv otherwise reuses the wheel it already built for this
 version number and an edit that leaves the version alone is silently ignored.
 
+The copy it installs does not follow the checkout, so **re-run `make tool` after every
+change you want on your PATH**. Use the target rather than `uv tool install .` by hand:
+rebuilding the environment drops the spaCy model, and `make tool` puts it back and then
+runs `complydoc doctor` so you can see what the new install can actually do.
+
 ## How it is put together
 
 Documents pass through discovery and a per-format loader into the normalised `Document`

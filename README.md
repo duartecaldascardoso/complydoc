@@ -14,7 +14,17 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
-  <img src="https://img.shields.io/badge/tests-407-4f5d75" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-490-4f5d75" alt="Tests">
+</div>
+
+<br>
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/images/report-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset=".github/images/report-light.png">
+    <img alt="The complydoc report: a global readiness ring with its three factors, and a ranked list of quick wins" src=".github/images/report-light.png" width="100%">
+  </picture>
 </div>
 
 <br>
@@ -79,6 +89,15 @@ repeat the lines above that install them. `complydoc doctor` tells you what the 
 see, and is worth running afterwards.
 
 ## Use
+
+See a report before you point it at anything of your own — six synthetic sample
+documents ship with the tool:
+
+```bash
+complydoc demo
+```
+
+Then the real thing:
 
 ```bash
 cd ~/invoices

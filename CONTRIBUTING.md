@@ -17,6 +17,22 @@ change you want on your PATH**. Use the target rather than `uv tool install .` b
 rebuilding the environment drops the spaCy model, and `make tool` puts it back and then
 runs `complydoc doctor` so you can see what the new install can actually do.
 
+## The sample documents
+
+`src/complydoc/sample` holds six synthetic documents, shipped in the wheel so
+`complydoc demo` has something to audit without anyone having to find a folder
+first. They are generated, not real: every name and identifier in them was
+invented, and none of them describes a person.
+
+Between them they carry the problems the tool exists to find — a scan with no
+text layer, a two-column page the readers disagree about, a table held together
+by whitespace, and identifiers of several kinds. They are copies of the
+fixtures under `tests/fixtures`, renamed to look like documents somebody would
+actually point this at, and `make sample` refreshes them.
+
+Nothing but a document belongs in that folder: discovery reports anything else
+as a skipped file, and the demo is the first thing many people will see.
+
 ## How it is put together
 
 Documents pass through discovery and a per-format loader into the normalised `Document`

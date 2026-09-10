@@ -8,6 +8,17 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Added
+
+- `complydoc demo` audits six synthetic sample documents that ship with the
+  tool and opens the report. Evaluating this used to mean finding a folder
+  first. The samples carry the problems the tool exists to find — a scan with
+  no text layer, a two-column page the readers disagree about, a whitespace
+  table, and identifiers of several kinds — and no real person is described in
+  any of them.
+- The README shows the report. The product is the page it produces, and the
+  repository did not show it.
+
 ### Internal
 
 - Type suppressions are down from twenty to four, and each was removed by

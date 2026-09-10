@@ -510,6 +510,70 @@ def audit(
 
 
 @app.command()
+def demo(
+    out: OutDirOpt = DEFAULT_OUT,
+    ocr: OcrOpt = True,
+    open_report: Annotated[
+        bool,
+        typer.Option("--open/--no-open", help="Open the report when it is written."),
+    ] = True,
+) -> None:
+    """Audit six sample documents, so you can see a report without finding a folder.
+
+    The samples ship with the tool and are synthetic: every identifier in them
+    was invented. Between them they carry a scan with no text layer, a
+    two-column page the readers disagree about, a whitespace table, and
+    identifiers of several kinds — the problems this exists to find.
+    """
+    from importlib.resources import as_file, files
+
+    with as_file(files("complydoc.sample")) as folder:
+        if not quiet_default_target(folder):
+            errors.print("[bold red]The sample documents are missing from this install.[/]")
+            raise typer.Exit(code=2)
+        console.print(
+            "[dim]Auditing the six sample documents that ship with complydoc. "
+            "They are synthetic — no real person is described in them.[/]"
+        )
+        _run(
+            folder,
+            COMPONENTS,
+            out,
+            "complydoc-demo",
+            None,
+            ocr,
+            True,
+            False,
+            page_images=True,
+            extracted_text=True,
+            # The comparison is most of what makes the sample worth looking at:
+            # one of these documents is read differently by different libraries.
+            compare_extractors=["pypdf"],
+        )
+
+    if open_report:
+        _open((out / "complydoc-demo.html").resolve())
+
+
+def quiet_default_target(folder: Path) -> bool:
+    """Whether the sample folder actually holds documents."""
+    return folder.is_dir() and any(p.is_file() and p.suffix != ".md" for p in folder.iterdir())
+
+
+def _open(path: Path) -> None:
+    """Show the report, without making a failure to do so a failed run."""
+    import subprocess
+    import sys
+
+    openers = {"darwin": ["open"], "win32": ["cmd", "/c", "start", ""]}
+    opener = openers.get(sys.platform, ["xdg-open"])
+    try:
+        subprocess.run([*opener, str(path)], check=False, capture_output=True, timeout=10)
+    except Exception:
+        console.print(f"[dim]Open it yourself: {path}[/]")
+
+
+@app.command()
 def compare(
     target: TargetArg,
     out: OutDirOpt = DEFAULT_OUT,

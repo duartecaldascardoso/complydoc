@@ -132,3 +132,14 @@ release-check: ## Confirm the version, the changelog and the tree agree before t
 clean: ## Remove caches, build output and generated reports
 	rm -rf $(OUT) dist build .pytest_cache .mypy_cache .ruff_cache .coverage htmlcov
 	find . -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
+
+.PHONY: sample
+sample: ## Refresh the sample documents the demo audits, from the fixtures
+	$(PYTHON) python $(TESTS)/generate_fixtures.py
+	cp $(TESTS)/fixtures/acroform.pdf            src/complydoc/sample/supplier-onboarding.pdf
+	cp $(TESTS)/fixtures/sensitive_sample.pdf    src/complydoc/sample/employee-record.pdf
+	cp $(TESTS)/fixtures/two_column.pdf          src/complydoc/sample/terms-and-conditions.pdf
+	cp $(TESTS)/fixtures/merged_header_table.pdf src/complydoc/sample/financial-summary.pdf
+	cp $(TESTS)/fixtures/scanned_page.pdf        src/complydoc/sample/invoice-scan.pdf
+	cp $(TESTS)/fixtures/sample.docx             src/complydoc/sample/supplier-list.docx
+	@echo "Only documents belong in that folder: anything else is reported as skipped."

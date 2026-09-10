@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import pathlib
 
 import pytest
 from typer.testing import CliRunner
@@ -360,3 +361,27 @@ def test_searching_the_catalogue_finds_imported_models(monkeypatch):
     result = runner.invoke(app, ["models", "gemini"])
     assert result.exit_code == 0
     assert "imported" in result.output
+
+
+def test_the_demo_audits_the_samples_that_ship_with_the_tool(tmp_path):
+    """Somebody evaluating this should not have to find a folder first."""
+    import json
+
+    result = runner.invoke(app, ["demo", "--no-open", "--no-ocr", "--out", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    report = json.loads((tmp_path / "complydoc-demo.json").read_text())
+    assert len(report["documents"]) == 6
+
+
+def test_the_sample_folder_holds_documents_and_nothing_else():
+    """Discovery reports anything else as a skipped file, and the demo is the
+    first thing many people see."""
+    from importlib.resources import files
+
+    from complydoc.ingest.registry import supported_extensions
+
+    allowed = set(supported_extensions())
+    folder = files("complydoc.sample")
+    names = [entry.name for entry in folder.iterdir() if entry.is_file()]
+    assert names, "the samples ship with the package"
+    assert all(pathlib.PurePath(name).suffix.lower() in allowed for name in names), names

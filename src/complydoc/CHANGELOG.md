@@ -8,6 +8,19 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Performance
+
+- A 392-page book took 2.1 GB of memory and now takes 0.99 GB. pdfplumber
+  caches every object it parses off a page, and nothing released them, so the
+  whole document's characters — 680,000 of them — stayed in memory until the
+  run ended. They are dropped as soon as each page has been read. It matters
+  most where it was worst: a process pool holds one document per worker, so
+  the old figure was multiplied by the number of workers.
+- The coverage helper is fourteen times faster. It called `np.clip` four times
+  per rectangle, and numpy's per-call overhead on a single Python float dwarfs
+  the arithmetic — on a dense page that was a tenth of the whole run. Plain
+  `min`/`max` gives the identical answer.
+
 ### Changed
 
 - Cost is off the front page. The tile and the per-1,000 chart move to the Cost

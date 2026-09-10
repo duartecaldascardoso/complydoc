@@ -12,6 +12,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import time
+from bisect import bisect_right
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -200,6 +201,40 @@ def _table_shape(table: Any) -> TableInfo | None:
     )
 
 
+def _release(plumber_page: Any) -> None:
+    """Drop a page's parsed objects once everything needed is off it.
+
+    Best effort: pdfplumber has named this differently across versions, and a
+    page that cannot be released is a memory cost, never a wrong answer.
+    """
+    for name in ("close", "flush_cache"):
+        method = getattr(plumber_page, name, None)
+        if callable(method):
+            with contextlib.suppress(Exception):
+                method()
+
+
+def _cuts_too_many_words(words: list[Any], interior: list[float]) -> bool:
+    """Whether these column edges slice through the text rather than between it.
+
+    Two things keep this cheap, and it is worth keeping cheap because it runs
+    for every candidate on every page of every document. The edges are sorted,
+    so finding whether one falls inside a word is a bisection rather than a
+    walk over all of them. And it stops as soon as the answer is settled: on a
+    page of prose the budget is spent in the first few dozen words, and there
+    is nothing to learn from checking the other sixteen hundred.
+    """
+    budget = int(len(words) * _MAX_WORDS_CUT)
+    cut = 0
+    for word in words:
+        left = bisect_right(interior, word["x0"] + 0.5)
+        if left < len(interior) and interior[left] < word["x1"] - 0.5:
+            cut += 1
+            if cut > budget:
+                return True
+    return False
+
+
 def _aligned_tables(plumber_page: Any, words: list[Any]) -> list[TableInfo]:
     """Tables held together by whitespace rather than ruling lines.
 
@@ -235,10 +270,7 @@ def _aligned_tables(plumber_page: Any, words: list[Any]) -> list[TableInfo]:
         interior = edges[1:-1]
         if not interior:
             continue
-        cut = sum(
-            1 for w in words if any(w["x0"] + 0.5 < edge < w["x1"] - 0.5 for edge in interior)
-        )
-        if cut / len(words) > _MAX_WORDS_CUT:
+        if _cuts_too_many_words(words, interior):
             continue
 
         try:
@@ -401,6 +433,12 @@ class PdfLoader:
                     page, options
                 ):
                     needs_raster.append(index)
+                # pdfplumber caches every object it parsed off the page, and
+                # holding all of them for the length of the document is what
+                # made a 392-page book cost gigabytes. Everything worth keeping
+                # has been copied into `page` by now, and a worker holding one
+                # document at a time is the whole point of the process pool.
+                _release(plumber_page)
 
         rasters = _render_pages(path, password, needs_raster, options.render_dpi)
         for index, image in rasters.items():

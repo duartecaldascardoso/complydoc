@@ -53,10 +53,36 @@ class _Context:
     report: AuditReport
     wins: list[QuickWin] = field(default_factory=list)
 
-    def add(self, **kwargs: object) -> None:
-        documents = kwargs.get("documents") or []
-        if documents:
-            self.wins.append(QuickWin(**kwargs))  # type: ignore[arg-type]
+    def add(
+        self,
+        *,
+        id: str,
+        title: str,
+        detail: str,
+        documents: list[str],
+        actor: str,
+        effect: str | None = None,
+        saving_usd_per_1000: float | None = None,
+    ) -> None:
+        """Record a win, unless it applies to nothing.
+
+        Every builder computes its list first and calls this unconditionally,
+        so the empty case is handled once here rather than guarded at each of
+        the call sites.
+        """
+        if not documents:
+            return
+        self.wins.append(
+            QuickWin(
+                id=id,
+                title=title,
+                detail=detail,
+                documents=documents,
+                actor=actor,
+                effect=effect,
+                saving_usd_per_1000=saving_usd_per_1000,
+            )
+        )
 
 
 def _vision_saving_per_1000(report: AuditReport) -> float | None:

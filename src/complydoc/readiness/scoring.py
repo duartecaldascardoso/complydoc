@@ -17,7 +17,7 @@ from complydoc.config.schema import ScoringConfig
 from complydoc.readiness.base import SignalResult
 from complydoc.text import count
 
-__all__ = ["ReadinessScore", "ScoreComponent", "compute_score"]
+__all__ = ["ReadinessScore", "ScoreComponent", "band_label", "compute_score"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,7 +45,7 @@ class ReadinessScore:
     confidence_note: str | None
 
 
-def _label(value: float) -> str:
+def band_label(value: float) -> str:
     """The band, worded so that it reads the same way round as the number.
 
     The score used to be called difficulty while a high one meant easy, so both
@@ -77,7 +77,9 @@ def compute_score(results: list[SignalResult], config: ScoringConfig) -> Readine
     accumulated = 0.0
     for result in counted:
         normalised = result.weight / total_weight
-        points = config.rating_points.get(result.rating, 0.0)  # type: ignore[arg-type]
+        # A counted signal always has a rating; the fallback is for a rating
+        # the config does not price, not for its absence.
+        points = 0.0 if result.rating is None else config.rating_points.get(result.rating, 0.0)
         contribution = normalised * points
         accumulated += contribution
         components.append(
@@ -97,7 +99,7 @@ def compute_score(results: list[SignalResult], config: ScoringConfig) -> Readine
     low_confidence = total_signals > 0 and len(counted) < total_signals / 2
     return ReadinessScore(
         value=value,
-        label=_label(value),
+        label=band_label(value),
         components=components,
         signals_counted=len(counted),
         signals_excluded=excluded,

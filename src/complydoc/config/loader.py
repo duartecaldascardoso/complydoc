@@ -53,13 +53,14 @@ class StalenessWarning:
 
     @property
     def message(self) -> str:
-        if self.never_verified:
+        verified = self.last_verified
+        if verified is None:
             return (
                 f"{self.entry}: never verified. No last_verified date is set, so this "
                 f"figure has no known provenance. Check it and set the date."
             )
         return (
-            f"{self.entry}: last verified {self.last_verified.isoformat()} "  # type: ignore[union-attr]
+            f"{self.entry}: last verified {verified.isoformat()} "
             f"({self.age_days} days ago, threshold {self.threshold_days}). "
             f"Re-check before relying on this figure."
         )
@@ -264,10 +265,6 @@ def _current_lineup(
         )
 
     return sorted(newest_of_line.values(), key=between_lines, reverse=True)[:wanted]
-
-
-def m_price(model: ModelPricing) -> float:
-    return model.input_per_mtok_usd or 0.0
 
 
 def check_staleness(pricing: PricingConfig, today: dt.date | None = None) -> list[StalenessWarning]:

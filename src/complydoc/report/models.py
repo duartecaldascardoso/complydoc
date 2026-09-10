@@ -14,7 +14,7 @@ import datetime as dt
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from complydoc.config.schema import MaskingConfig
 from complydoc.cost.estimator import DocumentCostEstimate, FolderCostEstimate
@@ -24,6 +24,10 @@ from complydoc.readiness.analyser import ReadinessReport
 from complydoc.readiness.base import SignalStatus
 from complydoc.report.preview import PagePreview
 from complydoc.sensitive.scanner import ScanResult
+
+if TYPE_CHECKING:  # pragma: no cover - resolved by the type checker, not at runtime
+    from complydoc.overall import OverallReadiness
+    from complydoc.quickwins import QuickWin
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -262,13 +266,14 @@ class AuditReport:
     """Printed in the report whenever a score is shown, never hidden."""
     config_masking: MaskingConfig | None = None
     """Echoed so a reader can see exactly how much of a value was ever shown."""
-    overall: Any = None
-    """Global readiness: content, cost and exposure combined. See `complydoc.overall`.
+    overall: OverallReadiness | None = None
+    """Global readiness: content, cost and exposure combined.
 
-    Untyped here to keep this module free of an import cycle — it is built from
-    a finished report, so it cannot be built while the report is being defined.
+    Both this and `quick_wins` are derived from a finished report, so their
+    modules import this one. The annotations are resolved only by a type
+    checker, which keeps the dependency one-way at runtime.
     """
-    quick_wins: list[Any] = field(default_factory=list)
+    quick_wins: list[QuickWin] = field(default_factory=list)
     """What to do next, ranked. See `complydoc.quickwins`."""
 
 

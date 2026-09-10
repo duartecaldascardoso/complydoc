@@ -27,8 +27,8 @@ from complydoc.report.charts import (
 )
 from complydoc.report.diffing import ReadingDiff, compare_readings
 from complydoc.report.models import AuditReport, DocumentReport
-from complydoc.report.preview import PagePreview
-from complydoc.sensitive.base import EVIDENCE_ORDER
+from complydoc.report.preview import Box, PagePreview
+from complydoc.sensitive.base import EVIDENCE_ORDER, SEVERITY_WEIGHT
 from complydoc.text import count, duration
 
 __all__ = [
@@ -40,12 +40,14 @@ __all__ = [
     "write_html",
 ]
 
-_SEVERITY_RANK = {"high": 3, "medium": 2, "low": 1}
-
 
 def severity_rank(severity: str) -> int:
-    """Sort weight. Alphabetical would file high between low and medium."""
-    return _SEVERITY_RANK.get(severity, 0)
+    """Sort weight. Alphabetical would file high between low and medium.
+
+    A severity nobody recognises sorts last rather than raising: the table is
+    still readable, and the row is still in it.
+    """
+    return SEVERITY_WEIGHT.get(severity, 0)
 
 
 def evidence_rank(evidence: str) -> int:
@@ -232,10 +234,11 @@ def page_preview_svg(preview: PagePreview, width: int = _PREVIEW_WIDTH) -> str:
         f'{count(preview.sensitive_count, "sensitive item")}">'
     ]
 
-    def rect(box: object, **attrs: object) -> str:
-        b = box
-        x, y = b.x * width, b.y * height  # type: ignore[attr-defined]
-        w, h = max(0.6, b.w * width), max(0.6, b.h * height)  # type: ignore[attr-defined]
+    def rect(box: Box, **attrs: object) -> str:
+        x, y = box.x * width, box.y * height
+        # A floor of 0.6, so a hairline rule or a one-character mark is still
+        # drawn rather than rounding away to nothing.
+        w, h = max(0.6, box.w * width), max(0.6, box.h * height)
         extra = " ".join(f'{k.replace("_", "-")}="{v}"' for k, v in attrs.items())
         return f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" {extra}/>'
 

@@ -80,7 +80,8 @@ def _tokenizer(provider: str) -> TokenizerSpec:
 def _table() -> dict[str, Any]:
     if not TABLE_PATH.exists():  # pragma: no cover - the file ships with the package
         return {"models": {}, "imported": None, "source_url": None}
-    return json.loads(TABLE_PATH.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
+    loaded: dict[str, Any] = json.loads(TABLE_PATH.read_text(encoding="utf-8"))
+    return loaded
 
 
 def table_provenance() -> tuple[str | None, dt.date | None, int]:

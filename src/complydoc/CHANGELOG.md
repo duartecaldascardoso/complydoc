@@ -8,6 +8,21 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Internal
+
+- Type suppressions are down from twenty to four, and each was removed by
+  fixing what caused it rather than by widening the annotation. The largest
+  group came from one helper that returned `object` where it had a `Config` in
+  hand, which cost eight `type: ignore` comments in commands downstream. The
+  four that remain are in the network guard, where assigning to a standard
+  library method cannot be expressed in the type system.
+- One severity table instead of two. The report and the readiness score each
+  had their own copy, so a fourth severity would have had to be remembered in
+  both; the band label is public now rather than reached for as a private name
+  from another module.
+- Dead code removed: an unused page property, and a price helper left behind
+  when model selection moved from price spread to product line.
+
 ### Performance
 
 - A 392-page book took 2.1 GB of memory and now takes 0.99 GB. pdfplumber

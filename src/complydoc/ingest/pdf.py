@@ -168,7 +168,15 @@ def _table_shape(table: Any) -> TableInfo | None:
     cell_rows: list[list[tuple[float, float, float, float]]] = []
     for row in rows:
         cells = [c for c in getattr(row, "cells", []) or [] if c is not None]
-        cell_rows.append([tuple(float(v) for v in c) for c in cells])  # type: ignore[misc]
+        # Spelled out rather than built by comprehension: a four-tuple cannot
+        # be expressed as one, and pdfplumber gives a cell as exactly four
+        # numbers — anything else is not a cell and is dropped.
+        boxes: list[tuple[float, float, float, float]] = []
+        for cell in cells:
+            values = [float(v) for v in cell]
+            if len(values) == 4:
+                boxes.append((values[0], values[1], values[2], values[3]))
+        cell_rows.append(boxes)
 
     all_cells = [c for row in cell_rows for c in row]
     if not all_cells:

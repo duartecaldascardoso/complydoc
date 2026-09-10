@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from complydoc.config.schema import (
     FlatVisionFormula,
@@ -87,10 +88,13 @@ def _flat_tokens(size: RenderedSize, formula: FlatVisionFormula) -> int:
     return tiles * (formula.tile_tokens or formula.tokens_per_image)
 
 
-_FORMULAS: dict[str, Callable[[RenderedSize, object], int]] = {
-    "width_height": _width_height_tokens,  # type: ignore[dict-item]
-    "tiled": _tiled_tokens,  # type: ignore[dict-item]
-    "flat_per_image": _flat_tokens,  # type: ignore[dict-item]
+# Each function takes the formula type its own key selects, which no signature
+# can express: the pairing is guaranteed by the config schema, where the kind
+# and its settings are validated together.
+_FORMULAS: dict[str, Callable[[RenderedSize, Any], int]] = {
+    "width_height": _width_height_tokens,
+    "tiled": _tiled_tokens,
+    "flat_per_image": _flat_tokens,
 }
 
 

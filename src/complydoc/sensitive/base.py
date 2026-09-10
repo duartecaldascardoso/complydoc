@@ -14,6 +14,7 @@ from complydoc.config.schema import CategoryConfig
 
 __all__ = [
     "EVIDENCE_ORDER",
+    "SEVERITY_WEIGHT",
     "Detector",
     "DetectorContext",
     "Evidence",
@@ -88,6 +89,15 @@ class SensitiveMatch:
     context_term: str | None = None
     """The nearby label that justified reporting a generic pattern."""
 
+
+SEVERITY_WEIGHT: Final[dict[str, int]] = {"high": 3, "medium": 2, "low": 1}
+"""How the three severities compare, for sorting and for scoring exposure.
+
+One table, because it was two: a fourth severity added to the config would
+otherwise have to be remembered in the report as well as in the score. What to
+do with a severity that is not in it differs by caller — last when sorting, not
+free when scoring — so each says so where it asks.
+"""
 
 EVIDENCE_ORDER: Final = ("confirmed", "corroborated", "pattern", "model")
 """Strongest first. The order the security page sorts by within a severity."""

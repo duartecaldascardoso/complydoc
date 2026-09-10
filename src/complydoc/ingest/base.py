@@ -176,10 +176,6 @@ class Page:
         return max(0.0, self.width_pt) * max(0.0, self.height_pt)
 
     @property
-    def text_area_pt(self) -> float:
-        return sum(b.bbox.area for b in self.text_blocks)
-
-    @property
     def image_area_pt(self) -> float:
         return sum(b.bbox.area for b in self.image_blocks)
 

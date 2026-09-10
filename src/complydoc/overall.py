@@ -32,12 +32,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from complydoc.config.schema import OverallConfig
+from complydoc.readiness.scoring import band_label
 from complydoc.report.models import AuditReport, DocumentReport
-from complydoc.sensitive.base import EVIDENCE_ORDER
+from complydoc.sensitive.base import EVIDENCE_ORDER, SEVERITY_WEIGHT
 
 __all__ = ["Factor", "OverallReadiness", "band_of", "overall_readiness"]
-
-_SEVERITY_WEIGHT = {"high": 3.0, "medium": 2.0, "low": 1.0}
 
 _EVIDENCE_WEIGHT = {
     "confirmed": 1.0,
@@ -54,9 +53,7 @@ person's name — but it should not weigh the same as a checksum that passed.
 
 def band_of(value: float) -> str:
     """The same four bands the content score uses, so one scale reads across."""
-    from complydoc.readiness.scoring import _label
-
-    return _label(value)
+    return band_label(value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,7 +145,10 @@ def _exposure_score(document: DocumentReport, config: OverallConfig) -> float | 
 
     exposure = 0.0
     for match in scan.matches:
-        severity = _SEVERITY_WEIGHT.get(match.severity, 1.0)
+        # A severity nobody recognises is not free: it counts as the lowest
+        # rather than as nothing, so a config that grows a level does not
+        # quietly stop costing anything.
+        severity = float(SEVERITY_WEIGHT.get(match.severity, 1))
         evidence = _EVIDENCE_WEIGHT.get(match.evidence, 0.5)
         exposure += severity * evidence
 

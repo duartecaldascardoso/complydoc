@@ -31,6 +31,7 @@ from rich.table import Column, Table
 from complydoc import __version__, offline
 from complydoc.audit import COMPONENTS, run_audit
 from complydoc.config.loader import ConfigError, load_config
+from complydoc.config.schema import Config
 from complydoc.cost.estimator import UnknownModelError
 from complydoc.report.html_writer import write_html
 from complydoc.report.json_writer import write_json
@@ -205,7 +206,7 @@ ModelOpt = Annotated[
 ]
 
 
-def _load(config_dir: Path | None) -> object:
+def _load(config_dir: Path | None) -> Config:
     try:
         return load_config(config_dir)
     except ConfigError as exc:
@@ -215,7 +216,7 @@ def _load(config_dir: Path | None) -> object:
 
 def _emit(
     report: AuditReport,
-    config: object,
+    config: Config,
     out: Path,
     name: str,
     quiet: bool,
@@ -226,7 +227,7 @@ def _emit(
     compare_engines: list[str] | None = None,
 ) -> None:
     json_path = write_json(report, out / f"{name}.json").resolve()
-    html_path = write_html(report, config, out / f"{name}.html").resolve()  # type: ignore[arg-type]
+    html_path = write_html(report, config, out / f"{name}.html").resolve()
 
     written: list[Path] = []
     if save_text is not None:
@@ -407,7 +408,7 @@ def _run(
         with _watching(quiet) as progress:
             report = run_audit(
                 target,
-                config,  # type: ignore[arg-type]
+                config,
                 components,
                 ocr=ocr,
                 reveal=reveal,
@@ -827,7 +828,7 @@ def doctor(config_dir: ConfigOpt = None) -> None:
     config = _load(config_dir)
     console.print(f"[bold]complydoc {__version__}[/] · Python {sys.version.split()[0]}")
     console.print(f"Network guard: [green]{offline.guard_status()}[/]")
-    console.print(f"Config: {config.source_dir} (digest {config.digest})")  # type: ignore[attr-defined]
+    console.print(f"Config: {config.source_dir} (digest {config.digest})")
     console.print(f"Formats: {', '.join(supported_extensions())}")
     console.print(f"Tokenizer vocabularies vendored: {len(available_encodings())}")
 
@@ -839,7 +840,7 @@ def doctor(config_dir: ConfigOpt = None) -> None:
     from complydoc.sensitive.detectors.ner import model_available
 
     checked = False
-    for category in config.sensitive.enabled_categories.values():  # type: ignore[attr-defined]
+    for category in config.sensitive.enabled_categories.values():
         if category.detector == "ner" and category.model is not None and not checked:
             checked = True
             ok, reason = model_available(category.model.name)
@@ -850,7 +851,7 @@ def doctor(config_dir: ConfigOpt = None) -> None:
 
     from complydoc.config.loader import check_staleness
 
-    warnings = check_staleness(config.pricing)  # type: ignore[attr-defined]
+    warnings = check_staleness(config.pricing)
     if warnings:
         for warning in warnings:
             console.print(f"[yellow]Price provenance:[/] {warning.message}")
@@ -887,7 +888,7 @@ def models(
     from complydoc.cost.price_table import released_on, table_provenance
 
     config = _load(config_dir)
-    pricing = config.pricing  # type: ignore[attr-defined]
+    pricing = config.pricing
     today = dt.date.today()
 
     chosen = list(pricing.models)

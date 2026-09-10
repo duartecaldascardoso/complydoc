@@ -6,6 +6,37 @@ the minor number when something is added, the patch number when a measurement is
 corrected. `schema_version` in the JSON is versioned separately and is the field to
 branch on when reading reports programmatically.
 
+## [Unreleased]
+
+### Changed
+
+- The summary quotes Claude Sonnet 5 rather than whichever model happened to be
+  cheapest. The cheapest was a moving target — it changed with a catalogue
+  refresh rather than with the folder — and it flattered the estimate with a
+  model few people would actually run. `compare.headline_model` in
+  `pricing.yaml` sets it, and the report falls back to the cheapest priced model
+  and still names it when that one is not in the comparison.
+- A model that carried its own id as its name now borrows the catalogue's, so
+  the chart no longer reads `zai/glm-5.3-flash` beside `Claude Sonnet 5`. The
+  seven curated entries that were written that way are fixed as well.
+- How many documents each architecture reaches is stated once per architecture
+  in the legend, instead of beside every bar. On a dozen models that was ninety
+  copies of three numbers, crowding out the figures that differ. It stays on
+  each bar's own hover.
+- The explanation of a sensitive mark follows the mark instead of appearing
+  under the page. Under the page it was a line of text away from the thing it
+  described, and it displaced the page's own caption every time the pointer
+  crossed a mark.
+- The summary tiles say one thing each. The heading above the first chart no
+  longer repeats the tile directly above it.
+
+### Fixed
+
+- `.complydoc`, where a run writes when nobody passes `--out`, is git-ignored.
+  Those reports carry the text read off each page and a picture of every page,
+  so a default run inside a repository was leaving document content untracked
+  in the working tree.
+
 ## [0.2.0] — 2026-09-10
 
 ### Added

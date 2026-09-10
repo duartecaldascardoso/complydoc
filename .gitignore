@@ -20,7 +20,10 @@ htmlcov/
 # Local model downloads (fetched at install time, not committed)
 models/
 
-# Generated reports — may contain document metadata
+# Generated reports — these carry the text read off each page and a picture of
+# every page, so they are document content, not just metadata. `.complydoc` is
+# where a run writes when nobody passes --out.
+.complydoc/
 reports/
 *.report.json
 *.report.html

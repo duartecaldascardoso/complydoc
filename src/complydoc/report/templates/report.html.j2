@@ -170,7 +170,8 @@
   .spread .side > .lbl { flex: 0 0 auto; display: flex; align-items: center; height: 1.625rem;
                          font-size: 0.625rem; color: var(--faint); text-transform: uppercase;
                          letter-spacing: 0.06em; margin-bottom: 0.375rem; }
-  .spread .face { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .spread .face { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+                  position: relative; }
   .spread .face[hidden] { display: none; }
   .spread .body { flex: 0 0 auto; height: var(--frame); overflow: auto;
                   background: var(--panel); border: 1px solid var(--line-2); }
@@ -205,9 +206,15 @@
   .pv-mark { cursor: help; }
   .pv-mark rect { pointer-events: all; }
   .pv-mark:hover rect { stroke-width: 2.4; }
-  .mark-detail { display: block; color: var(--ink); }
-  .mark-detail b { font-weight: 600; }
-  .mark-detail .why { display: block; color: var(--muted); }
+  /* The explanation follows the mark rather than sitting under the page. Under
+     the page it was a line of text away from the thing it described, and it
+     moved the caption every time the pointer crossed a mark. */
+  .pv-tip { position: absolute; z-index: 5; max-width: 20rem; padding: 0.375rem 0.5rem;
+            background: var(--panel); border: 1px solid var(--line-2); border-radius: 4px;
+            font-size: 0.75rem; line-height: 1.4; color: var(--ink);
+            pointer-events: none; }
+  .pv-tip b { display: block; font-weight: 600; }
+  .pv-tip .why { color: var(--muted); }
   .filter { display: flex; gap: 0.5rem; align-items: baseline; margin: 0 0 0.75rem; }
   .filter input { font: inherit; font-size: 0.875rem; padding: 0.3125rem 0.5rem;
                   border: 1px solid var(--line-2); background: var(--panel); color: inherit;
@@ -365,6 +372,7 @@
             margin: 0 0 0.5rem; }
   .legend span { display: inline-flex; align-items: center; gap: 0.375rem; }
   .legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+  .legend .why { font-size: 0.6875rem; color: var(--faint); }
   .chart { display: block; max-width: 100%; margin: 0.25rem 0 1rem; }
   .chart .grp { transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1),
                              opacity 0.16s ease; }
@@ -446,6 +454,21 @@
 </nav>
 <main>
 
+{# How many documents each architecture could actually be used on, said once
+   per architecture rather than on all ninety bars. It has to be said: read on
+   price alone the text layer always wins, and the reason it is cheapest is
+   that it does not work on the scans. #}
+{% macro legend() %}
+<div class="legend">
+  {% for key, label, colour in series %}
+    {% set reached = headline.by_key(key) if headline else none %}
+    <span><i style="background:{{ colour }}"></i>{{ label }}{% if reached
+      %}<span class="why">{{ reached.documents_served }}/{{ reached.documents_total }}
+      documents</span>{% endif %}</span>
+  {% endfor %}
+</div>
+{% endmacro %}
+
 {# ============================================================ SUMMARY #}
 <section data-page id="summary">
 <h2>What this folder looks like</h2>
@@ -454,14 +477,14 @@
 <div class="tiles">
   <div class="tile">
     <div class="k">Cost per 1,000 documents</div>
-    {% if comparisons %}
-      {% set best = comparisons | last %}
+    {% if headline %}
+      {% set best = headline %}
       {% set ocr = best.by_key("text_ocr") %}
       {% set vis = best.by_key("vision") %}
       <div class="v">{{ money(ocr.per_1000_usd) if ocr.per_1000_usd is not none else "—" }}</div>
-      <div class="s">reading the text, on {{ best.display_name }}.
-        {% if vis.per_1000_usd is not none %}Up to {{ money(vis.per_1000_usd) }} if every page
-        is sent as an image.{% endif %}</div>
+      <div class="s">reading the text, on {{ best.display_name }}{% if
+        vis.per_1000_usd is not none %} — up to {{ money(vis.per_1000_usd) }} sending every
+        page as an image{% endif %}.</div>
     {% else %}<div class="v">—</div><div class="s">cost was not part of this run</div>{% endif %}
   </div>
 
@@ -469,10 +492,12 @@
     <div class="k">AI readiness</div>
     {% if agg.mean_readiness_score is not none %}
       <div class="v">{{ agg.mean_readiness_score | round | int }}<span class="u">/100</span></div>
+      {# "Higher is better" is what the name now says; it was there when this
+         read "difficulty" and meant the opposite. #}
       <div class="s">
         {% set bands = agg.readiness_bands %}
         {{ bands.get("ready", 0) + bands.get("workable", 0) }} of
-        {{ agg.documents_audited }} are workable or better. Higher is better.</div>
+        {{ agg.documents_audited }} workable or better</div>
     {% else %}<div class="v">—</div><div class="s">readiness was not part of this run</div>{% endif %}
   </div>
 
@@ -480,10 +505,9 @@
     <div class="k">Local preparation</div>
     {% if agg.hours_per_1000_documents is not none %}
       <div class="v">{{ duration(agg.hours_per_1000_documents * 3600) }}<span class="u"> / 1,000</span></div>
-      <div class="s">measured on this machine at
-        {{ duration(agg.seconds_per_document) }} a document.
-        {% if agg.ocr_pages_per_second %}OCR ran at {{ agg.ocr_pages_per_second }} pages a
-        second.{% endif %} This is before anything reaches a model.</div>
+      {# The OCR rate and the caveat about what this excludes are both on the
+         timing table, where someone reading about time will find them. #}
+      <div class="s">on this machine, {{ duration(agg.seconds_per_document) }} a document</div>
     {% else %}<div class="v">—</div><div class="s">nothing was timed</div>{% endif %}
   </div>
 
@@ -491,22 +515,18 @@
     <div class="k">Sensitive items per document</div>
     {% if "sensitive" in report.run.components_run %}
       <div class="v">{{ "%.1f"|format(agg.sensitive_total / agg.documents_audited) if agg.documents_audited else 0 }}</div>
-      <div class="s">{{ agg.sensitive_total }} found in
-        {{ agg.documents_with_sensitive_data }} of {{ agg.documents_audited }} documents.
-        {% if agg.counts_by_severity_high is defined %}{% endif %}
-        {% set high = agg.sensitive_by_severity.get("high", 0) %}
-        {{ high }} rated high severity.</div>
+      {% set high = agg.sensitive_by_severity.get("high", 0) %}
+      <div class="s">{{ agg.sensitive_total }} in
+        {{ agg.documents_with_sensitive_data }} of {{ agg.documents_audited }} documents,
+        {{ high }} high severity</div>
     {% else %}<div class="v">—</div><div class="s">the sensitive scan was not part of this run</div>{% endif %}
   </div>
 </div>
 
 {% if per_1000_chart %}
-<h3>Cost per 1,000 documents</h3>
-<div class="legend">
-  {% for key, label, colour in series %}
-    <span><i style="background:{{ colour }}"></i>{{ label }}</span>
-  {% endfor %}
-</div>
+{# The tile above already names this figure; a heading repeating it is a second
+   label on one number. #}
+{{ legend() }}
 {{ per_1000_chart | safe }}
 {% endif %}
 
@@ -589,11 +609,7 @@ A folder of longer or heavier scans takes longer.</p>
 {# =============================================================== COST #}
 <section data-page id="cost" hidden>
 {% if comparisons %}
-<div class="legend">
-  {% for key, label, colour in series %}
-    <span><i style="background:{{ colour }}"></i>{{ label }}</span>
-  {% endfor %}
-</div>
+{{ legend() }}
 {% set providers = comparisons | map(attribute="provider") | unique | sort | list %}
 {% if providers | length > 1 %}
 <div class="providers" id="providers">
@@ -637,7 +653,7 @@ customary but unpublished is not a number this report will put in a budget.</p>
 {% endif %}
 
 <h3>Per document</h3>
-{% set cheapest = comparisons | last %}
+{% set cheapest = headline or comparisons | last %}
 <div class="scroll"><table data-paginate="20">
   <thead><tr><th>Document</th><th class="n">Pages</th>
     <th class="n">Text</th><th class="n">Vision</th></tr></thead>
@@ -651,8 +667,8 @@ customary but unpublished is not a number this report will put in a budget.</p>
   {% endif %}{% endfor %}
   </tbody>
 </table></div>
-<p class="note">Priced on {{ cheapest.display_name }}, the cheapest model in the comparison.
-Multiply by the ratio in the chart above for any other.</p>
+<p class="note">Priced on {{ cheapest.display_name }}. Multiply by the ratio in the chart
+above for any other.</p>
 {% else %}
 <p class="note">Cost was not part of this run.</p>
 {% endif %}
@@ -839,7 +855,7 @@ before reading that as an all-clear.</p>
                 {# Filled in while the reader points at a mark on the layout.
                    The browser's own tooltip says the same thing, after its own
                    delay; this says it at once and without covering the page. #}
-                <span class="mark-detail" hidden></span>
+
               </div>
             </div>
 
@@ -1326,35 +1342,51 @@ before reading that as an all-clear.</p>
       if (event.key === "ArrowRight") { show(at + 1); event.preventDefault(); }
     });
 
-    // Pointing at a mark on the layout says what it is, under the page. The
+    // Pointing at a mark on the layout says what it is, beside the mark. The
     // <title> in the markup says the same thing for a reader without script and
-    // for a screen reader; this is only quicker.
+    // for a screen reader; this is only quicker and does not wait for the
+    // browser's own tooltip delay.
     Array.prototype.slice.call(doc.querySelectorAll(".pv-mark")).forEach(function (mark) {
-      var caption = mark.closest(".side") && mark.closest(".side").querySelector(".pcap");
-      if (!caption) return;
-      var flags = caption.querySelector(".flags");
-      var detail = caption.querySelector(".mark-detail");
+      var face = mark.closest(".face");
       var title = mark.querySelector("title");
-      if (!detail || !title) return;
+      if (!face || !title) return;
 
       function show() {
+        var tip = face.querySelector(".pv-tip");
+        if (!tip) {
+          tip = document.createElement("div");
+          tip.className = "pv-tip";
+          face.appendChild(tip);
+        }
         var lines = title.textContent.split("\n");
-        detail.textContent = "";
+        tip.textContent = "";
         var head = document.createElement("b");
         head.textContent = lines[0];
-        detail.appendChild(head);
+        tip.appendChild(head);
         if (lines.length > 1) {
           var rest = document.createElement("span");
           rest.className = "why";
           rest.textContent = lines.slice(1).join(" ");
-          detail.appendChild(rest);
+          tip.appendChild(rest);
         }
-        detail.hidden = false;
-        if (flags) flags.hidden = true;
+        tip.hidden = false;
+
+        // Placed above the mark where there is room, below it where there is
+        // not, and kept inside the panel either way so it is never clipped.
+        var box = mark.getBoundingClientRect();
+        var frame = face.getBoundingClientRect();
+        var gap = 6;
+        var left = box.left - frame.left;
+        var top = box.top - frame.top - tip.offsetHeight - gap;
+        if (top < 0) top = box.bottom - frame.top + gap;
+        var overflow = left + tip.offsetWidth - frame.width;
+        if (overflow > 0) left -= overflow;
+        tip.style.left = Math.max(0, left) + "px";
+        tip.style.top = Math.max(0, top) + "px";
       }
       function hide() {
-        detail.hidden = true;
-        if (flags) flags.hidden = false;
+        var tip = face.querySelector(".pv-tip");
+        if (tip) tip.hidden = true;
       }
       mark.addEventListener("pointerenter", show);
       mark.addEventListener("pointerleave", hide);

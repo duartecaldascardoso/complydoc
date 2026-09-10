@@ -98,6 +98,19 @@ _VERSION = re.compile(r"(?:^|-)(?:v?\d+(?:[.\-]\d+)*|k\d+(?:\.\d+)*)(?=-|$)")
 _QUALIFIER = re.compile(r"-(latest|preview|exp|chat|non-reasoning|reasoning|highspeed)(?=-|$)")
 
 
+def display_name_for(model_id: str) -> str | None:
+    """The catalogue's name for a model, if it has one.
+
+    A curated entry that never got a name reads as its own id, which puts
+    `zai/glm-5.3-flash` beside `Claude Sonnet 5` in the same chart. The
+    catalogue almost always knows the name the provider uses.
+    """
+    table = _table().get("models", {})
+    entry = table.get(model_id) or table.get(model_id.rsplit("/", 1)[-1])
+    name = (entry or {}).get("display_name")
+    return str(name) if name else None
+
+
 def line_of(model_id: str) -> str:
     """The product line a model belongs to, with its version taken off.
 

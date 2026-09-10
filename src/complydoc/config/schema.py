@@ -87,6 +87,23 @@ class ModelPricing(_Base):
     provider: str
     display_name: str
     enabled: bool = True
+
+    @model_validator(mode="after")
+    def _named_not_identified(self) -> ModelPricing:
+        """A model that carries its own id as its name borrows the catalogue's.
+
+        An entry written in a hurry gets `display_name` equal to `id`, and the
+        chart then reads `zai/glm-5.3-flash` beside `Claude Sonnet 5`. The
+        catalogue almost always knows what the provider calls it.
+        """
+        if self.display_name == self.id:
+            from complydoc.cost.price_table import display_name_for
+
+            better = display_name_for(self.id)
+            if better:
+                object.__setattr__(self, "display_name", better)
+        return self
+
     input_per_mtok_usd: float | None = None
     output_per_mtok_usd: float | None = None
     batch_input_per_mtok_usd: float | None = None
@@ -166,6 +183,20 @@ class CompareConfig(_Base):
     haiku, sonnet, opus and fable rather than four flavours of opus.
     """
     top_up_from_catalogue: bool = True
+    headline_model: str = "claude-sonnet-5"
+    """The model the summary quotes when it has to name one number.
+
+    The report compares a dozen models, but the figure on the front page has to
+    be a figure, and that means picking one. The cheapest in the comparison was
+    the wrong pick: it is whichever small model happened to be cheapest that
+    week, so the headline moved for reasons that had nothing to do with the
+    folder, and it flattered the estimate. A mid-range model in wide use is what
+    someone is actually likely to run, and it stays put between refreshes of the
+    catalogue.
+
+    Falls back to the cheapest priced model in the comparison when this one is
+    not among them, and the report says which it used either way.
+    """
 
 
 class PricingConfig(_Base):

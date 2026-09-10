@@ -331,12 +331,17 @@ def test_cost_page_carries_the_charts(html):
     assert "Text + local OCR" in cost
 
 
-def test_reach_is_on_the_bars_not_in_a_second_table(html):
-    """Cost alone favours the text layer; reach is what stops that misleading."""
+def test_reach_is_stated_once_and_not_in_a_second_table(html):
+    """Cost alone favours the text layer; reach is what stops that misleading.
+
+    It used to be printed beside every bar, which on a dozen models is ninety
+    copies of three numbers and buries the figures that actually differ. Once
+    per architecture, in the legend, says the same thing.
+    """
     cost = html.split('id="cost"')[1].split("<section")[0]
-    assert "The same numbers" not in cost
-    assert 'tspan fill="var(--faint)"' in cost, "each bar should carry its reach"
-    assert "reaches" in cost, "the note belongs on hover"
+    assert "The same numbers" not in cost, "not a second table of the same figures"
+    assert cost.count("documents</span>") == 3, "once per architecture, in the legend"
+    assert "reaches" in cost, "and on each bar's own hover"
 
 
 def test_charts_can_be_filtered_by_provider(html, report):

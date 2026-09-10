@@ -78,6 +78,22 @@ class ModelComparison:
         return next((a for a in self.architectures if a.key == key), None)
 
 
+def headline_comparison(comparisons: list[ModelComparison], wanted: str) -> ModelComparison | None:
+    """The model the summary quotes when it has to name one number.
+
+    Falls back to the cheapest priced model in the comparison when the chosen
+    one is not among them — a catalogue refresh or a narrowed `--model` can
+    leave it out — so the front page always has a figure and always says which
+    model produced it.
+    """
+    if not comparisons:
+        return None
+    for comparison in comparisons:
+        if comparison.model_id.rsplit("/", 1)[-1] == wanted:
+            return comparison
+    return comparisons[-1]
+
+
 def build_comparison(report: AuditReport) -> list[ModelComparison]:
     """Folder cost per model under each architecture."""
     if report.cost is None or not report.cost.documents:
@@ -232,10 +248,13 @@ def grouped_bars_svg(
                     f"<title>{comparison.display_name} · {label} · {money(amount)} · "
                     f"reaches {reach} documents. {architecture.note}</title></path>"
                 )
+                # The money only. How many documents each architecture reached
+                # is the same figure on every bar of that colour, so printing
+                # it ninety times said nothing and crowded the numbers that
+                # differ. It is on the bar's own tooltip, and in the note.
                 parts.append(
                     f'<text x="{label_w + bar_w + 8}" y="{row_y + bar_h - 3}" '
-                    f'font-size="10.5" fill="var(--ink-2)">{money(amount)}'
-                    f'<tspan fill="var(--faint)" dx="6">{reach}</tspan></text>'
+                    f'font-size="10.5" fill="var(--ink-2)">{money(amount)}</text>'
                 )
             row_y += bar_h + gap
         parts.append("</g>")

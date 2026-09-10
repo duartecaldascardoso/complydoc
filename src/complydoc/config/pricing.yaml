@@ -131,7 +131,7 @@ models:
 
   - id: deepseek-v4-flash-vision-exp
     provider: deepseek
-    display_name: "deepseek-v4-flash-vision-exp"
+    display_name: "DeepSeek V4 Flash Vision Exp"
     enabled: true
     input_per_mtok_usd: 0.44
     output_per_mtok_usd: 1.32
@@ -154,7 +154,7 @@ models:
 
   - id: gemini/gemini-3.7-flash
     provider: gemini
-    display_name: "gemini/gemini-3.7-flash"
+    display_name: "Gemini 3.7 Flash"
     enabled: true
     input_per_mtok_usd: 0.75
     output_per_mtok_usd: 3.75
@@ -172,7 +172,7 @@ models:
 
   - id: gemini/gemini-3.1-pro-preview
     provider: gemini
-    display_name: "gemini/gemini-3.1-pro-preview"
+    display_name: "Gemini 3.1 Pro Preview"
     enabled: true
     input_per_mtok_usd: 2.0
     output_per_mtok_usd: 12.0
@@ -190,7 +190,7 @@ models:
 
   - id: moonshot/kimi-k3
     provider: moonshot
-    display_name: "moonshot/kimi-k3"
+    display_name: "Kimi K3"
     enabled: true
     input_per_mtok_usd: 3.0
     output_per_mtok_usd: 15.0
@@ -213,7 +213,7 @@ models:
 
   - id: gpt-5-mini
     provider: openai
-    display_name: "gpt-5-mini"
+    display_name: "GPT-5 Mini"
     enabled: true
     input_per_mtok_usd: 0.25
     output_per_mtok_usd: 2.0
@@ -227,7 +227,7 @@ models:
 
   - id: gpt-5.2
     provider: openai
-    display_name: "gpt-5.2"
+    display_name: "GPT-5.2"
     enabled: true
     input_per_mtok_usd: 1.75
     output_per_mtok_usd: 14.0
@@ -241,7 +241,7 @@ models:
 
   - id: zai/glm-5.3-flash
     provider: zai
-    display_name: "zai/glm-5.3-flash"
+    display_name: "GLM-5.3-Flash"
     enabled: true
     input_per_mtok_usd: 0.15
     output_per_mtok_usd: 0.5

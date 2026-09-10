@@ -15,7 +15,12 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import escape
 
 from complydoc.config.schema import Config
-from complydoc.report.charts import SERIES, build_comparison, grouped_bars_svg
+from complydoc.report.charts import (
+    SERIES,
+    build_comparison,
+    grouped_bars_svg,
+    headline_comparison,
+)
 from complydoc.report.diffing import ReadingDiff, compare_readings
 from complydoc.report.models import AuditReport, DocumentReport
 from complydoc.report.preview import PagePreview
@@ -294,6 +299,7 @@ def render_html(report: AuditReport, config: Config) -> str:
         return "r-poor"
 
     comparisons = build_comparison(report)
+    headline = headline_comparison(comparisons, config.pricing.compare.headline_model)
     run = report.run
     options = [f"complydoc {' '.join(run.components_run)}"]
     if run.ocr_requested:
@@ -318,6 +324,7 @@ def render_html(report: AuditReport, config: Config) -> str:
     template = environment.get_template("report.html.j2")
     return template.render(
         comparisons=comparisons,
+        headline=headline,
         run_options=" ".join(options),
         series=SERIES,
         folder_chart=grouped_bars_svg(

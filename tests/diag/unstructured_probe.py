@@ -30,6 +30,20 @@ for strategy in ("fast",):
     except Exception as exc:
         print("RESULT armed", strategy, "raised", type(exc).__name__, exc)
 
+for kwargs in ({"languages": ["eng"]}, {"languages": None}, {}):
+    try:
+        els = partition_pdf("tests/fixtures/two_column.pdf", strategy="fast", **kwargs)
+        print("RESULT kwargs", kwargs, len(els))
+    except Exception as exc:
+        print("RESULT kwargs", kwargs, "raised", type(exc).__name__, exc)
+
+try:
+    import langdetect
+
+    print("RESULT langdetect present")
+except Exception as exc:
+    print("RESULT langdetect absent", exc)
+
 from unstructured.partition.pdf import extractable_elements
 
 try:

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from complydoc.audit import run_audit
 from complydoc.sensitive.base import EVIDENCE_ORDER, evidence_of
-from tests.helpers import FIXTURES
+from tests.helpers import FIXTURES, requires_ner
 
 
 def matches(config, categories: set[str] | None = None):
@@ -51,6 +51,7 @@ def test_a_model_naming_something_is_the_weakest_tier():
     assert EVIDENCE_ORDER[-1] == "model"
 
 
+@requires_ner
 def test_the_model_reports_no_score_rather_than_a_perfect_one(config):
     """The small English pipeline exposes no per-entity score.
 

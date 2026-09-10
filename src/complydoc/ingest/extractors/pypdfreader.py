@@ -25,7 +25,6 @@ class PypdfExtractor:
     provides_tables = False
     provides_raw_chars = False
     granularity = "none"
-    needs_install = ""
 
     def available(self) -> bool:
         return True

@@ -49,15 +49,7 @@ def test_every_extractor_declares_what_it_can_do():
     for engine in all_extractors():
         assert isinstance(engine.provides_tables, bool)
         assert isinstance(engine.provides_raw_chars, bool)
-        assert engine.granularity in {"word", "line", "block", "none"}
-        assert isinstance(engine.needs_install, str)
-
-
-def test_a_reader_behind_an_extra_names_the_extra():
-    """ "Not available" without saying what installs it is a dead end."""
-    for engine in all_extractors():
-        if not engine.available():
-            assert engine.needs_install, engine.id
+        assert engine.granularity in {"word", "line", "none"}
 
 
 def test_the_default_run_uses_one_extractor_and_says_which():
@@ -233,8 +225,8 @@ def test_three_readers_agree_that_the_default_one_scrambles_two_columns():
 
     pdfplumber walks the text layer in file order, which on this page runs
     across both columns and interleaves every sentence with one from the other
-    side. pdfium, pypdf and unstructured share no code with it or with each
-    other, and all three read the columns in order.
+    side. pdfium and pypdf share no code with it or with each other, and both
+    read the columns in order.
     """
     document = load_document(
         FIXTURES / "two_column.pdf",
@@ -245,29 +237,3 @@ def test_three_readers_agree_that_the_default_one_scrambles_two_columns():
     assert others[0][:60] == others[1][:60], "the two independent readers agree"
     assert " ".join(readings["pdfplumber"].split())[:60] != others[0][:60]
     assert min(r.similarity for r in extractor_readings(document)) < 0.5
-
-
-@pytest.mark.skipif(
-    extractor_by_id("unstructured") is None or not extractor_by_id("unstructured").available(),
-    reason="the loaders extra is not installed",
-)
-def test_the_segmenting_reader_runs_entirely_on_this_machine():
-    """It is only allowed the `fast` strategy, and that is why.
-
-    `hi_res` would fetch layout-detection models from Hugging Face on first
-    use. Read with the guard armed, as a real run reads, so a reader that
-    reached for the network raises here rather than quietly downloading.
-    """
-    from complydoc.offline import arm, disarm, is_armed
-
-    was_armed = is_armed()
-    arm()
-    try:
-        document = load_document(
-            FIXTURES / "two_column.pdf", IngestOptions(extractor="unstructured")
-        )
-    finally:
-        if not was_armed:
-            disarm()
-    page = document.pages[0]
-    assert page.text.strip().startswith("TERMS AND CONDITIONS"), page.notes

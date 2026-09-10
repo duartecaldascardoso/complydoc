@@ -64,9 +64,6 @@ The second line puts the spaCy model inside the tool's own environment, which
 `spacy download` cannot do because it shells out to pip and a uv tool environment has
 none. `complydoc doctor` says which extras it can see.
 
-A fourth PDF reader, `unstructured`, is available as `--with "unstructured[pdf]"` on the
-same line. It is only worth installing if you intend to compare readers: see below.
-
 ## Use
 
 ```bash
@@ -123,15 +120,14 @@ the same documents, so their reports compare.
 
 ## Reading the same page twice
 
-Four libraries can read a PDF's text layer, and they do not always agree. `complydoc
-extractors` lists them:
+Three libraries can read a PDF's text layer, and they do not always agree. All three
+ship with the tool; `complydoc extractors` lists them:
 
-| Reader | Boxes | Tables | Install |
-| --- | --- | --- | --- |
-| `pdfplumber` | per word | yes | ships |
-| `pdfium` | per line | no | ships |
-| `pypdf` | none | no | ships |
-| `unstructured` | per paragraph | no | `unstructured[pdf]` |
+| Reader | Boxes | Tables |
+| --- | --- | --- |
+| `pdfplumber` | per word | yes |
+| `pdfium` | per line | no |
+| `pypdf` | none | no |
 
 `--compare-extractor` reads every page with a second reader as well and reports where the
 two differ. Only the first reaches a finding; the rest are measured and never adopted. The
@@ -155,9 +151,7 @@ complydoc audit ./contracts --compare-extractor pypdf --compare-extractor pdfium
 ```
 
 A reader that returns no geometry, like `pypdf`, reports coverage as not measured rather
-than as nought per cent, and the findings that need boxes say the same. `unstructured` is
-run only in its `fast` strategy, which is local arithmetic; its `hi_res` strategy fetches
-layout models over the network and is never used.
+than as nought per cent, and the findings that need boxes say the same.
 
 ## The report
 

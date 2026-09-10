@@ -498,7 +498,6 @@ class PdfLoader:
             plumber=plumber_page,
             pdfium=pdfium_page,
             pypdf=reader,
-            path=document.path,
             number=index + 1,
         )
         kept = self._extract(page, source, width, height, options)

@@ -27,7 +27,6 @@ dependencies = [
 
 [project.optional-dependencies]
 ocr = ["rapidocr-onnxruntime>=1.3"]
-loaders = ["unstructured[pdf]>=0.16"]
 ner = ["spacy>=3.7"]
 
 [project.scripts]
@@ -95,7 +94,6 @@ module = [
     "pdfplumber.*",
     "pypdfium2.*",
     "rapidocr_onnxruntime.*",
-    "unstructured.*",
     "spacy.*",
     "tiktoken.*",
     "docx.*",

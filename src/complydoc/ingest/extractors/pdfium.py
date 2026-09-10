@@ -22,7 +22,6 @@ class PdfiumExtractor:
     provides_tables = False
     provides_raw_chars = False
     granularity = "line"
-    needs_install = ""
 
     def available(self) -> bool:
         try:

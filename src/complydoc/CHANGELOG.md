@@ -6,7 +6,7 @@ the minor number when something is added, the patch number when a measurement is
 corrected. `schema_version` in the JSON is versioned separately and is the field to
 branch on when reading reports programmatically.
 
-## [Unreleased]
+## [0.3.0] — 2026-09-10
 
 ### Added
 
@@ -26,46 +26,6 @@ branch on when reading reports programmatically.
   any of them.
 - The README shows the report. The product is the page it produces, and the
   repository did not show it.
-
-### Internal
-
-- Type suppressions are down from twenty to four, and each was removed by
-  fixing what caused it rather than by widening the annotation. The largest
-  group came from one helper that returned `object` where it had a `Config` in
-  hand, which cost eight `type: ignore` comments in commands downstream. The
-  four that remain are in the network guard, where assigning to a standard
-  library method cannot be expressed in the type system.
-- One severity table instead of two. The report and the readiness score each
-  had their own copy, so a fourth severity would have had to be remembered in
-  both; the band label is public now rather than reached for as a private name
-  from another module.
-- Dead code removed: an unused page property, and a price helper left behind
-  when model selection moved from price spread to product line.
-
-### Performance
-
-- A 392-page book took 2.1 GB of memory and now takes 0.99 GB. pdfplumber
-  caches every object it parses off a page, and nothing released them, so the
-  whole document's characters — 680,000 of them — stayed in memory until the
-  run ended. They are dropped as soon as each page has been read. It matters
-  most where it was worst: a process pool holds one document per worker, so
-  the old figure was multiplied by the number of workers.
-- The coverage helper is fourteen times faster. It called `np.clip` four times
-  per rectangle, and numpy's per-call overhead on a single Python float dwarfs
-  the arithmetic — on a dense page that was a tenth of the whole run. Plain
-  `min`/`max` gives the identical answer.
-
-### Changed
-
-- Cost is off the front page. The tile and the per-1,000 chart move to the Cost
-  tab, which is what that tab is for, and the chart leads it. An audit's front
-  page should answer whether these documents can be used, not what the pipeline
-  would bill — the price only matters once the answer to the first question is
-  yes. The only figure left is what a quick win would save, which is the reason
-  to act on it rather than a cost breakdown.
-
-### Added
-
 - Global readiness, on the front page as a ring. AI readiness asks whether the
   text can be got off the page; this asks whether the folder can be put through
   a pipeline at all, combining content with the cost path it forces and what it
@@ -91,6 +51,12 @@ branch on when reading reports programmatically.
 
 ### Changed
 
+- Cost is off the front page. The tile and the per-1,000 chart move to the Cost
+  tab, which is what that tab is for, and the chart leads it. An audit's front
+  page should answer whether these documents can be used, not what the pipeline
+  would bill — the price only matters once the answer to the first question is
+  yes. The only figure left is what a quick win would save, which is the reason
+  to act on it rather than a cost breakdown.
 - The model detector reports no confidence rather than 1.0. The small English
   pipeline exposes no per-entity score, so recording one put a guess level with
   a passed checksum — the one place this tool was reporting a number that meant
@@ -99,7 +65,6 @@ branch on when reading reports programmatically.
   filtered nothing and implied a threshold that was never applied.
 - `schema_version` is 3. The report carries `overall` and `quick_wins`, every
   sensitive match carries `evidence`, and `confidence` on a match may be null.
-
 - The summary quotes Claude Sonnet 5 rather than whichever model happened to be
   cheapest. The cheapest was a moving target — it changed with a catalogue
   refresh rather than with the folder — and it flattered the estimate with a
@@ -132,6 +97,34 @@ branch on when reading reports programmatically.
   Those reports carry the text read off each page and a picture of every page,
   so a default run inside a repository was leaving document content untracked
   in the working tree.
+
+### Performance
+
+- A 392-page book took 2.1 GB of memory and now takes 0.99 GB. pdfplumber
+  caches every object it parses off a page, and nothing released them, so the
+  whole document's characters — 680,000 of them — stayed in memory until the
+  run ended. They are dropped as soon as each page has been read. It matters
+  most where it was worst: a process pool holds one document per worker, so
+  the old figure was multiplied by the number of workers.
+- The coverage helper is fourteen times faster. It called `np.clip` four times
+  per rectangle, and numpy's per-call overhead on a single Python float dwarfs
+  the arithmetic — on a dense page that was a tenth of the whole run. Plain
+  `min`/`max` gives the identical answer.
+
+### Internal
+
+- Type suppressions are down from twenty to four, and each was removed by
+  fixing what caused it rather than by widening the annotation. The largest
+  group came from one helper that returned `object` where it had a `Config` in
+  hand, which cost eight `type: ignore` comments in commands downstream. The
+  four that remain are in the network guard, where assigning to a standard
+  library method cannot be expressed in the type system.
+- One severity table instead of two. The report and the readiness score each
+  had their own copy, so a fourth severity would have had to be remembered in
+  both; the band label is public now rather than reached for as a private name
+  from another module.
+- Dead code removed: an unused page property, and a price helper left behind
+  when model selection moved from price spread to product line.
 
 ## [0.2.0] — 2026-09-10
 
@@ -348,6 +341,7 @@ First release.
   type-proportional subset of a large folder, `--password` opens encrypted PDFs.
 - A packaged agent skill, installed with the tool, so an agent can be told to use it.
 
-[Unreleased]: https://github.com/duartecaldascardoso/complydoc/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/duartecaldascardoso/complydoc/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/duartecaldascardoso/complydoc/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/duartecaldascardoso/complydoc/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/duartecaldascardoso/complydoc/releases/tag/v0.1.0

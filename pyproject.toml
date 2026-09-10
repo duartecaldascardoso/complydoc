@@ -8,6 +8,24 @@ license = { text = "MIT" }
 authors = [{ name = "Duarte Cardoso", email = "caldasdcardoso@gmail.com" }]
 keywords = ["pdf", "ocr", "gdpr", "pii", "document-automation", "offline"]
 
+# How the package is filed and found on PyPI. Kept to the ones that are true:
+# a long list of aspirational classifiers is noise on the page.
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Legal Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+
 dependencies = [
     "typer>=0.12",
     "rich>=13.7",
@@ -32,8 +50,12 @@ ner = ["spacy>=3.7"]
 [project.scripts]
 complydoc = "complydoc.cli:app"
 
+# Rendered as links down the side of the PyPI page.
 [project.urls]
+Homepage = "https://github.com/duartecaldascardoso/complydoc"
 Repository = "https://github.com/duartecaldascardoso/complydoc"
+Changelog = "https://github.com/duartecaldascardoso/complydoc/blob/main/src/complydoc/CHANGELOG.md"
+Issues = "https://github.com/duartecaldascardoso/complydoc/issues"
 
 [dependency-groups]
 dev = [

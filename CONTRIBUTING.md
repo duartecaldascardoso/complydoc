@@ -151,6 +151,32 @@ GitHub does not store attestations for a user-owned private repository, so while
 repository is private the release ships `SHA256SUMS` and the SBOM without a signed provenance
 statement, and says so in its notes.
 
+### Publishing to PyPI
+
+The tag does not publish. It drafts a release; **publishing that release** is what uploads
+to PyPI, and that is deliberate — a version on PyPI can never be replaced or reused, so the
+last step before it is a person deciding rather than a `git push`. What gets uploaded is the
+wheel and sdist already attached to the release, so PyPI receives the exact artefacts that
+were built and attested, not a rebuild that might differ.
+
+There is no API token anywhere. `publish.yml` authenticates with PyPI Trusted Publishing:
+GitHub mints a short-lived OIDC token proving which workflow is running, and PyPI checks it
+against the publisher configured for the project.
+
+That configuration is a one-time job on the PyPI website and cannot be done from here:
+
+1. Sign in at [pypi.org](https://pypi.org) and go to **Your projects → Publishing**.
+2. Add a **pending publisher** — the project does not exist yet, so this is what reserves
+   `complydoc` for the first upload. Owner `duartecaldascardoso`, repository `complydoc`,
+   workflow `publish.yml`, environment `pypi`.
+3. In this repository, create the `pypi` environment under **Settings → Environments**.
+   Adding yourself as a required reviewer there puts a second confirmation in front of every
+   upload, which is worth having.
+
+After that, publishing a drafted release uploads it. `workflow_dispatch` with a tag name
+re-runs an upload that partly failed; it skips files that already landed rather than erroring
+on them.
+
 ## Keeping prices current
 
 ```bash

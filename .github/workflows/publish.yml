@@ -1,0 +1,73 @@
+# Upload a release to PyPI.
+#
+# Deliberately not triggered by the tag. Pushing a tag builds the artefacts,
+# attests them and drafts a release; this runs only when a human publishes that
+# release. A version on PyPI can never be replaced or reused, so the last step
+# before it is a person deciding, not a git push.
+#
+# The files uploaded are the ones already attached to the release — the exact
+# artefacts that were built and signed under `release.yml`, not a rebuild that
+# might differ.
+#
+# Authentication is PyPI Trusted Publishing: GitHub proves this workflow's
+# identity with a short-lived OIDC token and PyPI checks it against the
+# publisher configured for the project. There is no token to store or rotate.
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to upload, for a re-run"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    name: upload to PyPI
+    runs-on: ubuntu-latest
+    # A GitHub environment, so the repository can require a review before this
+    # runs and so the deployment is recorded.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/complydoc
+    permissions:
+      contents: read
+      # Minting the OIDC token Trusted Publishing checks.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: take the wheel and sdist off the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+        run: |
+          mkdir -p dist
+          gh release download "${TAG}" --dir dist \
+            --pattern '*.whl' --pattern '*.tar.gz'
+          # The release also carries an SBOM and a checksum file. PyPI accepts
+          # distributions only, so they are deliberately not downloaded.
+          ls -l dist
+
+      - name: the version being uploaded matches the tag
+        env:
+          TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
+        run: |
+          wheel=$(ls dist/*.whl)
+          version="${TAG#v}"
+          case "$(basename "${wheel}")" in
+            complydoc-"${version}"-*) echo "${wheel} matches ${TAG}" ;;
+            *) echo "::error::${wheel} is not version ${version} from tag ${TAG}"; exit 1 ;;
+          esac
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # A re-run of a release that partly succeeded should not fail on the
+          # files that already landed.
+          skip-existing: true
+          print-hash: true

@@ -1,8 +1,8 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/images/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset=".github/images/logo-light.svg">
-    <img alt="complydoc" src=".github/images/logo-light.svg" width="42%">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/logo-light.svg">
+    <img alt="complydoc" src="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/logo-light.svg" width="42%">
   </picture>
 </div>
 
@@ -21,9 +21,9 @@
 
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/images/report-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset=".github/images/report-light.png">
-    <img alt="The complydoc report: a global readiness ring with its three factors, and a ranked list of quick wins" src=".github/images/report-light.png" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/report-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/report-light.png">
+    <img alt="The complydoc report: a global readiness ring with its three factors, and a ranked list of quick wins" src="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/report-light.png" width="100%">
   </picture>
 </div>
 
@@ -42,9 +42,9 @@ that guard armed. Every report records whether it was active.
 
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/images/complydoc-architecture-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset=".github/images/complydoc-architecture.svg">
-    <img alt="complydoc pipeline: documents pass through discovery and per-format loaders into three independent analysis components, which emit a JSON report and a self-contained HTML report, all inside a network guard boundary" src=".github/images/complydoc-architecture.svg" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/complydoc-architecture-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/complydoc-architecture.svg">
+    <img alt="complydoc pipeline: documents pass through discovery and per-format loaders into three independent analysis components, which emit a JSON report and a self-contained HTML report, all inside a network guard boundary" src="https://raw.githubusercontent.com/duartecaldascardoso/complydoc/main/.github/images/complydoc-architecture.svg" width="100%">
   </picture>
 </div>
 

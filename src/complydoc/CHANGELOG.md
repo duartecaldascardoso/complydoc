@@ -10,6 +10,14 @@ branch on when reading reports programmatically.
 
 ### Added
 
+- The release can publish to PyPI. Publishing the drafted release uploads the
+  wheel and sdist already attached to it — the artefacts that were built and
+  attested, not a rebuild — over Trusted Publishing, so there is no token
+  stored anywhere. The tag deliberately does not do it: a version on PyPI
+  cannot be replaced or reused, so the last step before it is a person.
+- PyPI metadata: classifiers, and Homepage, Changelog and Issues links. The
+  README's images are absolute URLs now, because PyPI renders it with no
+  repository context and relative paths arrive broken.
 - `complydoc demo` audits six synthetic sample documents that ship with the
   tool and opens the report. Evaluating this used to mean finding a folder
   first. The samples carry the problems the tool exists to find — a scan with

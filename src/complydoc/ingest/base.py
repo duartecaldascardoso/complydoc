@@ -103,6 +103,14 @@ class ExtractionSummary:
     granularity: str
     tables_found: int | None
     """None when the extractor cannot look for tables, which is not zero tables."""
+    similarity: float = 1.0
+    """How closely this reading matches the one that was kept, 0 to 1.
+
+    Compared in order, not as a bag of characters. Two extractors reading a
+    two-column page can return the same characters and the same count while one
+    reads straight across the columns and scrambles the sentences — which a
+    count cannot see and this can.
+    """
 
     @property
     def reads_tables(self) -> bool:

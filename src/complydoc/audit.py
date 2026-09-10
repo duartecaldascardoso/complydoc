@@ -106,7 +106,7 @@ class _Outcome:
     ocr_seconds: float = 0.0
 
 
-def _readings(document: Document) -> list[ExtractorReading]:
+def extractor_readings(document: Document) -> list[ExtractorReading]:
     """Each extractor's reading of the whole document, totalled over its pages.
 
     Order is preserved: the first is the one whose output the findings were
@@ -115,6 +115,7 @@ def _readings(document: Document) -> list[ExtractorReading]:
     order: list[str] = []
     totals: dict[str, list[float]] = {}
     shape: dict[str, tuple[str, bool]] = {}
+    worst: dict[str, float] = {}
 
     for page in document.pages:
         for summary in page.extractions:
@@ -127,6 +128,7 @@ def _readings(document: Document) -> list[ExtractorReading]:
             row[1] += summary.coverage_pct
             row[2] += summary.seconds
             row[3] += 1
+            worst[summary.extractor] = min(worst.get(summary.extractor, 1.0), summary.similarity)
 
     readings: list[ExtractorReading] = []
     for name in order:
@@ -140,6 +142,9 @@ def _readings(document: Document) -> list[ExtractorReading]:
                 seconds=round(seconds, 4),
                 granularity=granularity,
                 reads_tables=reads_tables,
+                # The worst page, not the average: one scrambled page is worth
+                # knowing about in a document whose other forty are fine.
+                similarity=round(worst.get(name, 1.0), 4),
             )
         )
     return readings
@@ -174,7 +179,7 @@ def _process(path: Path, work: _Work) -> _Outcome:
         load_warnings=list(document.load_warnings),
     )
 
-    entry.extractions = _readings(document)
+    entry.extractions = extractor_readings(document)
 
     analyse_started = time.perf_counter()
     if "readiness" in work.requested:

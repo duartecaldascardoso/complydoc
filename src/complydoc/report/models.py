@@ -110,6 +110,14 @@ class PageText:
     """What each reader compared on this run made of the page, by name."""
 
 
+_SIMILAR_ENOUGH = 0.95
+"""Below this, two readings of a page are telling different stories.
+
+Line endings and stray whitespace put honest extractors at about 0.99 of each
+other; a scrambled two-column page measures around 0.1.
+"""
+
+
 @dataclass(frozen=True, slots=True)
 class ExtractorReading:
     """What one extractor made of one document, totalled over its pages."""
@@ -120,6 +128,8 @@ class ExtractorReading:
     seconds: float
     granularity: str
     reads_tables: bool
+    similarity: float = 1.0
+    """How closely this reading matched the one kept, compared in order."""
 
     @property
     def read_nothing(self) -> bool:
@@ -154,16 +164,31 @@ class DocumentReport:
         the line: below that the difference is line endings and whitespace, and
         reporting it would be noise on every document.
         """
+        return self.disagreement is not None
+
+    @property
+    def disagreement(self) -> str | None:
+        """What the extractors disagreed about, in the words a reader needs.
+
+        "They differ" sends someone to compare two thousand characters by eye.
+        Naming the kind of difference says where to look.
+        """
         if len(self.extractions) < 2:
-            return False
+            return None
         kept = self.extractions[0]
         for other in self.extractions[1:]:
             if kept.read_nothing != other.read_nothing:
-                return True
+                return "one of them read nothing"
             highest = max(kept.characters, other.characters, 1)
             if abs(kept.characters - other.characters) / highest > 0.10:
-                return True
-        return False
+                return "they read different amounts"
+            # Counting characters is not enough. Two extractors can return the
+            # same characters in a different order — one reading straight
+            # across a two-column page and scrambling every sentence — and a
+            # count says they agreed.
+            if other.similarity < _SIMILAR_ENOUGH:
+                return "same text, different order"
+        return None
 
 
 @dataclass(slots=True)

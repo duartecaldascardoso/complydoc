@@ -21,11 +21,12 @@ from complydoc.ingest.extractors.registry import (
 )
 from complydoc.ingest.registry import load_document
 from complydoc.readiness.analyser import analyse
+from complydoc.audit import extractor_readings
 from complydoc.report.models import DocumentReport, ExtractorReading
 from tests.helpers import FIXTURES
 
 
-def reading(name: str, characters: int) -> ExtractorReading:
+def reading(name: str, characters: int, similarity: float = 1.0) -> ExtractorReading:
     return ExtractorReading(
         extractor=name,
         characters=characters,
@@ -33,6 +34,7 @@ def reading(name: str, characters: int) -> ExtractorReading:
         seconds=0.01,
         granularity="word",
         reads_tables=True,
+        similarity=similarity,
     )
 
 
@@ -100,9 +102,29 @@ def test_a_small_difference_is_not_reported_as_a_disagreement():
         format="pdf",
         page_count=1,
         page_count_known=True,
-        extractions=[reading("a", 1000), reading("b", 1050)],
+        extractions=[reading("a", 1000), reading("b", 1050, similarity=0.99)],
     )
     assert not document.extractors_disagree
+
+
+def test_the_same_characters_in_a_different_order_is_a_disagreement():
+    """The case a character count cannot see.
+
+    Two extractors read a two-column page. One reads down the columns, the
+    other straight across the page, and every sentence in the second is
+    interleaved with a sentence from the other column. Same characters, same
+    count, and one of them is unreadable.
+    """
+    document = DocumentReport(
+        path=FIXTURES / "x.pdf",
+        relative_path="x.pdf",
+        sha256="",
+        format="pdf",
+        page_count=1,
+        page_count_known=True,
+        extractions=[reading("a", 1000), reading("b", 1000, similarity=0.11)],
+    )
+    assert document.extractors_disagree
 
 
 def test_a_large_difference_is():
@@ -143,6 +165,33 @@ def test_a_single_extractor_never_disagrees_with_itself():
         extractions=[reading("a", 1000)],
     )
     assert not document.extractors_disagree
+
+
+def test_a_scrambled_two_column_page_is_caught_end_to_end():
+    """The fixture that prompted the measure.
+
+    pdfplumber reads the two columns in order; pdfium reads straight across
+    and interleaves them. Their character counts are within a few percent of
+    each other, so nothing about the size of the reading says they disagree.
+    """
+    document = load_document(
+        FIXTURES / "two_column.pdf",
+        IngestOptions(compare_extractors=("pdfium",)),
+    )
+    readings = extractor_readings(document)
+    counts = [r.characters for r in readings]
+    assert abs(counts[0] - counts[1]) / max(counts) < 0.10, "the counts do not give it away"
+    assert min(r.similarity for r in readings) < 0.5
+    report = DocumentReport(
+        path=document.path,
+        relative_path="two_column.pdf",
+        sha256="",
+        format="pdf",
+        page_count=1,
+        page_count_known=True,
+        extractions=readings,
+    )
+    assert report.extractors_disagree
 
 
 @pytest.mark.parametrize("name", ["pdfplumber", "pdfium"])

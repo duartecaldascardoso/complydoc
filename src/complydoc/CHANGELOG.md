@@ -8,6 +8,15 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Fixed
+
+- Two extractors that read a page in a different order are now reported as
+  disagreeing. The comparison used to be a character count, which cannot see the
+  case it most needs to: on a two-column page, one library reads down the columns
+  and another straight across, interleaving every sentence, and both return the
+  same number of characters. Readings are now compared in order, and the report
+  names the kind of difference rather than only that there was one.
+
 ### Added
 
 - Extractors are pluggable, and more than one can run in a single pass.

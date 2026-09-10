@@ -885,10 +885,12 @@ before reading that as an all-clear.</p>
       <div data-view="signals" hidden>
         {% if doc.extractions | length > 1 %}
         <h4 class="sec">How it was read
-          <span class="tag">{{ "they differ" if doc.extractors_disagree else "they agree" }}</span></h4>
+          <span class="tag">{{ doc.disagreement or "they agree" }}</span></h4>
         <div class="scroll"><table>
           <thead><tr><th>Extractor</th><th class="n">Characters</th><th class="n">Coverage</th>
-            <th class="n">Time</th><th>Reads</th></tr></thead>
+            <th class="n">Time</th><th class="n" title="How closely this reading matches the kept
+              one, compared in order. Two readings can hold the same characters in a different
+              order and this is what says so.">Matches kept</th><th>Reads</th></tr></thead>
           <tbody>
           {% for r in doc.extractions %}
             <tr{% if loop.first %} class="d-head"{% endif %}>
@@ -896,6 +898,7 @@ before reading that as an all-clear.</p>
               <td class="n">{{ "{:,}".format(r.characters) }}</td>
               <td class="n">{{ r.mean_coverage_pct }}%</td>
               <td class="n">{{ duration(r.seconds) }}</td>
+              <td class="n">{% if loop.first %}—{% else %}{{ "{:.0f}%".format(r.similarity * 100) }}{% endif %}</td>
               <td class="why">{{ r.granularity }} boxes{% if r.reads_tables %}, table structure{% endif %}</td>
             </tr>
           {% endfor %}

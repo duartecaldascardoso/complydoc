@@ -257,6 +257,22 @@ def _aligned_tables(plumber_page: Any, words: list[Any]) -> list[TableInfo]:
     return found
 
 
+def _reading_similarity(kept: str, other: str, cap: int = 4000) -> float:
+    """How closely two readings of a page agree, in order.
+
+    Bounded because this runs per page per extractor and the comparison is
+    quadratic; the opening few thousand characters settle it either way.
+    """
+    import difflib
+
+    left, right = " ".join(kept.split())[:cap], " ".join(other.split())[:cap]
+    if left == right:
+        return 1.0
+    if not left or not right:
+        return 0.0
+    return round(difflib.SequenceMatcher(None, left, right).ratio(), 4)
+
+
 def _wants_pdfium(options: IngestOptions) -> bool:
     """Whether any extractor asked for reads through pdfium."""
     from complydoc.ingest.extractors.registry import extractor_by_id
@@ -443,6 +459,9 @@ class PdfLoader:
                     seconds=round(seconds, 4),
                     granularity=found.granularity,
                     tables_found=len(found.tables) if engine.provides_tables else None,
+                    similarity=(
+                        1.0 if kept is None else _reading_similarity(kept.text, found.text)
+                    ),
                 )
             )
             if options.keep_readings and found.text.strip():

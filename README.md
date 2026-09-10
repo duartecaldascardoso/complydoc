@@ -78,6 +78,7 @@ hidden so a second run does not pick up the first run's reports.
 ```bash
 complydoc audit ~/invoices --monthly-volume 2500  # extrapolate to a monthly bill
 complydoc audit ~/invoices --save-text ./text     # keep the text it read, one file per document
+complydoc compare ~/invoices                      # read every page with every reader installed
 complydoc sensitive ~/invoices                    # only the identifier scan
 complydoc readiness ~/invoices                    # only the extraction signals
 complydoc cost ~/invoices                         # only the price estimate
@@ -157,6 +158,16 @@ what the comparison says before trusting the reading.
 ```bash
 complydoc audit ./contracts --compare-extractor pypdf --compare-extractor pdfium
 ```
+
+Or let it use everything installed, readers and OCR engines both:
+
+```bash
+complydoc compare ./contracts
+```
+
+It says which readers it is using before it starts. Reading each page several
+times is slower than a plain audit, so it is a command you point at a sample
+rather than a nightly job.
 
 A reader that returns no geometry, like `pypdf`, reports coverage as not measured rather
 than as nought per cent, and the findings that need boxes say the same.

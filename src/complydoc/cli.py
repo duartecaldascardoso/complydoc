@@ -9,13 +9,24 @@ The network guard is armed before any document is opened, on every path.
 
 from __future__ import annotations
 
+import contextlib
 import sys
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Annotated
 
 import typer
 from rich.console import Console
-from rich.table import Table
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
+from rich.table import Column, Table
 
 from complydoc import __version__, offline
 from complydoc.audit import COMPONENTS, run_audit
@@ -285,6 +296,57 @@ def _summary(report: AuditReport) -> None:
         console.print(f"[yellow]Price provenance:[/] {warning}")
 
 
+@contextlib.contextmanager
+def _watching(quiet: bool) -> Iterator[Callable[[int, int, Path], None] | None]:
+    """A live count, a bar and a clock while the folder is read.
+
+    A run over a few hundred documents takes minutes, and a terminal that says
+    nothing for minutes is indistinguishable from one that has hung. The clock
+    is the part people actually want: not how far along it is, but whether it
+    is worth waiting for.
+
+    Nothing is drawn when the run was asked to be quiet, and a line per
+    document is printed instead of a bar when the output is not a terminal —
+    a redrawing bar in a log file is thousands of lines of escape codes.
+    """
+    if quiet:
+        yield None
+        return
+
+    if not console.is_terminal:
+
+        def plain(index: int, total: int, path: Path) -> None:
+            console.print(f"[dim]({index}/{total})[/] {path.name}")
+
+        yield plain
+        return
+
+    bar = Progress(
+        SpinnerColumn(style="dim"),
+        # A fixed width, so the bar does not jump sideways on every filename.
+        TextColumn("{task.fields[name]}", table_column=Column(width=28, no_wrap=True)),
+        BarColumn(bar_width=24, complete_style="green", finished_style="green"),
+        MofNCompleteColumn(),
+        TextColumn("[dim]·[/]"),
+        TimeElapsedColumn(),
+        TextColumn("[dim]elapsed,[/]"),
+        TimeRemainingColumn(),
+        TextColumn("[dim]left[/]"),
+        console=console,
+        transient=True,
+    )
+    with bar:
+        # The total is unknown until the folder has been walked, which on a
+        # large tree is itself a wait. An indeterminate bar says the tool is
+        # working during it rather than leaving the terminal blank.
+        task = bar.add_task("", total=None, name="finding documents")
+
+        def report(index: int, total: int, path: Path) -> None:
+            bar.update(task, completed=index, total=total, name=path.name)
+
+        yield report
+
+
 def _run(
     target: Path,
     components: tuple[str, ...],
@@ -333,32 +395,29 @@ def _run(
             "values. Treat them as sensitive documents in their own right."
         )
 
-    def progress(index: int, total: int, path: Path) -> None:
-        if not quiet:
-            console.print(f"[dim]({index}/{total})[/] {path.name}")
-
     try:
-        report = run_audit(
-            target,
-            config,  # type: ignore[arg-type]
-            components,
-            ocr=ocr,
-            reveal=reveal,
-            monthly_volume=monthly_volume,
-            resolution=resolution,
-            select_models=select_models,
-            page_images=page_images,
-            extracted_text=extracted_text or ocr_compare,
-            ocr_compare=ocr_compare,
-            recurse=recurse,
-            password=password,
-            extractor=extractor,
-            compare_extractors=tuple(compare_extractors or ()),
-            compare_engines=tuple(compare_engines or ()),
-            jobs=jobs,
-            sample=sample,
-            progress=progress if not quiet else None,
-        )
+        with _watching(quiet) as progress:
+            report = run_audit(
+                target,
+                config,  # type: ignore[arg-type]
+                components,
+                ocr=ocr,
+                reveal=reveal,
+                monthly_volume=monthly_volume,
+                resolution=resolution,
+                select_models=select_models,
+                page_images=page_images,
+                extracted_text=extracted_text or ocr_compare,
+                ocr_compare=ocr_compare,
+                recurse=recurse,
+                password=password,
+                extractor=extractor,
+                compare_extractors=tuple(compare_extractors or ()),
+                compare_engines=tuple(compare_engines or ()),
+                jobs=jobs,
+                sample=sample,
+                progress=progress,
+            )
     except UnknownModelError as exc:
         errors.print(f"[bold red]Unknown model[/] — {exc}\n\nRun 'complydoc models' to list them.")
         raise typer.Exit(code=2) from exc
@@ -435,6 +494,87 @@ def audit(
         compare_extractors=compare_extractor,
         ocr_engine=ocr_engine,
         compare_engines=compare_ocr_engine,
+        password=password,
+        jobs=jobs,
+        sample=sample,
+    )
+
+
+@app.command()
+def compare(
+    target: TargetArg,
+    out: OutDirOpt = DEFAULT_OUT,
+    name: NameOpt = "complydoc-compare",
+    extractor: ExtractorOpt = None,
+    ocr_engine: OcrEngineOpt = None,
+    password: PasswordOpt = "",
+    jobs: JobsOpt = 0,
+    sample: SampleOpt = None,
+    config_dir: ConfigOpt = None,
+    ocr: OcrOpt = True,
+    recurse: RecurseOpt = True,
+    save_text: SaveTextOpt = None,
+    print_json: PrintJsonOpt = False,
+    quiet: QuietOpt = False,
+) -> None:
+    """Read every page with every reader and every OCR engine installed.
+
+    The same audit, with each library's reading of each page kept beside the
+    others. Only the first still reaches a finding; the rest are there to be
+    compared against it, and the report marks the pages where they parted
+    company.
+    """
+    from complydoc.ingest.engines.registry import DEFAULT_ENGINE, all_engines
+    from complydoc.ingest.extractors.registry import DEFAULT_EXTRACTOR, all_extractors
+
+    kept_reader = extractor or DEFAULT_EXTRACTOR
+    kept_engine = ocr_engine or DEFAULT_ENGINE
+    readers = [e.id for e in all_extractors() if e.available() and e.id != kept_reader]
+    # Comparing OCR engines means running OCR. With --no-ocr there is nothing
+    # for them to read, and offering the comparison anyway would be a lie.
+    engines = [e.id for e in all_engines() if ocr and e.available() and e.id != kept_engine]
+
+    if not quiet and not print_json:
+        console.print(
+            f"Reading with [bold]{kept_reader}[/][dim], comparing against [/]"
+            f"[bold]{'[/], [bold]'.join(readers) if readers else 'nothing else installed'}[/]"
+        )
+        if ocr:
+            console.print(
+                f"OCR with [bold]{kept_engine}[/][dim], comparing against [/]"
+                f"[bold]{'[/], [bold]'.join(engines) if engines else 'nothing else installed'}[/]"
+            )
+        else:
+            console.print("[dim]OCR is off, so no scan is read and no engine is compared.[/]")
+        if not readers and not engines:
+            console.print(
+                "[yellow]Nothing to compare against.[/] Run "
+                "[bold]complydoc extractors[/] and [bold]complydoc engines[/] to see "
+                "what is installed."
+            )
+        # Every page read several times over, and every scan recognised twice.
+        console.print("[dim]This reads each page several times, so it is slower than audit.[/]")
+
+    _run(
+        target,
+        COMPONENTS,
+        out,
+        name,
+        config_dir,
+        ocr,
+        recurse,
+        quiet,
+        page_images=True,
+        extracted_text=True,
+        # Text against the OCR of the same page is a comparison too, and the
+        # one that most often disagrees.
+        ocr_compare=ocr,
+        print_json=print_json,
+        save_text=save_text,
+        extractor=extractor,
+        compare_extractors=readers,
+        ocr_engine=ocr_engine,
+        compare_engines=engines,
         password=password,
         jobs=jobs,
         sample=sample,

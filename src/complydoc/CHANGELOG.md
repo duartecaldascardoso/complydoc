@@ -10,6 +10,15 @@ branch on when reading reports programmatically.
 
 ### Added
 
+- `complydoc compare <path>` runs an audit with every reader and every OCR
+  engine installed, so comparing does not mean naming each one by hand. It says
+  which it is using before it starts, and says so plainly when there is nothing
+  installed to compare against.
+- A live bar, count and clock while a folder is read. A run over a few hundred
+  documents takes minutes, and a terminal that says nothing for minutes is
+  indistinguishable from one that has hung. A pipe still gets one line per
+  document, and `--quiet` still gets nothing.
+
 - Where two readers parted company is now shown, not just measured. Each other
   reader's pane carries its own text with the words only it found underlined
   and the words only the kept reader found struck through, so the difference is

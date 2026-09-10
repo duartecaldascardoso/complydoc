@@ -116,3 +116,79 @@ def test_the_readings_reach_the_report(config):
     page = report.documents[0].extracted_text[0]
     assert set(page.readings) == {"pdfplumber", "pdfium"}
     assert report.run.compare_extractors == ["pdfium"]
+
+
+def test_the_compare_command_uses_every_reader_installed(tmp_path):
+    """One command, rather than remembering to name each reader by hand."""
+    import json
+
+    from typer.testing import CliRunner
+
+    from complydoc.cli import app
+    from complydoc.ingest.extractors.registry import all_extractors
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "compare",
+            str(FIXTURES / "two_column.pdf"),
+            "--out",
+            str(tmp_path),
+            "--name",
+            "c",
+            "--no-ocr",
+            "--quiet",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    report = json.loads((tmp_path / "c.json").read_text())
+    used = {r["extractor"] for r in report["documents"][0]["extractions"]}
+    assert used == {e.id for e in all_extractors() if e.available()}
+
+
+def test_the_compare_command_keeps_what_each_reader_read(tmp_path):
+    """Comparing is the point, so the text has to survive into the report."""
+    import json
+
+    from typer.testing import CliRunner
+
+    from complydoc.cli import app
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "compare",
+            str(FIXTURES / "two_column.pdf"),
+            "--out",
+            str(tmp_path),
+            "--name",
+            "c",
+            "--no-ocr",
+            "--quiet",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    page = json.loads((tmp_path / "c.json").read_text())["documents"][0]["extracted_text"][0]
+    assert len(page["readings"]) > 1
+
+
+def test_the_compare_command_does_not_offer_an_ocr_comparison_with_ocr_off(tmp_path):
+    """An engine that was never run has not agreed or disagreed with anything."""
+    from typer.testing import CliRunner
+
+    from complydoc.cli import app
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "compare",
+            str(FIXTURES / "native_text.pdf"),
+            "--out",
+            str(tmp_path),
+            "--name",
+            "c",
+            "--no-ocr",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "OCR is off" in result.output

@@ -95,6 +95,7 @@ module = [
     "pdfplumber.*",
     "pypdfium2.*",
     "rapidocr_onnxruntime.*",
+    "unstructured.*",
     "spacy.*",
     "tiktoken.*",
     "docx.*",

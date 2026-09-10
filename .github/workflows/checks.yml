@@ -77,6 +77,8 @@ jobs:
       # and the point of the extra is that the tool works without them, which
       # every other job checks by not installing it.
       - run: uv sync --extra ocr --extra loaders --group dev
+      - name: probe
+        run: uv run python tests/diag/unstructured_probe.py 2>&1 | grep -E "^(VERSION|RESULT|EXTRACTABLE)" || true
       - name: tests
         run: uv run pytest -q
 

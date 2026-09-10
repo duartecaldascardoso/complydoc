@@ -6,7 +6,7 @@ the minor number when something is added, the patch number when a measurement is
 corrected. `schema_version` in the JSON is versioned separately and is the field to
 branch on when reading reports programmatically.
 
-## [Unreleased]
+## [0.2.0] — 2026-09-10
 
 ### Added
 
@@ -14,49 +14,6 @@ branch on when reading reports programmatically.
   engine installed, so comparing does not mean naming each one by hand. It says
   which it is using before it starts, and says so plainly when there is nothing
   installed to compare against.
-- A live bar, count and clock while a folder is read. A run over a few hundred
-  documents takes minutes, and a terminal that says nothing for minutes is
-  indistinguishable from one that has hung. A pipe still gets one line per
-  document, and `--quiet` still gets nothing.
-
-- Where two readers parted company is now shown, not just measured. Each other
-  reader's pane carries its own text with the words only it found underlined
-  and the words only the kept reader found struck through, so the difference is
-  read in place rather than by flipping between two panes and holding both in
-  your head. The page bar gains a control that jumps to the next page the
-  readers read differently, which on a long document is a handful of pages
-  among hundreds.
-- The report tells a reader that walked a page in the wrong order apart from
-  one that read different words. They look the same to any similarity score and
-  they call for different things: the first scrambled a page it could read, the
-  second could not read part of it.
-
-### Changed
-
-- Readings are compared by word rather than by character, and spacing is no
-  longer a difference. Every reader breaks lines somewhere slightly different,
-  and counting that marked every page of every document. One measure now backs
-  both the number in the table and the marks on the page.
-
-### Fixed
-
-- Two extractors that read a page in a different order are now reported as
-  disagreeing. The comparison used to be a character count, which cannot see the
-  case it most needs to: on a two-column page, one library reads down the columns
-  and another straight across, interleaving every sentence, and both return the
-  same number of characters. Readings are now compared in order, and the report
-  names the kind of difference rather than only that there was one.
-
-### Added
-
-- A third reader for a PDF's text layer, `pypdf`. It is already a dependency,
-  so it costs no install and no measurable time, and it shares no code with
-  either of the others — which is the only reason a third reading is worth
-  having. It returns text and no geometry, so it reports coverage as not
-  measured rather than as nought per cent, and the findings that need boxes say
-  the same.
-
-
 - Extractors are pluggable, and more than one can run in a single pass.
   `--extractor` picks which library reads the text layer; `--compare-extractor`
   reads every page with a second one as well and reports where the two differ.
@@ -71,18 +28,30 @@ branch on when reading reports programmatically.
   thirteen times faster. It provides no table structure and a box per line rather
   than per word, so the signals that need those report that they could not measure
   rather than returning a number that means something else.
+- A third reader for a PDF's text layer, `pypdf`. It is already a dependency,
+  so it costs no install and no measurable time, and it shares no code with
+  either of the others — which is the only reason a third reading is worth
+  having. It returns text and no geometry, so it reports coverage as not
+  measured rather than as nought per cent, and the findings that need boxes say
+  the same.
 - OCR engines are pluggable the same way, with `--ocr-engine`,
-  `--compare-ocr-engine` and `complydoc engines`. Tesseract is included for anyone who already has it; it is
-  not a dependency, because it needs a system binary.
-
-- `--save-text <dir>` keeps the text complydoc read, one file per document. Reading a
-  scanned folder is the slow part of an audit and it was being thrown away, so the next
-  tool to want the text ran OCR over the same pages again.
-- The summary says how long the work took by stage — reading, OCR, signals, identifier
-  scan — and what the measured rate means for 100, 1,000, 10,000 and 100,000 documents.
-
-### Added
-
+  `--compare-ocr-engine` and `complydoc engines`. Tesseract is included for anyone
+  who already has it; it is not a dependency, because it needs a system binary.
+- Where two readers parted company is now shown, not just measured. Each other
+  reader's pane carries its own text with the words only it found underlined
+  and the words only the kept reader found struck through, so the difference is
+  read in place rather than by flipping between two panes and holding both in
+  your head. The page bar gains a control that jumps to the next page the
+  readers read differently, which on a long document is a handful of pages
+  among hundreds.
+- The report tells a reader that walked a page in the wrong order apart from
+  one that read different words. They look the same to any similarity score and
+  they call for different things: the first scrambled a page it could read, the
+  second could not read part of it.
+- A live bar, count and clock while a folder is read. A run over a few hundred
+  documents takes minutes, and a terminal that says nothing for minutes is
+  indistinguishable from one that has hung. A pipe still gets one line per
+  document, and `--quiet` still gets nothing.
 - A vendored model catalogue from models.dev: every current model from the eight
   first-party providers, so `--model` reaches one without anyone having hand-written an
   entry for it. `complydoc models --new N` lists the most recently released, because an
@@ -99,32 +68,28 @@ branch on when reading reports programmatically.
 - Batch pricing, where the provider publishes one. The cost page shows what the same
   tokens cost through a batch endpoint beside the interactive price. Never inferred from
   the customary half price: a discount nobody can check does not belong in a budget.
-
-### Fixed
-
-- Pointing at a sensitive mark on the page layout does something. The marks are drawn
-  as outlines, and an SVG shape with no fill answers the pointer only along its stroke —
-  on a mark six pixels tall that is two hairlines, so hovering the middle of one hit
-  nothing. The explanation also appears under the page at once rather than waiting for
-  the browser's own tooltip, and the marks can be tabbed to.
-- The OCR engine registers its own shutdown cleanup, at the point it creates the
-  native threads, instead of relying on another module importing it during
-  interpreter teardown — when the import machinery may already be gone, and a run
-  that had already succeeded aborts with a mutex error.
-- The file list sat in the right place only some of the time. `.spread:not([hidden])` also
-  matched a panel hidden along with the whole Pages view, because the attribute sits on the
-  container, so the list was being centred on a zero-height ghost whenever the signals tab
-  was showing. It also now re-aligns when a page is first shown, which it could not do while
-  it was hidden.
-- An imported price is no longer reported as a verification that went stale. It was
-  never claimed to be verified, and warning once per model buried the run's real
-  limitations under a dozen copies of what the provenance entry says once.
+- `--save-text <dir>` keeps the text complydoc read, one file per document. Reading a
+  scanned folder is the slow part of an audit and it was being thrown away, so the next
+  tool to want the text ran OCR over the same pages again.
+- The summary says how long the work took by stage — reading, OCR, signals, identifier
+  scan — and what the measured rate means for 100, 1,000, 10,000 and 100,000 documents.
 
 ### Changed
 
-- `complydoc pricing-import` reads the vendored table, so it works without litellm
-  installed, and the entry it generates is marked `price_source: imported` rather than
-  being stamped with a `last_verified` date nobody earned.
+- The difficulty component is called readiness. A high score always meant a document
+  that was easy to process, which read backwards under a name promising the opposite.
+  The command is `complydoc readiness`, the config file is `readiness.yaml`, the JSON
+  carries `readiness` where it carried `difficulty`, and `schema_version` is 2. The
+  score bands read the same way round as the number now: ready, workable, needs work,
+  not ready. Signal directions are `higher_is_better` and `lower_is_better`.
+- The Documents page is a page viewer rather than a grid of the first twelve pages.
+  Every page of a document is reachable, by stepping or by typing a page number, and
+  the page sits beside the text that was read off it instead of in a separate tab.
+  The two halves are one row of equal height and each scrolls inside its own frame.
+- The Documents page is the file list and the two panels, and nothing else. The
+  folder-wide table of readiness signals, the per-document summary line and the list
+  of poorly rated signals moved to that document's own Signals tab, where they answer
+  a question the reader has actually asked.
 - The text read off each page is in the report by default. Reading a page beside what
   was extracted from it is the point of the tool, and it was behind a flag. The report
   says on its security page that the masking covers the findings table and not the file,
@@ -132,19 +97,27 @@ branch on when reading reports programmatically.
   `--no-extracted-text` restores a report with no document content.
 - Sensitive marks on the page layout explain themselves on hover: what was found, why it
   was reported, and why that matters. The value itself is never in the explanation.
-- The difficulty component is called readiness. A high score always meant a document
-  that was easy to process, which read backwards under a name promising the opposite.
-  The command is `complydoc readiness`, the config file is `readiness.yaml`, the JSON
-  carries `readiness` where it carried `difficulty`, and `schema_version` is 2. The
-  score bands read the same way round as the number now: ready, workable, needs work,
-  not ready. Signal directions are `higher_is_better` and `lower_is_better`.
-
-### Documentation
-
-- The README is written for someone running the tool: what it does, how to run it, what the
-  flags mean. Architecture, adding a signal, fixtures and the release process moved to
-  CONTRIBUTING.md, and this changelog now ships inside the package, so an installed copy can
-  say what changed in the version you have.
+- Readings are compared by word rather than by character, and spacing is no
+  longer a difference. Every reader breaks lines somewhere slightly different,
+  and counting that marked every page of every document. One measure now backs
+  both the number in the table and the marks on the page.
+- The report is laid out to the width of the window rather than a 60rem reading
+  column, so the page and its text get the room.
+- Findings on the security page arrive ordered by severity, and every column there
+  can be sorted.
+- The page heading repeating the folder path, the timestamp and the version is gone.
+  All of it is recorded once, in the footer.
+- The panels are one fixed frame, identical on every document and every page. Their
+  height used to follow whichever page image was loaded, so the workspace resized
+  every time you stepped a page or picked another file. A document nobody could open
+  now draws the same workspace with the reason inside it, rather than a different
+  block that resized the page on arrival.
+- The file list sits at the height of the panels, not the column that holds them.
+- Every page starts the same distance below the tab bar, whether or not it opens on
+  a heading.
+- `complydoc pricing-import` reads the vendored table, so it works without litellm
+  installed, and the entry it generates is marked `price_source: imported` rather than
+  being stamped with a `last_verified` date nobody earned.
 
 ### Performance
 
@@ -163,36 +136,43 @@ Measured on this machine: a folder of 102 documents 17.6s to 10.9s with OCR and
 - Worker processes fork from a server that has loaded the models, instead of each
   loading its own copy, and the number of them is chosen from the size of the folder.
 
-### Changed
-
-- The Documents page is a page viewer rather than a grid of the first twelve pages.
-  Every page of a document is reachable, by stepping or by typing a page number, and
-  the page sits beside the text that was read off it instead of in a separate tab.
-  The two halves are one row of equal height and each scrolls inside its own frame.
-- The report is laid out to the width of the window rather than a 60rem reading
-  column, so the page and its text get the room.
-- Findings on the security page arrive ordered by severity, and every column there
-  can be sorted.
-- The page heading repeating the folder path, the timestamp and the version is gone.
-  All of it is recorded once, in the footer.
-- The panels are one fixed frame, identical on every document and every page. Their
-  height used to follow whichever page image was loaded, so the workspace resized
-  every time you stepped a page or picked another file. A document nobody could open
-  now draws the same workspace with the reason inside it, rather than a different
-  block that resized the page on arrival.
-- The file list sits at the height of the panels, not the column that holds them.
-- Every page starts the same distance below the tab bar, whether or not it opens on
-  a heading.
-- The Documents page is the file list and the two panels, and nothing else. The
-  folder-wide table of readiness signals, the per-document summary line and the list
-  of poorly rated signals moved to that document's own Signals tab, where they answer
-  a question the reader has actually asked.
-
 ### Fixed
 
+- Two extractors that read a page in a different order are now reported as
+  disagreeing. The comparison used to be a character count, which cannot see the
+  case it most needs to: on a two-column page, one library reads down the columns
+  and another straight across, interleaving every sentence, and both return the
+  same number of characters. Readings are now compared in order, and the report
+  names the kind of difference rather than only that there was one.
+- Pointing at a sensitive mark on the page layout does something. The marks are drawn
+  as outlines, and an SVG shape with no fill answers the pointer only along its stroke —
+  on a mark six pixels tall that is two hairlines, so hovering the middle of one hit
+  nothing. The explanation also appears under the page at once rather than waiting for
+  the browser's own tooltip, and the marks can be tabbed to.
 - DOCX merged cells were counted by object identity, which made the count depend on
   memory reuse and differ between processes reading the same file. They are read from
   the markup now.
+- The OCR engine registers its own shutdown cleanup, at the point it creates the
+  native threads, instead of relying on another module importing it during
+  interpreter teardown — when the import machinery may already be gone, and a run
+  that had already succeeded aborts with a mutex error.
+- The file list sat in the right place only some of the time. `.spread:not([hidden])` also
+  matched a panel hidden along with the whole Pages view, because the attribute sits on the
+  container, so the list was being centred on a zero-height ghost whenever the signals tab
+  was showing. It also now re-aligns when a page is first shown, which it could not do while
+  it was hidden.
+- An imported price is no longer reported as a verification that went stale. It was
+  never claimed to be verified, and warning once per model buried the run's real
+  limitations under a dozen copies of what the provenance entry says once.
+
+### Documentation
+
+- The README is written for someone running the tool: what it does, how to run it, what the
+  flags mean. Architecture, adding a signal, fixtures and the release process moved to
+  CONTRIBUTING.md, and this changelog now ships inside the package, so an installed copy can
+  say what changed in the version you have.
+- The README says how to keep an installed copy up to date, and why `--reinstall`
+  matters as much as `--force`.
 
 ## [0.1.0]
 
@@ -241,5 +221,6 @@ First release.
   type-proportional subset of a large folder, `--password` opens encrypted PDFs.
 - A packaged agent skill, installed with the tool, so an agent can be told to use it.
 
-[Unreleased]: https://github.com/duartecaldascardoso/complydoc/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/duartecaldascardoso/complydoc/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/duartecaldascardoso/complydoc/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/duartecaldascardoso/complydoc/releases/tag/v0.1.0

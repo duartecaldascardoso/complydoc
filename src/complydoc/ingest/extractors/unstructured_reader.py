@@ -53,9 +53,20 @@ class UnstructuredExtractor:
             return found
 
         try:
-            elements = _elements_for(source.path).get(source.number, [])
+            by_page = _elements_for(source.path)
         except Exception as exc:
             found.notes.append(f"text extraction failed: {exc}")
+            return found
+
+        elements = by_page.get(source.number, [])
+        if not elements:
+            # Silence here would look like a blank page. It is the reader
+            # declining to segment this one, which is a different thing.
+            found.notes.append(
+                f"unstructured returned nothing for this page "
+                f"(it segmented {sum(len(v) for v in by_page.values())} elements "
+                f"across pages {sorted(by_page) or 'none'})"
+            )
             return found
 
         pieces: list[str] = []

@@ -269,4 +269,5 @@ def test_the_segmenting_reader_runs_entirely_on_this_machine():
     finally:
         if not was_armed:
             disarm()
-    assert document.pages[0].text.strip().startswith("TERMS AND CONDITIONS")
+    page = document.pages[0]
+    assert page.text.strip().startswith("TERMS AND CONDITIONS"), page.notes

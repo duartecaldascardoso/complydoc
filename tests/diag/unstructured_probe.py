@@ -20,6 +20,16 @@ for strategy in ("fast", "auto"):
     except Exception as exc:
         print("RESULT", strategy, "raised", type(exc).__name__, exc)
 
+from complydoc.offline import arm
+
+arm()
+for strategy in ("fast",):
+    try:
+        els = partition_pdf("tests/fixtures/two_column.pdf", strategy=strategy)
+        print("RESULT armed", strategy, len(els))
+    except Exception as exc:
+        print("RESULT armed", strategy, "raised", type(exc).__name__, exc)
+
 from unstructured.partition.pdf import extractable_elements
 
 try:

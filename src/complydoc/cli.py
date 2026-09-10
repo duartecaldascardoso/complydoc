@@ -828,11 +828,17 @@ def extractors() -> None:
     table.add_column("Available")
 
     for engine in all_extractors():
+        if engine.available():
+            state = "yes"
+        elif engine.needs_install:
+            state = f'[yellow]pip install "{engine.needs_install}"[/]'
+        else:  # pragma: no cover - a hard dependency that failed to import
+            state = "[yellow]no[/]"
         table.add_row(
             f"{engine.id}[dim] (default)[/]" if engine.id == DEFAULT_EXTRACTOR else engine.id,
-            f"per {engine.granularity}",
+            "[dim]none[/]" if engine.granularity == "none" else f"per {engine.granularity}",
             "yes" if engine.provides_tables else "[dim]no[/]",
-            "yes" if engine.available() else "[yellow]no[/]",
+            state,
         )
     console.print(table)
     console.print(

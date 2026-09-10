@@ -54,8 +54,8 @@ def build_limitations(
             Limitation(
                 area="Extraction",
                 statement=(
-                    f"{count(len(differing), 'document')} were read differently by the "
-                    f"extractors this run compared ({names}). The findings come from the "
+                    f"The extractors this run compared ({names}) read "
+                    f"{count(len(differing), 'document')} differently. The findings come from the "
                     f"first of them, so what the others read is not reflected anywhere but "
                     f"here — on those documents the choice of extractor changes the answer."
                 ),

@@ -14,15 +14,21 @@ returning a number that means something else.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from complydoc.ingest.base import Rect, TableInfo, TextBlock
 
 __all__ = ["Extraction", "Extractor", "Granularity", "PageSource", "rect_from"]
 
-Granularity = Literal["word", "line"]
-"""How finely the boxes divide the page. Coverage from line boxes counts the gaps
-between words as text, so the two are not interchangeable."""
+Granularity = Literal["word", "line", "block", "none"]
+"""How finely the boxes divide the page.
+
+Coverage from line boxes counts the gaps between words as text, and coverage
+from paragraph boxes counts the gaps between lines as well, so the three are not
+interchangeable. `"none"` is for a reader that returns text and no geometry at
+all: it reports no coverage rather than nought per cent, which would read as an
+empty page."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +42,12 @@ class PageSource:
 
     plumber: Any = None
     pdfium: Any = None
+    pypdf: Any = None
+    """The reader the loader already opened, decrypted if the file was."""
+    path: Path | None = None
+    """The file itself, for readers that work on a document rather than a page."""
+    number: int = 1
+    """Which page this is, one-based, for those same readers."""
 
 
 @dataclass(slots=True)
@@ -61,8 +73,14 @@ class Extraction:
     def characters(self) -> int:
         return len(self.text.strip())
 
-    def coverage_pct(self, width: float, height: float) -> float:
-        """Share of the page covered by text boxes."""
+    def coverage_pct(self, width: float, height: float) -> float | None:
+        """Share of the page covered by text boxes, or None if none were returned.
+
+        A reader that hands back text without geometry has not measured nought
+        per cent coverage; it has not measured coverage.
+        """
+        if self.granularity == "none":
+            return None
         if width <= 0 or height <= 0:
             return 0.0
         covered = sum(b.bbox.area for b in self.blocks)
@@ -78,6 +96,12 @@ class Extractor(Protocol):
     provides_tables: bool
     provides_raw_chars: bool
     granularity: Granularity
+    needs_install: str
+    """The extra that installs this reader, or empty when it always ships.
+
+    Named rather than implied, so `complydoc extractors` can tell someone what
+    to install instead of only that something is missing.
+    """
 
     def available(self) -> bool:
         """Whether this extractor can run here at all."""

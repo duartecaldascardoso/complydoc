@@ -19,6 +19,18 @@ branch on when reading reports programmatically.
 
 ### Added
 
+- Two more readers for a PDF's text layer, bringing the count to four.
+  `pypdf` ships already and costs no install: it returns text and no geometry,
+  so it reports coverage as not measured rather than as nought per cent, and it
+  is a genuinely separate implementation to compare against. `unstructured` is
+  optional (`pip install "complydoc[loaders]"`) and segments the page into
+  paragraphs before reading it, which is why it handles columns. It runs only
+  in its local `fast` strategy; the strategy that fetches layout models over
+  the network is never used.
+- `complydoc extractors` names the extra that installs a reader it cannot find,
+  instead of only reporting it as unavailable.
+
+
 - Extractors are pluggable, and more than one can run in a single pass.
   `--extractor` picks which library reads the text layer; `--compare-extractor`
   reads every page with a second one as well and reports where the two differ.

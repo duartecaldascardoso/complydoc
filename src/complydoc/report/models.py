@@ -124,7 +124,8 @@ class ExtractorReading:
 
     extractor: str
     characters: int
-    mean_coverage_pct: float
+    mean_coverage_pct: float | None
+    """None when the reader returns no geometry to measure coverage from."""
     seconds: float
     granularity: str
     reads_tables: bool

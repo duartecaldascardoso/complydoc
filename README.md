@@ -64,6 +64,9 @@ The second line puts the spaCy model inside the tool's own environment, which
 `spacy download` cannot do because it shells out to pip and a uv tool environment has
 none. `complydoc doctor` says which extras it can see.
 
+A fourth PDF reader, `unstructured`, is available as `--with "unstructured[pdf]"` on the
+same line. It is only worth installing if you intend to compare readers: see below.
+
 ## Use
 
 ```bash
@@ -102,6 +105,7 @@ anything that cannot be opened is skipped and reported rather than failing the r
 | `--reveal` | Prints identifiers in full instead of masked, and stamps the report |
 | `--no-ocr` | Skips reading scanned pages. Faster, and finds less |
 | `--no-page-images` / `--no-extracted-text` | Leave the document content out of the report |
+| `--extractor <id>` | Which library reads the text layer. The default is pdfplumber |
 | `--compare-extractor <id>` | Reads every page with a second library too, and keeps what each read |
 | `--compare-ocr-engine <id>` | The same for OCR engines, which disagree far more than the extractors |
 | `--jobs N` | Fixes the worker count. The default reads the folder size and decides |
@@ -116,6 +120,44 @@ the same documents, so their reports compare.
 > check what was extracted against what was there. That means the file holds the identifiers
 > it masks elsewhere. Treat it as you would treat the documents. `--no-extracted-text` and
 > `--no-page-images` produce a report with no document content in it.
+
+## Reading the same page twice
+
+Four libraries can read a PDF's text layer, and they do not always agree. `complydoc
+extractors` lists them:
+
+| Reader | Boxes | Tables | Install |
+| --- | --- | --- | --- |
+| `pdfplumber` | per word | yes | ships |
+| `pdfium` | per line | no | ships |
+| `pypdf` | none | no | ships |
+| `unstructured` | per paragraph | no | `unstructured[pdf]` |
+
+`--compare-extractor` reads every page with a second reader as well and reports where the
+two differ. Only the first reaches a finding; the rest are measured and never adopted. The
+comparison lives inside one run — the same page on the same machine at the same moment —
+so a difference is a difference between the libraries and not between two runs.
+
+They are compared in order, not by size, because the case worth catching does not change
+the size. On a two-column page, `pdfplumber` walks the text layer in the order the file
+stores it, which runs across both columns and interleaves every sentence with one from the
+other side. It returns the same number of characters as the readers that get it right. The
+report says `same text, different order` when that happens, and with `--extracted-text` on
+you can switch between what each reader made of the page and see it.
+
+`pdfplumber` remains the default because it is the only one that gives a box per word and
+finds ruled tables, which several findings need. If your documents are laid out in columns,
+compare it against `pypdf` — that costs no install and no measurable time — and look at
+what the comparison says before trusting the reading.
+
+```bash
+complydoc audit ./contracts --compare-extractor pypdf --compare-extractor pdfium
+```
+
+A reader that returns no geometry, like `pypdf`, reports coverage as not measured rather
+than as nought per cent, and the findings that need boxes say the same. `unstructured` is
+run only in its `fast` strategy, which is local arithmetic; its `hi_res` strategy fetches
+layout models over the network and is never used.
 
 ## The report
 

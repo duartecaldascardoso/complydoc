@@ -64,6 +64,22 @@ jobs:
       - name: tests
         run: uv run pytest -q
 
+  test-loaders:
+    name: tests with the optional readers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      # Its own job rather than the matrix: it is twenty-odd extra packages,
+      # and the point of the extra is that the tool works without them, which
+      # every other job checks by not installing it.
+      - run: uv sync --extra ocr --extra loaders --group dev
+      - name: tests
+        run: uv run pytest -q
+
   fixtures:
     name: fixtures match their generator
     runs-on: ubuntu-latest

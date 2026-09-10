@@ -98,7 +98,8 @@ class ExtractionSummary:
 
     extractor: str
     characters: int
-    coverage_pct: float
+    coverage_pct: float | None
+    """None when the reader returns no geometry, which is not nought coverage."""
     seconds: float
     granularity: str
     tables_found: int | None

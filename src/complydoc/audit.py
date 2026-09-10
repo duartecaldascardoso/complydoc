@@ -121,24 +121,26 @@ def extractor_readings(document: Document) -> list[ExtractorReading]:
         for summary in page.extractions:
             if summary.extractor not in totals:
                 order.append(summary.extractor)
-                totals[summary.extractor] = [0.0, 0.0, 0.0, 0.0]
+                totals[summary.extractor] = [0.0, 0.0, 0.0, 0.0, 0.0]
                 shape[summary.extractor] = (summary.granularity, summary.reads_tables)
             row = totals[summary.extractor]
             row[0] += summary.characters
-            row[1] += summary.coverage_pct
             row[2] += summary.seconds
             row[3] += 1
+            if summary.coverage_pct is not None:
+                row[1] += summary.coverage_pct
+                row[4] += 1
             worst[summary.extractor] = min(worst.get(summary.extractor, 1.0), summary.similarity)
 
     readings: list[ExtractorReading] = []
     for name in order:
-        characters, coverage, seconds, pages = totals[name]
+        characters, coverage, seconds, _pages, measured = totals[name]
         granularity, reads_tables = shape[name]
         readings.append(
             ExtractorReading(
                 extractor=name,
                 characters=int(characters),
-                mean_coverage_pct=round(coverage / pages, 2) if pages else 0.0,
+                mean_coverage_pct=round(coverage / measured, 2) if measured else None,
                 seconds=round(seconds, 4),
                 granularity=granularity,
                 reads_tables=reads_tables,

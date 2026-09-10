@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 
+from complydoc.audit import extractor_readings
 from complydoc.config.loader import load_config
 from complydoc.ingest.base import IngestOptions
 from complydoc.ingest.extractors.registry import (
@@ -21,7 +22,6 @@ from complydoc.ingest.extractors.registry import (
 )
 from complydoc.ingest.registry import load_document
 from complydoc.readiness.analyser import analyse
-from complydoc.audit import extractor_readings
 from complydoc.report.models import DocumentReport, ExtractorReading
 from tests.helpers import FIXTURES
 
@@ -38,9 +38,9 @@ def reading(name: str, characters: int, similarity: float = 1.0) -> ExtractorRea
     )
 
 
-def test_the_registry_finds_both_extractors():
+def test_the_registry_finds_the_readers_that_always_ship():
     ids = {e.id for e in all_extractors()}
-    assert {"pdfplumber", "pdfium"} <= ids
+    assert {"pdfplumber", "pdfium", "pypdf"} <= ids
     assert extractor_by_id(DEFAULT_EXTRACTOR) is not None
 
 
@@ -49,7 +49,15 @@ def test_every_extractor_declares_what_it_can_do():
     for engine in all_extractors():
         assert isinstance(engine.provides_tables, bool)
         assert isinstance(engine.provides_raw_chars, bool)
-        assert engine.granularity in {"word", "line"}
+        assert engine.granularity in {"word", "line", "block", "none"}
+        assert isinstance(engine.needs_install, str)
+
+
+def test_a_reader_behind_an_extra_names_the_extra():
+    """ "Not available" without saying what installs it is a dead end."""
+    for engine in all_extractors():
+        if not engine.available():
+            assert engine.needs_install, engine.id
 
 
 def test_the_default_run_uses_one_extractor_and_says_which():
@@ -199,3 +207,66 @@ def test_either_extractor_can_read_a_plain_page(name):
     document = load_document(FIXTURES / "dense_text.pdf", IngestOptions(extractor=name))
     assert document.full_text.strip()
     assert document.pages[0].text_blocks
+
+
+def test_a_reader_without_geometry_reports_no_coverage_rather_than_none_of_it():
+    """pypdf returns text and no boxes.
+
+    Nought per cent coverage would read as a page with nothing on it, which is
+    the opposite of what happened.
+    """
+    document = load_document(FIXTURES / "dense_text.pdf", IngestOptions(extractor="pypdf"))
+    summary = document.pages[0].extractions[0]
+    assert summary.characters > 1000
+    assert summary.coverage_pct is None
+
+
+def test_the_signals_that_need_boxes_say_so_when_a_reader_has_none():
+    config = load_config()
+    document = load_document(FIXTURES / "dense_text.pdf", IngestOptions(extractor="pypdf"))
+    result = analyse(document, config.readiness)
+    assert any(s.rating is None for s in result.signals)
+
+
+def test_three_readers_agree_that_the_default_one_scrambles_two_columns():
+    """The finding this comparison exists to make.
+
+    pdfplumber walks the text layer in file order, which on this page runs
+    across both columns and interleaves every sentence with one from the other
+    side. pdfium, pypdf and unstructured share no code with it or with each
+    other, and all three read the columns in order.
+    """
+    document = load_document(
+        FIXTURES / "two_column.pdf",
+        IngestOptions(compare_extractors=("pdfium", "pypdf"), keep_readings=True),
+    )
+    readings = document.pages[0].readings
+    others = [" ".join(readings[name].split()) for name in ("pdfium", "pypdf")]
+    assert others[0][:60] == others[1][:60], "the two independent readers agree"
+    assert " ".join(readings["pdfplumber"].split())[:60] != others[0][:60]
+    assert min(r.similarity for r in extractor_readings(document)) < 0.5
+
+
+@pytest.mark.skipif(
+    extractor_by_id("unstructured") is None or not extractor_by_id("unstructured").available(),
+    reason="the loaders extra is not installed",
+)
+def test_the_segmenting_reader_runs_entirely_on_this_machine():
+    """It is only allowed the `fast` strategy, and that is why.
+
+    `hi_res` would fetch layout-detection models from Hugging Face on first
+    use. Read with the guard armed, as a real run reads, so a reader that
+    reached for the network raises here rather than quietly downloading.
+    """
+    from complydoc.offline import arm, disarm, is_armed
+
+    was_armed = is_armed()
+    arm()
+    try:
+        document = load_document(
+            FIXTURES / "two_column.pdf", IngestOptions(extractor="unstructured")
+        )
+    finally:
+        if not was_armed:
+            disarm()
+    assert document.pages[0].text.strip().startswith("TERMS AND CONDITIONS")

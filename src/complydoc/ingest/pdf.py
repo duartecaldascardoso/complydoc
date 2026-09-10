@@ -494,7 +494,13 @@ class PdfLoader:
 
         page = Page(number=index + 1, width_pt=width, height_pt=height, rotation=rotation)
 
-        source = PageSource(plumber=plumber_page, pdfium=pdfium_page)
+        source = PageSource(
+            plumber=plumber_page,
+            pdfium=pdfium_page,
+            pypdf=reader,
+            path=document.path,
+            number=index + 1,
+        )
         kept = self._extract(page, source, width, height, options)
         page.text = kept.text
         page.text_source = "native" if page.text.strip() else "none"

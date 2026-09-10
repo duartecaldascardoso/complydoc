@@ -896,7 +896,9 @@ before reading that as an all-clear.</p>
             <tr{% if loop.first %} class="d-head"{% endif %}>
               <td>{{ r.extractor }}{% if loop.first %} <span class="flag">kept</span>{% endif %}</td>
               <td class="n">{{ "{:,}".format(r.characters) }}</td>
-              <td class="n">{{ r.mean_coverage_pct }}%</td>
+              <td class="n">{% if r.mean_coverage_pct is none %}<span class="why"
+                title="This reader returns text without geometry, so there is nothing to
+                  measure coverage from.">not measured</span>{% else %}{{ r.mean_coverage_pct }}%{% endif %}</td>
               <td class="n">{{ duration(r.seconds) }}</td>
               <td class="n">{% if loop.first %}—{% else %}{{ "{:.0f}%".format(r.similarity * 100) }}{% endif %}</td>
               <td class="why">{{ r.granularity }} boxes{% if r.reads_tables %}, table structure{% endif %}</td>

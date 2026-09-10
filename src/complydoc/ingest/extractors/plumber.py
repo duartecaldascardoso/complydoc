@@ -20,6 +20,7 @@ class PlumberExtractor:
     provides_tables = True
     provides_raw_chars = True
     granularity = "word"
+    needs_install = ""
 
     def available(self) -> bool:
         return True

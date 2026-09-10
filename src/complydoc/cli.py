@@ -525,39 +525,50 @@ def demo(
     two-column page the readers disagree about, a whitespace table, and
     identifiers of several kinds — the problems this exists to find.
     """
-    from importlib.resources import as_file, files
+    folder = _sample_folder()
+    if folder is None:
+        errors.print("[bold red]The sample documents are missing from this install.[/]")
+        raise typer.Exit(code=2)
 
-    with as_file(files("complydoc.sample")) as folder:
-        if not quiet_default_target(folder):
-            errors.print("[bold red]The sample documents are missing from this install.[/]")
-            raise typer.Exit(code=2)
-        console.print(
-            "[dim]Auditing the six sample documents that ship with complydoc. "
-            "They are synthetic — no real person is described in them.[/]"
-        )
-        _run(
-            folder,
-            COMPONENTS,
-            out,
-            "complydoc-demo",
-            None,
-            ocr,
-            True,
-            False,
-            page_images=True,
-            extracted_text=True,
-            # The comparison is most of what makes the sample worth looking at:
-            # one of these documents is read differently by different libraries.
-            compare_extractors=["pypdf"],
-        )
-
+    console.print(
+        "[dim]Auditing the six sample documents that ship with complydoc. "
+        "They are synthetic — no real person is described in them.[/]"
+    )
+    _run(
+        folder,
+        COMPONENTS,
+        out,
+        "complydoc-demo",
+        None,
+        ocr,
+        True,
+        False,
+        page_images=True,
+        extracted_text=True,
+        # The comparison is most of what makes the sample worth looking at:
+        # one of these documents is read differently by different libraries.
+        compare_extractors=["pypdf"],
+    )
     if open_report:
         _open((out / "complydoc-demo.html").resolve())
 
 
-def quiet_default_target(folder: Path) -> bool:
-    """Whether the sample folder actually holds documents."""
-    return folder.is_dir() and any(p.is_file() and p.suffix != ".md" for p in folder.iterdir())
+def _sample_folder() -> Path | None:
+    """Where the shipped sample documents are, or None if they are not there.
+
+    `importlib.resources.as_file` only learned to hand back a directory in
+    3.12, and this supports 3.11. Resolving the package directory works on
+    every version for a normal install, which is the only kind there is: the
+    wheel is unpacked, never imported from a zip.
+    """
+    from importlib.resources import files
+
+    try:
+        folder = Path(str(files("complydoc"))) / "sample"
+    except (TypeError, ModuleNotFoundError):  # pragma: no cover - a zipimported install
+        return None
+    documents = [p for p in folder.iterdir() if p.is_file()] if folder.is_dir() else []
+    return folder if documents else None
 
 
 def _open(path: Path) -> None:

@@ -82,6 +82,8 @@ complydoc sensitive ~/invoices                    # only the identifier scan
 complydoc readiness ~/invoices                    # only the extraction signals
 complydoc cost ~/invoices                         # only the price estimate
 complydoc models --new 15                         # the newest models it can price against
+complydoc extractors                              # libraries that can read a text layer
+complydoc engines                                 # local OCR engines
 complydoc doctor                                  # what is installed
 ```
 
@@ -100,6 +102,8 @@ anything that cannot be opened is skipped and reported rather than failing the r
 | `--reveal` | Prints identifiers in full instead of masked, and stamps the report |
 | `--no-ocr` | Skips reading scanned pages. Faster, and finds less |
 | `--no-page-images` / `--no-extracted-text` | Leave the document content out of the report |
+| `--compare-extractor <id>` | Reads every page with a second library too, and keeps what each read |
+| `--compare-ocr-engine <id>` | The same for OCR engines, which disagree far more than the extractors |
 | `--jobs N` | Fixes the worker count. The default reads the folder size and decides |
 | `--print-json` | Puts the JSON on stdout and nothing else |
 

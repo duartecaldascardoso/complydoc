@@ -176,8 +176,15 @@
   .key span { display: inline-flex; align-items: center; gap: 0.3125rem; }
   .sw { width: 11px; height: 11px; display: inline-block; border: 1px solid var(--line-2); }
   /* The marks carry their own explanation, so say they are worth pointing at. */
+  /* The mark is an outline, and an SVG shape with no fill only answers the
+     pointer along its stroke — on a mark six pixels tall that is two hairlines,
+     which is why pointing at one did nothing. */
   .pv-mark { cursor: help; }
+  .pv-mark rect { pointer-events: all; }
   .pv-mark:hover rect { stroke-width: 2.4; }
+  .mark-detail { display: block; color: var(--ink); }
+  .mark-detail b { font-weight: 600; }
+  .mark-detail .why { display: block; color: var(--muted); }
   .filter { display: flex; gap: 0.5rem; align-items: baseline; margin: 0 0 0.75rem; }
   .filter input { font: inherit; font-size: 0.875rem; padding: 0.3125rem 0.5rem;
                   border: 1px solid var(--line-2); background: var(--panel); color: inherit;
@@ -798,39 +805,55 @@ before reading that as an all-clear.</p>
                 <div class="body"><p class="note">This page could not be read.</p></div>
               {% endif %}
               <div class="pcap">
-                {%- for level, label in row.flags %}<span class="flag {{ level }}">{{ label }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
+                <span class="flags">
+                  {%- for level, label in row.flags %}<span class="flag {{ level }}">{{ label }}</span>{% if not loop.last %} · {% endif %}{% endfor -%}
+                </span>
+                {# Filled in while the reader points at a mark on the layout.
+                   The browser's own tooltip says the same thing, after its own
+                   delay; this says it at once and without covering the page. #}
+                <span class="mark-detail" hidden></span>
               </div>
             </div>
 
             <div class="side">
-              {# Both panes are only worth offering when they can differ. On a page
-                 with no text layer the extracted text IS the OCR output, so a
-                 switch between them would be a switch between one thing and
-                 itself; --ocr-compare is what makes the comparison real. #}
+              {# One pane per reader that was asked to read this page, so what
+                 each made of it can be put side by side. Comparing a page with
+                 no text layer against its own OCR output would be comparing a
+                 thing to itself; --ocr-compare is what makes that one real,
+                 and --compare-extractor or --compare-ocr-engine the rest. #}
               {% set compare = row.source == "native" and row.ocr_text %}
+              {% set panes = [] %}
+              {# When several readers are being compared, the first pane is named
+                 after the one whose reading the report was built from, so the
+                 switch reads as a list of readers rather than one odd one out. #}
+              {%- set kept_label = (report.run.extractor if row.readings and row.source != "ocr"
+                                    else ("what OCR read" if row.source == "ocr" else "text layer")) -%}
+              {%- if row.text or row.ocr_text -%}
+                {%- set _ = panes.append(("text", kept_label, row.text or row.ocr_text)) -%}
+              {%- endif -%}
+              {%- if compare -%}{%- set _ = panes.append(("ocr", "what OCR sees", row.ocr_text)) -%}{%- endif -%}
+              {%- for name, text in row.readings.items() if text != (row.text or row.ocr_text) -%}
+                {%- set _ = panes.append(("read-" ~ loop.index0, name, text)) -%}
+              {%- endfor -%}
               <div class="lbl">
-                {% if compare %}
+                {% if panes | length > 1 %}
                 <span class="swap" role="group">
-                  <button type="button" data-face="text" aria-selected="true">text layer</button>
-                  <button type="button" data-face="ocr" aria-selected="false">what OCR sees</button>
+                  {% for key, label, _text in panes %}
+                  <button type="button" data-face="{{ key }}"
+                          aria-selected="{{ "true" if loop.first else "false" }}">{{ label }}</button>
+                  {% endfor %}
                 </span>
-                {% elif row.source == "ocr" %}what OCR read from this page
-                {% elif row.text %}text read from this page
+                {% elif panes %}{{ panes[0][1] }} from this page
                 {% else %}content{% endif %}
               </div>
-              {% if row.text or row.ocr_text %}
-                <div class="face" data-face="text">
-                  <div class="body"><pre>{{ row.text or row.ocr_text }}</pre></div>
-                  <p class="pcap">{{ "{:,}".format(row.characters or (row.ocr_text | length)) }}
-                    characters{% if row.source %}, read as {{ row.source }}{% endif %}
-                    {%- if row.truncated %}, truncated for the report{% endif %}</p>
+              {% if panes %}
+                {% for key, label, text in panes %}
+                <div class="face" data-face="{{ key }}" {% if not loop.first %}hidden{% endif %}>
+                  <div class="body"><pre>{{ text }}</pre></div>
+                  <p class="pcap">{{ "{:,}".format(text | length) }} characters, {{ label }}
+                    {%- if loop.first and row.truncated %}, truncated for the report{% endif %}</p>
                 </div>
-                {% if compare %}
-                <div class="face" data-face="ocr" hidden>
-                  <div class="body"><pre>{{ row.ocr_text }}</pre></div>
-                  <p class="pcap">{{ "{:,}".format(row.ocr_text | length) }} characters read by OCR</p>
-                </div>
-                {% endif %}
+                {% endfor %}
               {% elif row.preview and row.preview.unreadable %}
                 <div class="body"><p class="note">Nothing was read from this page. It carries no
                 text layer, and {% if report.run.ocr_requested %}OCR found nothing on it
@@ -1231,6 +1254,43 @@ before reading that as an all-clear.</p>
       if (event.target === jump || event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === "ArrowLeft") { show(at - 1); event.preventDefault(); }
       if (event.key === "ArrowRight") { show(at + 1); event.preventDefault(); }
+    });
+
+    // Pointing at a mark on the layout says what it is, under the page. The
+    // <title> in the markup says the same thing for a reader without script and
+    // for a screen reader; this is only quicker.
+    Array.prototype.slice.call(doc.querySelectorAll(".pv-mark")).forEach(function (mark) {
+      var caption = mark.closest(".side") && mark.closest(".side").querySelector(".pcap");
+      if (!caption) return;
+      var flags = caption.querySelector(".flags");
+      var detail = caption.querySelector(".mark-detail");
+      var title = mark.querySelector("title");
+      if (!detail || !title) return;
+
+      function show() {
+        var lines = title.textContent.split("\n");
+        detail.textContent = "";
+        var head = document.createElement("b");
+        head.textContent = lines[0];
+        detail.appendChild(head);
+        if (lines.length > 1) {
+          var rest = document.createElement("span");
+          rest.className = "why";
+          rest.textContent = lines.slice(1).join(" ");
+          detail.appendChild(rest);
+        }
+        detail.hidden = false;
+        if (flags) flags.hidden = true;
+      }
+      function hide() {
+        detail.hidden = true;
+        if (flags) flags.hidden = false;
+      }
+      mark.addEventListener("pointerenter", show);
+      mark.addEventListener("pointerleave", hide);
+      mark.addEventListener("focus", show);
+      mark.addEventListener("blur", hide);
+      mark.setAttribute("tabindex", "0");
     });
 
     // The page/layout and text/OCR switches, scoped to the side they sit in.

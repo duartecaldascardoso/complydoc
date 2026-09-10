@@ -16,14 +16,16 @@ branch on when reading reports programmatically.
   Only the first reaches a finding — the rest are measured, never adopted.
   Comparison lives inside a run, so it is the same page on the same machine at the
   same moment rather than two runs that would differ for reasons of their own.
-  `complydoc extractors` lists them.
+  `complydoc extractors` lists them. With `--extracted-text` on, what each reader made
+  of a page is kept, so the Documents page can switch between them and show the text
+  itself rather than only how much of it there was.
 - pdfium as a second extractor: measured against pdfplumber on a real 392-page book
   the two agree on the text within one to two per cent, and pdfium reads it about
   thirteen times faster. It provides no table structure and a box per line rather
   than per word, so the signals that need those report that they could not measure
   rather than returning a number that means something else.
-- OCR engines are pluggable the same way, with `--ocr-engine` and
-  `complydoc engines`. Tesseract is included for anyone who already has it; it is
+- OCR engines are pluggable the same way, with `--ocr-engine`,
+  `--compare-ocr-engine` and `complydoc engines`. Tesseract is included for anyone who already has it; it is
   not a dependency, because it needs a system binary.
 
 - `--save-text <dir>` keeps the text complydoc read, one file per document. Reading a
@@ -53,6 +55,11 @@ branch on when reading reports programmatically.
 
 ### Fixed
 
+- Pointing at a sensitive mark on the page layout does something. The marks are drawn
+  as outlines, and an SVG shape with no fill answers the pointer only along its stroke —
+  on a mark six pixels tall that is two hairlines, so hovering the middle of one hit
+  nothing. The explanation also appears under the page at once rather than waiting for
+  the browser's own tooltip, and the marks can be tabbed to.
 - The OCR engine registers its own shutdown cleanup, at the point it creates the
   native threads, instead of relying on another module importing it during
   interpreter teardown — when the import machinery may already be gone, and a run

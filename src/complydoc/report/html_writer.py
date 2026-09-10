@@ -7,7 +7,7 @@ no external assets and no scripts to fetch.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -117,6 +117,8 @@ class PageRow:
     source: str = ""
     characters: int = 0
     truncated: bool = False
+    readings: dict[str, str] = field(default_factory=dict)
+    """What each reader compared on this run made of the page, by name."""
 
     @property
     def flags(self) -> list[tuple[str, str]]:
@@ -144,6 +146,7 @@ def page_rows(document: DocumentReport) -> list[PageRow]:
                 source=text.source if text else "",
                 characters=text.characters if text else 0,
                 truncated=bool(text and text.truncated),
+                readings=dict(text.readings) if text else {},
             )
         )
     return rows

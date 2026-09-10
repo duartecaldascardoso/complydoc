@@ -144,6 +144,13 @@ class Page:
     """
     extractions: list[ExtractionSummary] = field(default_factory=list)
     """One per extractor asked for, including the one whose output was kept."""
+    readings: dict[str, str] = field(default_factory=dict)
+    """What each extractor and OCR engine made of this page, by name.
+
+    Only populated for the readers a run was asked to compare, and only when the
+    run is keeping text at all. It is the page's words several times over, so it
+    is the largest thing a comparison adds to a report.
+    """
     raster: Image | None = None
     """Populated only for pages a signal actually needs to look at as pixels."""
     notes: list[str] = field(default_factory=list)
@@ -236,6 +243,10 @@ class IngestOptions:
     """Which extractor's output the report is built from."""
     compare_extractors: tuple[str, ...] = ()
     """Others to run alongside, for comparison only. They never change a finding."""
+    compare_engines: tuple[str, ...] = ()
+    """OCR engines to read every rasterised page with, beside the one in use."""
+    keep_readings: bool = False
+    """Whether to hold on to what each reader made of the page, not just how much."""
     password: str = ""
     """Tried on encrypted files before falling back to an empty password."""
     ocr_compare: bool = False

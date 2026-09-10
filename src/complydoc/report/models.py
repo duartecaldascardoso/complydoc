@@ -75,6 +75,7 @@ class RunMetadata:
     extractor: str = "pdfplumber"
     """Which extractor's reading the findings were built from."""
     compare_extractors: list[str] = field(default_factory=list)
+    compare_engines: list[str] = field(default_factory=list)
     jobs: int = 1
     """Worker processes used. More than one changes nothing about the findings."""
     sampled_from: int | None = None
@@ -105,6 +106,8 @@ class PageText:
     text: str
     ocr_text: str = ""
     truncated: bool = False
+    readings: dict[str, str] = field(default_factory=dict)
+    """What each reader compared on this run made of the page, by name."""
 
 
 @dataclass(frozen=True, slots=True)

@@ -223,3 +223,24 @@ def test_a_name_from_the_model_is_not_called_a_pattern(loader, config):
     ner = [m for m in result.matches if config.sensitive.categories[m.category].detector == "ner"]
     for match in ner:
         assert "pattern" not in _why_sensitive(match, config.sensitive)
+
+
+def test_a_sensitive_mark_answers_the_pointer_across_its_whole_area():
+    """An SVG shape with no fill answers the pointer only along its stroke.
+
+    On a mark six pixels tall that is two hairlines, so pointing at the middle
+    of one did nothing at all.
+    """
+    from complydoc.report import html_writer
+
+    styles = (html_writer._TEMPLATE_DIR / "report.html.j2").read_text()
+    assert ".pv-mark rect { pointer-events: all; }" in styles
+
+
+def test_the_explanation_is_reachable_without_a_pointer():
+    """A tooltip nobody can tab to is a tooltip some readers never get."""
+    from complydoc.report import html_writer
+
+    template = (html_writer._TEMPLATE_DIR / "report.html.j2").read_text()
+    assert 'mark.setAttribute("tabindex", "0")' in template
+    assert 'mark.addEventListener("focus", show)' in template

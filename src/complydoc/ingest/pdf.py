@@ -401,6 +401,7 @@ class PdfLoader:
 
         self._apply_ocr(document, options, ocr_module, needs_raster)
         self._apply_ocr_compare(document, options, ocr_module)
+        self._apply_second_engines(document, options)
         return document
 
     @staticmethod
@@ -444,6 +445,8 @@ class PdfLoader:
                     tables_found=len(found.tables) if engine.provides_tables else None,
                 )
             )
+            if options.keep_readings and found.text.strip():
+                page.readings[name] = found.text
             if kept is None:
                 kept = found
 
@@ -537,6 +540,34 @@ class PdfLoader:
         return page
 
     @staticmethod
+    def _apply_second_engines(document: Document, options: IngestOptions) -> None:
+        """Read every rasterised page with the other OCR engines as well.
+
+        Unlike the PDF extractors, which agree on a page's text to within a per
+        cent, OCR engines genuinely disagree — they read different words and
+        differ about how sure they are. Only the selected engine's reading is
+        used; the rest are here to be read beside it.
+        """
+        if not options.compare_engines or not options.keep_readings:
+            return
+        from complydoc.ingest.engines.registry import engine_by_id
+
+        for name in dict.fromkeys(options.compare_engines):
+            engine = engine_by_id(name)
+            if engine is None or not engine.available():
+                continue
+            for page in document.pages:
+                if page.raster is None:
+                    continue
+                try:
+                    read = engine.read(page.raster)
+                except Exception as exc:  # pragma: no cover - a bad page is not fatal
+                    page.notes.append(f"OCR engine {name!r} failed: {exc}")
+                    continue
+                if read.text.strip():
+                    page.readings[name] = read.text
+
+    @staticmethod
     def _apply_ocr_compare(document: Document, options: IngestOptions, ocr_module: Any) -> None:
         """Read every rasterised page with OCR as well, for side-by-side comparison."""
         if not options.ocr_compare or not ocr_module.available():
@@ -587,6 +618,8 @@ class PdfLoader:
             if read.text.strip():
                 page.text = read.text
                 page.text_source = "ocr"
+                if options.keep_readings:
+                    page.readings[ocr_module.engine_name()] = read.text
             else:
                 unread.append(page.number)
         if unread:

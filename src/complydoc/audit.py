@@ -204,6 +204,7 @@ def _process(path: Path, work: _Work) -> _Outcome:
                 text=page.text[:_MAX_TEXT_CHARS],
                 ocr_text=page.ocr_text[:_MAX_TEXT_CHARS],
                 truncated=len(page.text) > _MAX_TEXT_CHARS,
+                readings={name: text[:_MAX_TEXT_CHARS] for name, text in page.readings.items()},
             )
             for page in document.pages
         ]
@@ -323,6 +324,7 @@ def run_audit(
     password: str = "",
     extractor: str | None = None,
     compare_extractors: Sequence[str] = (),
+    compare_engines: Sequence[str] = (),
     jobs: int = 1,
     sample: int | None = None,
     progress: Callable[[int, int, Path], None] | None = None,
@@ -351,6 +353,10 @@ def run_audit(
         password=password,
         extractor=extractor or DEFAULT_EXTRACTOR,
         compare_extractors=tuple(compare_extractors),
+        compare_engines=tuple(compare_engines),
+        # Holding several readings of every page is the largest thing a
+        # comparison adds, so it is only done when the run keeps text at all.
+        keep_readings=extracted_text and bool(compare_extractors or compare_engines),
     )
     chosen_extractor = extractor or DEFAULT_EXTRACTOR
 
@@ -416,6 +422,7 @@ def run_audit(
         password_used=bool(password),
         extractor=chosen_extractor,
         compare_extractors=list(compare_extractors),
+        compare_engines=list(compare_engines),
     )
 
     staleness = check_staleness(config.pricing) if "cost" in requested else []

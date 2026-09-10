@@ -127,6 +127,14 @@ CompareExtractorsOpt = Annotated[
         "disagree, repeatable. It never changes a finding.",
     ),
 ]
+CompareEnginesOpt = Annotated[
+    list[str] | None,
+    typer.Option(
+        "--compare-ocr-engine",
+        help="Also read every rasterised page with this engine and keep what it "
+        "read, repeatable. It never changes a finding.",
+    ),
+]
 OcrEngineOpt = Annotated[
     str | None,
     typer.Option("--ocr-engine", help="Which local OCR engine to read scans with."),
@@ -204,6 +212,7 @@ def _emit(
     extractor: str | None = None,
     compare_extractors: list[str] | None = None,
     ocr_engine: str | None = None,
+    compare_engines: list[str] | None = None,
 ) -> None:
     json_path = write_json(report, out / f"{name}.json").resolve()
     html_path = write_html(report, config, out / f"{name}.html").resolve()  # type: ignore[arg-type]
@@ -300,6 +309,7 @@ def _run(
     extractor: str | None = None,
     compare_extractors: list[str] | None = None,
     ocr_engine: str | None = None,
+    compare_engines: list[str] | None = None,
 ) -> None:
     offline.arm()
     if ocr_engine:
@@ -344,6 +354,7 @@ def _run(
             password=password,
             extractor=extractor,
             compare_extractors=tuple(compare_extractors or ()),
+            compare_engines=tuple(compare_engines or ()),
             jobs=jobs,
             sample=sample,
             progress=progress if not quiet else None,
@@ -395,6 +406,7 @@ def audit(
     recurse: RecurseOpt = True,
     extractor: ExtractorOpt = None,
     ocr_engine: OcrEngineOpt = None,
+    compare_ocr_engine: CompareEnginesOpt = None,
     compare_extractor: CompareExtractorsOpt = None,
     save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
@@ -422,6 +434,7 @@ def audit(
         extractor=extractor,
         compare_extractors=compare_extractor,
         ocr_engine=ocr_engine,
+        compare_engines=compare_ocr_engine,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -449,6 +462,7 @@ def cost(
     recurse: RecurseOpt = True,
     extractor: ExtractorOpt = None,
     ocr_engine: OcrEngineOpt = None,
+    compare_ocr_engine: CompareEnginesOpt = None,
     compare_extractor: CompareExtractorsOpt = None,
     save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
@@ -472,6 +486,7 @@ def cost(
         extractor=extractor,
         compare_extractors=compare_extractor,
         ocr_engine=ocr_engine,
+        compare_engines=compare_ocr_engine,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -493,6 +508,7 @@ def readiness(
     recurse: RecurseOpt = True,
     extractor: ExtractorOpt = None,
     ocr_engine: OcrEngineOpt = None,
+    compare_ocr_engine: CompareEnginesOpt = None,
     compare_extractor: CompareExtractorsOpt = None,
     save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
@@ -515,6 +531,7 @@ def readiness(
         extractor=extractor,
         compare_extractors=compare_extractor,
         ocr_engine=ocr_engine,
+        compare_engines=compare_ocr_engine,
         password=password,
         jobs=jobs,
         sample=sample,
@@ -543,6 +560,7 @@ def sensitive(
     recurse: RecurseOpt = True,
     extractor: ExtractorOpt = None,
     ocr_engine: OcrEngineOpt = None,
+    compare_ocr_engine: CompareEnginesOpt = None,
     compare_extractor: CompareExtractorsOpt = None,
     save_text: SaveTextOpt = None,
     print_json: PrintJsonOpt = False,
@@ -566,6 +584,7 @@ def sensitive(
         extractor=extractor,
         compare_extractors=compare_extractor,
         ocr_engine=ocr_engine,
+        compare_engines=compare_ocr_engine,
         password=password,
         jobs=jobs,
         sample=sample,

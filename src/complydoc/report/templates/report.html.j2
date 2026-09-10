@@ -603,19 +603,6 @@
 {% set cheapest = comparisons | map(attribute="architectures") | map("first") | list %}
 <div class="tiles">
   <div class="tile">
-    <div class="k">Cost per 1,000 documents</div>
-    {% if headline %}
-      {% set best = headline %}
-      {% set ocr = best.by_key("text_ocr") %}
-      {% set vis = best.by_key("vision") %}
-      <div class="v">{{ money(ocr.per_1000_usd) if ocr.per_1000_usd is not none else "—" }}</div>
-      <div class="s">reading the text, on {{ best.display_name }}{% if
-        vis.per_1000_usd is not none %} — up to {{ money(vis.per_1000_usd) }} sending every
-        page as an image{% endif %}.</div>
-    {% else %}<div class="v">—</div><div class="s">cost was not part of this run</div>{% endif %}
-  </div>
-
-  <div class="tile">
     <div class="k">AI readiness</div>
     {% if agg.mean_readiness_score is not none %}
       <div class="v">{{ agg.mean_readiness_score | round | int }}<span class="u">/100</span></div>
@@ -649,13 +636,6 @@
     {% else %}<div class="v">—</div><div class="s">the sensitive scan was not part of this run</div>{% endif %}
   </div>
 </div>
-
-{% if per_1000_chart %}
-{# The tile above already names this figure; a heading repeating it is a second
-   label on one number. #}
-{{ legend() }}
-{{ per_1000_chart | safe }}
-{% endif %}
 
 {% if report.staleness_warnings %}
 <div class="box"><strong>Unverified prices</strong>
@@ -745,6 +725,13 @@ A folder of longer or heavier scans takes longer.</p>
     <button type="button" data-provider="{{ provider }}" aria-pressed="false">{{ provider }}</button>
   {% endfor %}
 </div>
+{% endif %}
+{% if per_1000_chart %}
+{# The most quotable figure in the report, and the one somebody arrives at this
+   tab wanting. It used to lead the home page, which made the front of an
+   audit about the bill rather than about whether the documents can be used. #}
+<h3>Cost per 1,000 documents</h3>
+{{ per_1000_chart | safe }}
 {% endif %}
 <h3>Cost for this folder</h3>
 {{ folder_chart | safe }}

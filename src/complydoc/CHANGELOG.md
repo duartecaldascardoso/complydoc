@@ -8,6 +8,15 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Changed
+
+- Cost is off the front page. The tile and the per-1,000 chart move to the Cost
+  tab, which is what that tab is for, and the chart leads it. An audit's front
+  page should answer whether these documents can be used, not what the pipeline
+  would bill — the price only matters once the answer to the first question is
+  yes. The only figure left is what a quick win would save, which is the reason
+  to act on it rather than a cost breakdown.
+
 ### Added
 
 - Global readiness, on the front page as a ring. AI readiness asks whether the

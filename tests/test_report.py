@@ -318,11 +318,32 @@ def test_decision_changing_facts_survive_in_the_html(html, report):
         assert "nothing was found there because nothing looked" in flat.lower()
 
 
-def test_summary_leads_with_the_three_business_figures(html):
+def test_the_summary_leads_with_readiness_and_what_to_do(html):
+    """The front page answers "can I use these", not "what will they cost".
+
+    Cost has a tab of its own. Leading with the bill made the front of an audit
+    about the price of the pipeline rather than whether the documents can go
+    through one at all.
+    """
     summary = html.split('id="summary"')[1].split("<section")[0]
-    assert "Cost per 1,000 documents" in summary
+    assert "Global readiness" in summary
+    assert "Quick wins" in summary
     assert "AI readiness" in summary
     assert "Sensitive items per document" in summary
+
+
+def test_the_summary_carries_no_price_table_or_chart(html):
+    """The one figure allowed here is what a quick win would save, because
+    that is the reason to act on it rather than a cost breakdown."""
+    summary = html.split('id="summary"')[1].split("<section")[0]
+    assert 'class="chart"' not in summary
+    assert "Cost per 1,000 documents" not in summary
+
+
+def test_the_cost_tab_gained_what_the_summary_lost(html):
+    """Moved, not dropped — it is the most quotable figure in the report."""
+    cost = html.split('id="cost"')[1].split("<section")[0]
+    assert "Cost per 1,000 documents" in cost
 
 
 def test_cost_page_carries_the_charts(html):

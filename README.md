@@ -11,6 +11,7 @@
 </div>
 
 <div align="center">
+  <a href="https://pypi.org/project/complydoc/"><img src="https://img.shields.io/pypi/v/complydoc?color=1a7f4b" alt="PyPI"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-1a7f4b" alt="License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-4f5d75" alt="Python versions">
   <img src="https://img.shields.io/badge/network-none%20at%20runtime-1a7f4b" alt="No network at runtime">
@@ -51,7 +52,14 @@ that guard armed. Every report records whether it was active.
 ## Install
 
 ```bash
-uv tool install git+https://github.com/duartecaldascardoso/complydoc
+uv tool install complydoc
+```
+
+Or `pipx install complydoc`, or `pip install complydoc` into an environment of your own.
+See a report straight away, on six sample documents that ship with it:
+
+```bash
+complydoc demo
 ```
 
 If `complydoc: command not found`, add uv's bin directory to your shell:
@@ -64,8 +72,7 @@ OCR and local name detection are optional extras — a large download, and a dia
 run is still useful without them. To install both:
 
 ```bash
-uv tool install --force --reinstall --with rapidocr-onnxruntime --with spacy \
-  git+https://github.com/duartecaldascardoso/complydoc
+uv tool install --force --reinstall --with rapidocr-onnxruntime --with spacy complydoc
 uv pip install --python "$(uv tool dir)/complydoc/bin/python" \
   https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 ```
@@ -76,13 +83,14 @@ none. `complydoc doctor` says which extras it can see.
 
 ### Keeping it up to date
 
-Re-run the install command with `--force --reinstall`. `--reinstall` matters as much as
-`--force`: without it uv reuses the environment it already built for this version number,
-and a change that leaves the version alone is silently ignored.
-
 ```bash
-uv tool install --force --reinstall git+https://github.com/duartecaldascardoso/complydoc
+uv tool upgrade complydoc
 ```
+
+If you installed from the git URL rather than PyPI, or you are tracking `main`, re-run the
+install with `--force --reinstall`. `--reinstall` matters as much as `--force` there:
+without it uv reuses the environment it already built for that version number, and a change
+that leaves the version alone is silently ignored.
 
 Rebuilding the environment drops the optional extras, so if you use OCR or name detection,
 repeat the lines above that install them. `complydoc doctor` tells you what the install can

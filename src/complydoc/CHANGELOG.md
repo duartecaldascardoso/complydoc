@@ -6,6 +6,13 @@ the minor number when something is added, the patch number when a measurement is
 corrected. `schema_version` in the JSON is versioned separately and is the field to
 branch on when reading reports programmatically.
 
+## [Unreleased]
+
+### Documentation
+
+- The README installs from PyPI. `uv tool install complydoc` replaces the git
+  URL, and keeping it current is `uv tool upgrade complydoc`.
+
 ## [0.3.0] — 2026-09-10
 
 ### Added

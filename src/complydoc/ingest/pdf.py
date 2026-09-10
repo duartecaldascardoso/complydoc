@@ -34,7 +34,14 @@ from complydoc.ingest.base import (
 from complydoc.ingest.extractors.base import Extraction, PageSource
 from complydoc.ingest.extractors.registry import extractor_by_id
 from complydoc.ingest.registry import register
-from complydoc.text import count, plural
+from complydoc.text import (
+    MAX_WORDS,
+    count,
+    plural,
+    reading_similarity,
+    same_words,
+    words,
+)
 
 _ALIGNED_TABLE_SETTINGS = {"vertical_strategy": "text", "horizontal_strategy": "text"}
 _MAX_WORDS_CUT = 0.02
@@ -257,22 +264,6 @@ def _aligned_tables(plumber_page: Any, words: list[Any]) -> list[TableInfo]:
     return found
 
 
-def _reading_similarity(kept: str, other: str, cap: int = 4000) -> float:
-    """How closely two readings of a page agree, in order.
-
-    Bounded because this runs per page per extractor and the comparison is
-    quadratic; the opening few thousand characters settle it either way.
-    """
-    import difflib
-
-    left, right = " ".join(kept.split())[:cap], " ".join(other.split())[:cap]
-    if left == right:
-        return 1.0
-    if not left or not right:
-        return 0.0
-    return round(difflib.SequenceMatcher(None, left, right).ratio(), 4)
-
-
 def _wants_pdfium(options: IngestOptions) -> bool:
     """Whether any extractor asked for reads through pdfium."""
     from complydoc.ingest.extractors.registry import extractor_by_id
@@ -451,6 +442,11 @@ class PdfLoader:
                 continue
             seconds = time.perf_counter() - started
 
+            compared = (
+                (words(kept.text)[:MAX_WORDS], words(found.text)[:MAX_WORDS])
+                if kept is not None
+                else ([], [])
+            )
             page.extractions.append(
                 ExtractionSummary(
                     extractor=name,
@@ -459,9 +455,8 @@ class PdfLoader:
                     seconds=round(seconds, 4),
                     granularity=found.granularity,
                     tables_found=len(found.tables) if engine.provides_tables else None,
-                    similarity=(
-                        1.0 if kept is None else _reading_similarity(kept.text, found.text)
-                    ),
+                    similarity=(1.0 if kept is None else reading_similarity(*compared)),
+                    reordered=kept is not None and same_words(*compared),
                 )
             )
             if options.keep_readings and found.text.strip():

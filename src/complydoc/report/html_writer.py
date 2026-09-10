@@ -16,6 +16,7 @@ from markupsafe import escape
 
 from complydoc.config.schema import Config
 from complydoc.report.charts import SERIES, build_comparison, grouped_bars_svg
+from complydoc.report.diffing import ReadingDiff, compare_readings
 from complydoc.report.models import AuditReport, DocumentReport
 from complydoc.report.preview import PagePreview
 from complydoc.text import count, duration
@@ -120,6 +121,18 @@ class PageRow:
     readings: dict[str, str] = field(default_factory=dict)
     """What each reader compared on this run made of the page, by name."""
 
+    diffs: list[ReadingDiff] = field(default_factory=list)
+    """Every other reader's version of this page, against the kept one.
+
+    Worked out once when the row is built. The template reads it twice — once
+    to mark the page as one where the readers parted company, once to render
+    the marks — and the comparison is quadratic in the length of the page.
+    """
+
+    @property
+    def readers_differ(self) -> bool:
+        return any(d.differs for d in self.diffs)
+
     @property
     def flags(self) -> list[tuple[str, str]]:
         return self.preview.flags if self.preview is not None else []
@@ -147,9 +160,20 @@ def page_rows(document: DocumentReport) -> list[PageRow]:
                 characters=text.characters if text else 0,
                 truncated=bool(text and text.truncated),
                 readings=dict(text.readings) if text else {},
+                diffs=_diffs_for(text),
             )
         )
     return rows
+
+
+def _diffs_for(text: object) -> list[ReadingDiff]:
+    """The other readers' versions of one page, or nothing to compare."""
+    readings = getattr(text, "readings", None) or {}
+    kept = (getattr(text, "text", "") or "") or (getattr(text, "ocr_text", "") or "")
+    others = {name: reading for name, reading in readings.items() if reading != kept}
+    if not kept or not others:
+        return []
+    return compare_readings(kept, others)
 
 
 _TEMPLATE_DIR = Path(__file__).parent / "templates"

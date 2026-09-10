@@ -15,6 +15,7 @@
     --attn: #a4402f;
     --good: #6b7280; --fair: #55606d; --poor: #a4402f;
     --na: #8b939c; --na-bg: #f1f1ef;
+    --add-bg: #dff0e2; --gone-bg: #f3e2de;
     --series-1: #2a78d6; --series-2: #4a3aa7; --series-3: #e87ba4;
     --pv-page: #fff; --pv-edge: #bbb; --pv-text: #dcdcdc;
     --pv-image: #f4dfae; --pv-gutter: #f4f4f2;
@@ -31,6 +32,7 @@
       --attn: #e08a72;
       --good: #8b939c; --fair: #a7b0b8; --poor: #e08a72;
       --na: #7d858d; --na-bg: #23272b;
+      --add-bg: #1e3a2a; --gone-bg: #3a2622;
       --series-1: #3987e5; --series-2: #d55181; --series-3: #c98500;
       --pv-page: #24282c; --pv-edge: #4a5058; --pv-text: #4d545c;
       --pv-image: #6d5a2f; --pv-gutter: #1f2225;
@@ -44,6 +46,7 @@
     --attn: #e08a72;
     --good: #8b939c; --fair: #a7b0b8; --poor: #e08a72;
     --na: #7d858d; --na-bg: #23272b;
+    --add-bg: #1e3a2a; --gone-bg: #3a2622;
     --series-1: #3987e5; --series-2: #d55181; --series-3: #c98500;
     --pv-page: #24282c; --pv-edge: #4a5058; --pv-text: #4d545c;
     --pv-image: #6d5a2f; --pv-gutter: #1f2225;
@@ -134,6 +137,26 @@
   .pjump:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
   .pof { color: var(--faint); }
   .pmiss { color: var(--attn); }
+  /* Jumping between the pages where the readers parted company. On a long
+     document those are a handful of pages among hundreds, and stepping through
+     every page to find them is the whole difficulty. */
+  .pdiff { font: inherit; font-size: 0.75rem; color: var(--muted); cursor: pointer;
+           background: var(--panel); border: 1px solid var(--line-2); border-radius: 4px;
+           height: 1.875rem; padding: 0 0.625rem; }
+  .pdiff:hover { background: var(--na-bg); color: var(--ink); }
+  .pdiff .dot { display: inline-block; width: 0.4375rem; height: 0.4375rem; border-radius: 50%;
+                background: var(--attn); margin-right: 0.375rem; vertical-align: middle; }
+  /* Two readings side by side, with the words that only one of them found.
+     Underlines rather than colour alone: this is read on paper and in print,
+     and the two marks must stay apart without it. */
+  pre.dif mark { background: none; color: inherit; padding: 0; }
+  pre.dif mark.added { background: var(--add-bg); text-decoration: underline;
+                       text-decoration-thickness: 2px; text-underline-offset: 2px; }
+  pre.dif mark.missing { background: var(--gone-bg); text-decoration: line-through;
+                         text-decoration-thickness: 1px; color: var(--muted); }
+  .pcap mark { padding: 0 0.25rem; border-radius: 2px; font-size: 0.6875rem; }
+  .pcap mark.added { background: var(--add-bg); }
+  .pcap mark.missing { background: var(--gone-bg); color: var(--muted); }
   /* One fixed frame, the same on every document and every page. Letting the
      page image set the height meant the whole workspace resized every time you
      stepped a page or picked another file. Content that does not fill it
@@ -758,6 +781,10 @@ before reading that as an all-clear.</p>
                     {% if not rows %}disabled{% endif %}>&rsaquo;</button>
           </div>
           <span class="pmiss" hidden>no page with that number</span>
+          {% if rows | selectattr("readers_differ") | first is defined %}
+          <button type="button" class="pdiff"><span class="dot"></span>next page the readers
+            read differently</button>
+          {% endif %}
         </div>
 
         <div class="pageview">
@@ -778,7 +805,8 @@ before reading that as an all-clear.</p>
           </div>
         {% endif %}
         {% for row in rows %}
-          <div class="spread" data-page="{{ row.number }}" hidden>
+          <div class="spread" data-page="{{ row.number }}"
+               {% if row.readers_differ %}data-differs="1"{% endif %} hidden>
             <div class="side">
               <div class="lbl">
                 {% if row.image_data_uri %}
@@ -832,8 +860,11 @@ before reading that as an all-clear.</p>
                 {%- set _ = panes.append(("text", kept_label, row.text or row.ocr_text)) -%}
               {%- endif -%}
               {%- if compare -%}{%- set _ = panes.append(("ocr", "what OCR sees", row.ocr_text)) -%}{%- endif -%}
-              {%- for name, text in row.readings.items() if text != (row.text or row.ocr_text) -%}
-                {%- set _ = panes.append(("read-" ~ loop.index0, name, text)) -%}
+              {#- Each other reader's pane carries its differences from the kept
+                  reading in place. Two plain panes to flip between would leave
+                  someone to find the difference by reading both. -#}
+              {%- for d in row.diffs -%}
+                {%- set _ = panes.append(("read-" ~ loop.index0, d.reader, d)) -%}
               {%- endfor -%}
               <div class="lbl">
                 {% if panes | length > 1 %}
@@ -847,11 +878,26 @@ before reading that as an all-clear.</p>
                 {% else %}content{% endif %}
               </div>
               {% if panes %}
-                {% for key, label, text in panes %}
+                {% for key, label, body in panes %}
                 <div class="face" data-face="{{ key }}" {% if not loop.first %}hidden{% endif %}>
-                  <div class="body"><pre>{{ text }}</pre></div>
-                  <p class="pcap">{{ "{:,}".format(text | length) }} characters, {{ label }}
+                {% if body is string %}
+                  <div class="body"><pre>{{ body }}</pre></div>
+                  <p class="pcap">{{ "{:,}".format(body | length) }} characters, {{ label }}
                     {%- if loop.first and row.truncated %}, truncated for the report{% endif %}</p>
+                {% else %}
+                  <div class="body"><pre class="dif">{% for seg in body.segments -%}
+{%- if seg.kind == "same" %}{{ seg.text }}{% else %}<mark
+                    class="{{ seg.kind }}">{{ seg.text }}</mark>{% endif %}
+{%- endfor %}</pre></div>
+                  <p class="pcap">
+                    {% if body.differs %}<mark class="added">only {{ label }}</mark>
+                      <mark class="missing">only {{ kept_label }}</mark>
+                      · {{ body.added_words }} added, {{ body.missing_words }} missing ·
+                      {{ "{:.0f}%".format(body.similarity * 100) }} the same
+                    {% else %}the same words as {{ kept_label }}, differently spaced{% endif %}
+                    {%- if body.truncated %} · compared up to the first few thousand words
+                    {%- endif %}</p>
+                {% endif %}
                 </div>
                 {% endfor %}
               {% elif row.preview and row.preview.unreadable %}
@@ -1253,6 +1299,25 @@ before reading that as an all-clear.</p>
         show(index);
       });
       jump.addEventListener("blur", function () { show(at); });
+    }
+
+    // The pages where the readers parted company are the only ones worth
+    // looking at when comparing, and on a long document they are a handful
+    // among hundreds. Wraps around, so the button keeps working at the end.
+    var differing = bar.querySelector(".pdiff");
+    if (differing) {
+      var marked = [];
+      spreads.forEach(function (s, i) {
+        if (s.getAttribute("data-differs") === "1") marked.push(i);
+      });
+      if (!marked.length) {
+        differing.hidden = true;
+      } else {
+        differing.addEventListener("click", function () {
+          var next = marked.find(function (i) { return i > at; });
+          show(next === undefined ? marked[0] : next);
+        });
+      }
     }
 
     doc.addEventListener("keydown", function (event) {

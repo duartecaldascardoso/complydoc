@@ -134,11 +134,19 @@ two differ. Only the first reaches a finding; the rest are measured and never ad
 comparison lives inside one run — the same page on the same machine at the same moment —
 so a difference is a difference between the libraries and not between two runs.
 
-They are compared in order, not by size, because the case worth catching does not change
-the size. On a two-column page, `pdfplumber` walks the text layer in the order the file
+In the report, each other reader's pane shows its own text with the words only it found
+underlined and the words only the kept reader found struck through, so you read the page
+and see what moved rather than flipping between two panes. The page bar has a control that
+jumps straight to the next page the readers read differently — on a long document that is a
+handful of pages among hundreds. Spacing is not counted as a difference, or every page of
+every document would be marked.
+
+They are compared in order and by word, not by size, because the case worth catching does
+not change the size. On a two-column page, `pdfplumber` walks the text layer in the order the file
 stores it, which runs across both columns and interleaves every sentence with one from the
 other side. It returns the same number of characters as the readers that get it right. The
-report says `same text, different order` when that happens, and with `--extracted-text` on
+report says `same words, different order` when that happens, and `they read different
+words` when a reader genuinely could not read part of a page, and with `--extracted-text` on
 you can switch between what each reader made of the page and see it.
 
 `pdfplumber` remains the default because it is the only one that gives a box per word and

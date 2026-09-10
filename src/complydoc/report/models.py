@@ -131,6 +131,8 @@ class ExtractorReading:
     reads_tables: bool
     similarity: float = 1.0
     """How closely this reading matched the one kept, compared in order."""
+    reordered: bool = False
+    """True when it held the same words as the kept reading in another order."""
 
     @property
     def read_nothing(self) -> bool:
@@ -188,7 +190,11 @@ class DocumentReport:
             # across a two-column page and scrambling every sentence — and a
             # count says they agreed.
             if other.similarity < _SIMILAR_ENOUGH:
-                return "same text, different order"
+                return (
+                    "same words, different order"
+                    if other.reordered
+                    else "they read different words"
+                )
         return None
 
 

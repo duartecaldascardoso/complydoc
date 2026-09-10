@@ -26,7 +26,9 @@ from complydoc.report.models import DocumentReport, ExtractorReading
 from tests.helpers import FIXTURES
 
 
-def reading(name: str, characters: int, similarity: float = 1.0) -> ExtractorReading:
+def reading(
+    name: str, characters: int, similarity: float = 1.0, reordered: bool = False
+) -> ExtractorReading:
     return ExtractorReading(
         extractor=name,
         characters=characters,
@@ -35,6 +37,7 @@ def reading(name: str, characters: int, similarity: float = 1.0) -> ExtractorRea
         granularity="word",
         reads_tables=True,
         similarity=similarity,
+        reordered=reordered,
     )
 
 
@@ -122,9 +125,27 @@ def test_the_same_characters_in_a_different_order_is_a_disagreement():
         format="pdf",
         page_count=1,
         page_count_known=True,
-        extractions=[reading("a", 1000), reading("b", 1000, similarity=0.11)],
+        extractions=[reading("a", 1000), reading("b", 1000, similarity=0.11, reordered=True)],
     )
-    assert document.extractors_disagree
+    assert document.disagreement == "same words, different order"
+
+
+def test_reading_different_words_is_not_called_a_reordering():
+    """The two call for different things.
+
+    A reader that scrambled a page it could otherwise read has a layout
+    problem. A reader that returned different words could not read part of it.
+    """
+    document = DocumentReport(
+        path=FIXTURES / "x.pdf",
+        relative_path="x.pdf",
+        sha256="",
+        format="pdf",
+        page_count=1,
+        page_count_known=True,
+        extractions=[reading("a", 1000), reading("b", 1000, similarity=0.80)],
+    )
+    assert document.disagreement == "they read different words"
 
 
 def test_a_large_difference_is():
@@ -181,7 +202,7 @@ def test_a_scrambled_two_column_page_is_caught_end_to_end():
     readings = extractor_readings(document)
     counts = [r.characters for r in readings]
     assert abs(counts[0] - counts[1]) / max(counts) < 0.10, "the counts do not give it away"
-    assert min(r.similarity for r in readings) < 0.5
+    assert min(r.similarity for r in readings) < 0.6
     report = DocumentReport(
         path=document.path,
         relative_path="two_column.pdf",
@@ -236,4 +257,4 @@ def test_three_readers_agree_that_the_default_one_scrambles_two_columns():
     others = [" ".join(readings[name].split()) for name in ("pdfium", "pypdf")]
     assert others[0][:60] == others[1][:60], "the two independent readers agree"
     assert " ".join(readings["pdfplumber"].split())[:60] != others[0][:60]
-    assert min(r.similarity for r in extractor_readings(document)) < 0.5
+    assert min(r.similarity for r in extractor_readings(document)) < 0.6

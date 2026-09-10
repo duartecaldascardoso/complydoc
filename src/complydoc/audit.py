@@ -116,6 +116,10 @@ def extractor_readings(document: Document) -> list[ExtractorReading]:
     totals: dict[str, list[float]] = {}
     shape: dict[str, tuple[str, bool]] = {}
     worst: dict[str, float] = {}
+    # A document counts as reordered only if every page that differed did so by
+    # holding the same words. One page of genuinely different words is the more
+    # serious finding and is what the report should name.
+    shuffled: dict[str, bool] = {}
 
     for page in document.pages:
         for summary in page.extractions:
@@ -131,6 +135,10 @@ def extractor_readings(document: Document) -> list[ExtractorReading]:
                 row[1] += summary.coverage_pct
                 row[4] += 1
             worst[summary.extractor] = min(worst.get(summary.extractor, 1.0), summary.similarity)
+            if summary.similarity < 1.0 and not summary.reordered:
+                shuffled[summary.extractor] = False
+            elif summary.reordered:
+                shuffled.setdefault(summary.extractor, True)
 
     readings: list[ExtractorReading] = []
     for name in order:
@@ -147,6 +155,7 @@ def extractor_readings(document: Document) -> list[ExtractorReading]:
                 # The worst page, not the average: one scrambled page is worth
                 # knowing about in a document whose other forty are fine.
                 similarity=round(worst.get(name, 1.0), 4),
+                reordered=shuffled.get(name, False),
             )
         )
     return readings

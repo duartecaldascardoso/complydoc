@@ -104,6 +104,13 @@ class ExtractionSummary:
     granularity: str
     tables_found: int | None
     """None when the extractor cannot look for tables, which is not zero tables."""
+    reordered: bool = False
+    """True when this reading holds the same words as the kept one in another order.
+
+    A reader that scrambled a page it could otherwise read is a different
+    problem from one that read different words, and the report should not call
+    them the same thing.
+    """
     similarity: float = 1.0
     """How closely this reading matches the one that was kept, 0 to 1.
 

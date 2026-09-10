@@ -8,6 +8,27 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Added
+
+- Where two readers parted company is now shown, not just measured. Each other
+  reader's pane carries its own text with the words only it found underlined
+  and the words only the kept reader found struck through, so the difference is
+  read in place rather than by flipping between two panes and holding both in
+  your head. The page bar gains a control that jumps to the next page the
+  readers read differently, which on a long document is a handful of pages
+  among hundreds.
+- The report tells a reader that walked a page in the wrong order apart from
+  one that read different words. They look the same to any similarity score and
+  they call for different things: the first scrambled a page it could read, the
+  second could not read part of it.
+
+### Changed
+
+- Readings are compared by word rather than by character, and spacing is no
+  longer a difference. Every reader breaks lines somewhere slightly different,
+  and counting that marked every page of every document. One measure now backs
+  both the number in the table and the marks on the page.
+
 ### Fixed
 
 - Two extractors that read a page in a different order are now reported as

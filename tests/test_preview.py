@@ -11,6 +11,7 @@ from complydoc.report.html_writer import page_preview_svg
 from complydoc.report.models import to_jsonable
 from complydoc.report.preview import build_previews
 from complydoc.sensitive.scanner import scan
+from tests.helpers import FIXTURES
 
 
 @pytest.fixture(scope="module")
@@ -244,3 +245,73 @@ def test_the_explanation_is_reachable_without_a_pointer():
     template = (html_writer._TEMPLATE_DIR / "report.html.j2").read_text()
     assert 'mark.setAttribute("tabindex", "0")' in template
     assert 'mark.addEventListener("focus", show)' in template
+
+
+def _marks(html: str) -> list[str]:
+    import re
+
+    return re.findall(r'<g class="pv-mark"[^>]*>', html)
+
+
+def test_the_browser_draws_no_tooltip_of_its_own(config, tmp_path):
+    """Two tooltips for one mark is one tooltip too many.
+
+    An SVG <title> is the browser's own, and it appeared beside the report's
+    with the same words in a different box. `aria-label` says it to a screen
+    reader without drawing anything.
+    """
+    html = _rendered(config, tmp_path)
+    assert _marks(html), "the fixtures carry sensitive marks"
+    assert '<g class="pv-mark"><title>' not in html
+    assert all("aria-label=" in mark for mark in _marks(html))
+
+
+def test_a_mark_says_what_was_found_and_masks_it(config, tmp_path):
+    """A rectangle and a category leaves the reader hunting for which one.
+
+    The last few characters identify it; the rest are covered, exactly as the
+    findings table covers them.
+    """
+    import re
+
+    html = _rendered(config, tmp_path)
+    values = [
+        m.group(1) for m in (re.search(r'data-value="([^"]*)"', g) for g in _marks(html)) if m
+    ]
+    assert values, "every located mark should say what was found"
+    assert all("•" in value for value in values), values
+
+
+def test_a_mark_never_carries_a_value_the_run_did_not_reveal(config, tmp_path):
+    """The whole trust proposition, checked where the value is newest.
+
+    This is the one place a raw value is written into the report outside the
+    findings table, so it is the one most likely to leak one.
+    """
+    import re
+
+    from complydoc.audit import run_audit
+
+    report = run_audit(FIXTURES, config, ("sensitive",), ocr=False)
+    revealed = {
+        m.revealed
+        for d in report.documents
+        if d.sensitive
+        for m in d.sensitive.matches
+        if m.revealed
+    }
+    assert not revealed, "a default run reveals nothing"
+
+    html = _rendered(config, tmp_path)
+    for mark in _marks(html):
+        found = re.search(r'data-value="([^"]*)"', mark)
+        if found:
+            assert "•" in found.group(1)
+
+
+def _rendered(config, tmp_path) -> str:
+    from complydoc.audit import run_audit
+    from complydoc.report.html_writer import write_html
+
+    report = run_audit(FIXTURES, config, ("sensitive",), ocr=False, page_images=False)
+    return write_html(report, config, tmp_path / "r.html").read_text()

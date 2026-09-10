@@ -24,9 +24,15 @@ branch on when reading reports programmatically.
   copies of three numbers, crowding out the figures that differ. It stays on
   each bar's own hover.
 - The explanation of a sensitive mark follows the mark instead of appearing
-  under the page. Under the page it was a line of text away from the thing it
-  described, and it displaced the page's own caption every time the pointer
-  crossed a mark.
+  under the page, and there is one of it. The mark used to carry an SVG
+  `<title>` as well, which is the browser's own tooltip, so pointing at a mark
+  drew the same words twice in two different boxes. The mark now carries an
+  `aria-label`, which says the same thing to a screen reader without drawing
+  anything.
+- A mark says what was found, masked exactly as the findings table masks it —
+  the last few characters, with the separators kept so the shape stays legible.
+  A rectangle and a category left the reader hunting for which item it was.
+  `--reveal` puts the whole value there as it does everywhere else.
 - The summary tiles say one thing each. The heading above the first chart no
   longer repeats the tile directly above it.
 

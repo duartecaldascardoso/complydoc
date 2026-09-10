@@ -49,6 +49,13 @@ class Box:
     label: str | None = None
     title: str | None = None
     """Why this mark is here, shown when the reader points at it."""
+    value: str | None = None
+    """What was found, masked exactly as the findings table masks it.
+
+    Pointing at a rectangle and being told only that it is a card number leaves
+    you to find which one by eye. The last few characters identify it without
+    disclosing it, and `--reveal` puts the whole value here as it does there.
+    """
 
     @classmethod
     def normalised(
@@ -58,6 +65,7 @@ class Box:
         height: float,
         label: str | None = None,
         title: str | None = None,
+        value: str | None = None,
     ) -> Box:
         return cls(
             x=round(max(0.0, rect.x0 / width), 4),
@@ -66,6 +74,7 @@ class Box:
             h=round(min(1.0, (rect.y1 - rect.y0) / height), 4),
             label=label,
             title=title,
+            value=value,
         )
 
 
@@ -348,6 +357,9 @@ def build_previews(
                     height,
                     label=match.severity,
                     title=_why_sensitive(match, categories),
+                    # Masked unless the run was asked to reveal, the same rule
+                    # and the same string as the findings table.
+                    value=match.revealed or match.masked,
                 )
             )
 

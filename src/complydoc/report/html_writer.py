@@ -241,9 +241,16 @@ def page_preview_svg(preview: PagePreview, width: int = _PREVIEW_WIDTH) -> str:
         stroke = "var(--poor)" if box.label == "high" else "var(--fair)"
         mark = rect(box, fill="none", stroke=stroke, stroke_width="1.2")
         if box.title:
-            # A <title> inside the shape is the browser's own tooltip: it needs
-            # no script, survives being saved to disk, and screen readers read it.
-            parts.append(f'<g class="pv-mark"><title>{escape(box.title)}</title>{mark}</g>')
+            # Deliberately not a <title>: that is the browser's own tooltip, and
+            # it appeared alongside the report's, so a reader got the same text
+            # twice in two different boxes. `aria-label` says the same thing to a
+            # screen reader without drawing anything.
+            label = " ".join(box.title.split())
+            value = f' data-value="{escape(box.value)}"' if box.value else ""
+            parts.append(
+                f'<g class="pv-mark" aria-label="{escape(label)}" '
+                f'data-tip="{escape(box.title)}"{value}>{mark}</g>'
+            )
         else:
             parts.append(mark)
 

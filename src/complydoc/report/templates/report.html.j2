@@ -214,7 +214,10 @@
             font-size: 0.75rem; line-height: 1.4; color: var(--ink);
             pointer-events: none; }
   .pv-tip b { display: block; font-weight: 600; }
-  .pv-tip .why { color: var(--muted); }
+  .pv-tip .found { display: block; margin: 0.1875rem 0 0.25rem;
+                   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                   font-size: 0.8125rem; letter-spacing: 0.02em; color: var(--ink); }
+  .pv-tip .why { display: block; color: var(--muted); }
   .filter { display: flex; gap: 0.5rem; align-items: baseline; margin: 0 0 0.75rem; }
   .filter input { font: inherit; font-size: 0.875rem; padding: 0.3125rem 0.5rem;
                   border: 1px solid var(--line-2); background: var(--panel); color: inherit;
@@ -1348,8 +1351,8 @@ before reading that as an all-clear.</p>
     // browser's own tooltip delay.
     Array.prototype.slice.call(doc.querySelectorAll(".pv-mark")).forEach(function (mark) {
       var face = mark.closest(".face");
-      var title = mark.querySelector("title");
-      if (!face || !title) return;
+      var tipText = mark.getAttribute("data-tip");
+      if (!face || !tipText) return;
 
       function show() {
         var tip = face.querySelector(".pv-tip");
@@ -1358,11 +1361,20 @@ before reading that as an all-clear.</p>
           tip.className = "pv-tip";
           face.appendChild(tip);
         }
-        var lines = title.textContent.split("\n");
+        var lines = tipText.split("\n");
         tip.textContent = "";
         var head = document.createElement("b");
         head.textContent = lines[0];
         tip.appendChild(head);
+        // What was found, masked as the findings table masks it. A rectangle
+        // and a category leaves you hunting for which one it was.
+        var found = mark.getAttribute("data-value");
+        if (found) {
+          var shown = document.createElement("span");
+          shown.className = "found";
+          shown.textContent = found;
+          tip.appendChild(shown);
+        }
         if (lines.length > 1) {
           var rest = document.createElement("span");
           rest.className = "why";

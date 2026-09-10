@@ -30,10 +30,34 @@ def test_the_worst_findings_come_first(report):
     assert ranks[0] == severity_rank("high"), "the fixture folder holds high findings"
 
 
+def test_a_severity_tie_breaks_on_the_strength_of_the_evidence(report):
+    """Two high findings are not equally worth acting on.
+
+    One passed a checksum and one is a pattern that happened to match; the
+    confirmed one should not sit below the guess because its filename sorts
+    later.
+    """
+    from complydoc.report.html_writer import evidence_rank
+
+    rows = [(d, m) for d, m in sensitive_rows(report) if m.severity == "high"]
+    ranks = [evidence_rank(m.evidence) for _, m in rows]
+    assert ranks == sorted(ranks, reverse=True)
+
+
 def test_ties_break_the_same_way_every_run(report):
-    """Within one severity, order by document then position — never arbitrarily."""
+    """Within one severity and one tier, by document then position.
+
+    Never arbitrarily: two runs of the same folder produce the same table, so
+    two reports can be diffed.
+    """
+    from complydoc.report.html_writer import evidence_rank
+
     rows = sensitive_rows(report)
-    high = [(d.relative_path, m.page, m.line) for d, m in rows if m.severity == "high"]
+    high = [
+        (d.relative_path, m.page, m.line)
+        for d, m in rows
+        if m.severity == "high" and evidence_rank(m.evidence) == evidence_rank("confirmed")
+    ]
     assert high == sorted(high)
 
 

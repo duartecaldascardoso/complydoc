@@ -34,6 +34,8 @@ from complydoc.ingest import ocr as ocr_module
 from complydoc.ingest.base import Document, IngestOptions, LoaderError, SkipRecord
 from complydoc.ingest.extractors.registry import DEFAULT_EXTRACTOR
 from complydoc.ingest.registry import load_document
+from complydoc.overall import overall_readiness
+from complydoc.quickwins import quick_wins
 from complydoc.readiness.analyser import analyse
 from complydoc.report.limitations import build_limitations
 from complydoc.report.models import (
@@ -458,4 +460,8 @@ def run_audit(
             if settings.enabled
         }
     report.limitations = build_limitations(run, documents, skipped, staleness, config)
+    # Both are read off the finished report, so they belong here rather than in
+    # whichever writer happens to run: the JSON is as much an output as the page.
+    report.overall = overall_readiness(report, config.readiness.overall)
+    report.quick_wins = quick_wins(report)
     return report

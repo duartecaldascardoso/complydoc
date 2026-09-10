@@ -284,7 +284,7 @@ def _why_sensitive(match: SensitiveMatch, config: SensitiveConfig | None) -> str
     pointing at it wants the three things the table would have told them, and
     none of them is the value itself.
     """
-    lines = [f"{match.label} — {match.severity} severity"]
+    lines = [f"{match.label} — {match.severity} severity, {match.evidence}"]
     entry = config.categories.get(match.category) if config is not None else None
 
     if match.validators_passed:

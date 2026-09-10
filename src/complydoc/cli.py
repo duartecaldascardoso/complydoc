@@ -275,7 +275,15 @@ def _summary(report: AuditReport) -> None:
     if aggregate.annual_vision_usd is not None:
         table.add_row("Annual (vision)", f"${aggregate.annual_vision_usd:,.2f}")
     if aggregate.mean_readiness_score is not None:
-        table.add_row("Mean readiness", f"{aggregate.mean_readiness_score}/100")
+        table.add_row("AI readiness", f"{aggregate.mean_readiness_score}/100 (content)")
+    if report.overall is not None and report.overall.score is not None:
+        measured = len(report.overall.measured_factors)
+        total = len(report.overall.factors)
+        of = "" if measured == total else f", {measured} of {total} factors"
+        table.add_row(
+            "Global readiness",
+            f"{report.overall.score}/100 {report.overall.label}{of}",
+        )
     if "sensitive" in report.run.components_run:
         table.add_row(
             "Sensitive items",

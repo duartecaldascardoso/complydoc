@@ -106,5 +106,8 @@ class NerDetector:
             # word, so single short all-caps tokens are dropped.
             if len(span) <= _ACRONYM_MAX and span.isupper() and " " not in span.strip():
                 continue
-            findings.append(Finding(start=entity.start_char, end=entity.end_char, confidence=1.0))
+            # No score. The small English pipeline does not expose one through
+            # `doc.ents`, and recording 1.0 put a model's guess level with a
+            # passed checksum. The evidence tier says what this is instead.
+            findings.append(Finding(start=entity.start_char, end=entity.end_char, confidence=None))
         return findings

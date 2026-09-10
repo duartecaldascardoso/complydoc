@@ -8,7 +8,41 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Added
+
+- Global readiness, on the front page as a ring. AI readiness asks whether the
+  text can be got off the page; this asks whether the folder can be put through
+  a pipeline at all, combining content with the cost path it forces and what it
+  carries that should not leave. Weights are in `readiness.yaml` and printed
+  beside the score. A factor the run did not measure is dropped and the rest
+  renormalised — never counted as nought — and the report says how many of the
+  three it was built from.
+- The ring shows the composition rather than the score, because the mean hides
+  the tail: a folder averaging 71 can still hold two documents nothing can be
+  read from, and those two are the ones somebody has to deal with.
+- Quick wins: what to do next, ranked by how much of the folder each touches.
+  Every entry names the documents it applies to, says whether complydoc can do
+  it or a person has to, and where the consequence follows from prices already
+  in the report it is computed — the OCR entry quotes what those documents cost
+  today on the image path. None of them predicts a score, because signals
+  interact and the only honest way to know is to fix the documents and run the
+  audit again.
+- Every sensitive finding carries an evidence tier: `confirmed` when a checksum
+  passed, `corroborated` when a label sits beside it, `pattern` for a shape
+  alone, and `model` for a statistical guess. The security table shows it and
+  breaks a severity tie on it, so a confirmed card number sorts above a name a
+  model thought it saw.
+
 ### Changed
+
+- The model detector reports no confidence rather than 1.0. The small English
+  pipeline exposes no per-entity score, so recording one put a guess level with
+  a passed checksum — the one place this tool was reporting a number that meant
+  something other than what it said. `confidence` is now null there, and the
+  `min_confidence: 0.5` configured for names and organisations is gone: it
+  filtered nothing and implied a threshold that was never applied.
+- `schema_version` is 3. The report carries `overall` and `quick_wins`, every
+  sensitive match carries `evidence`, and `confidence` on a match may be null.
 
 - The summary quotes Claude Sonnet 5 rather than whichever model happened to be
   cheapest. The cheapest was a moving target — it changed with a catalogue

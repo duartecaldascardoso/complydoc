@@ -17,7 +17,12 @@ from pathlib import Path
 
 from complydoc.config.schema import CategoryConfig, SensitiveConfig
 from complydoc.ingest.base import Document
-from complydoc.sensitive.base import DetectorContext, Finding, SensitiveMatch
+from complydoc.sensitive.base import (
+    DetectorContext,
+    Finding,
+    SensitiveMatch,
+    evidence_of,
+)
 from complydoc.sensitive.masking import render
 from complydoc.sensitive.registry import DetectorUnavailableError, detector_by_id
 from complydoc.sensitive.validators import validate
@@ -147,7 +152,9 @@ def _scan_page(
             continue
 
         for finding in findings:
-            if finding.confidence < category.min_confidence:
+            # A detector with no score of its own cannot be filtered on one.
+            # It is labelled instead, by its evidence tier.
+            if finding.confidence is not None and finding.confidence < category.min_confidence:
                 continue
             value = text[finding.start : finding.end]
             passed, names = validate(value, category.validators)
@@ -174,6 +181,11 @@ def _scan_page(
                 masked=masked,
                 revealed=revealed,
                 confidence=finding.confidence,
+                evidence=evidence_of(
+                    candidate.category.detector,
+                    candidate.validators_passed,
+                    finding.context_term,
+                ),
                 validators_passed=candidate.validators_passed,
                 context_term=finding.context_term,
             )

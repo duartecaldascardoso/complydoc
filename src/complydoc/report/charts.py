@@ -15,9 +15,14 @@ actually serve, so reach is reported beside every figure.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
+from typing import Final
+
+from markupsafe import escape
 
 from complydoc.report.models import AuditReport
+from complydoc.text import count
 
 __all__ = ["ArchitectureCost", "ModelComparison", "build_comparison", "grouped_bars_svg"]
 
@@ -259,5 +264,76 @@ def grouped_bars_svg(
             row_y += bar_h + gap
         parts.append("</g>")
 
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+BAND_SERIES: Final = (
+    ("ready", "Ready", "var(--accent)"),
+    ("workable", "Workable", "var(--na)"),
+    ("needs work", "Needs work", "var(--warn-mid)"),
+    ("not ready", "Not ready", "var(--poor)"),
+)
+"""The four bands in order, worst last, with the colour each takes.
+
+Ordered so the ring reads clockwise from best to worst and the eye lands on
+the trouble at the end rather than hunting for it among four equal wedges.
+"""
+
+
+def readiness_donut_svg(
+    bands: dict[str, int], score: float | None, label: str, size: int = 168
+) -> str:
+    """The folder's composition, with its score in the middle.
+
+    A pie of a single score is that score with a circle drawn round it. What a
+    reader actually wants to know is what the folder is made of: a mean of 71
+    reads as fine and can still be hiding two documents nothing can be read
+    from, and those two are the ones somebody has to deal with.
+    """
+    total = sum(bands.values())
+    if not total:
+        return ""
+
+    radius, thickness = size / 2 - 4, 22
+    centre = size / 2
+    middle = radius - thickness / 2
+    circumference = 2 * math.pi * middle
+
+    parts = [
+        f'<svg class="donut" viewBox="0 0 {size} {size}" width="{size}" height="{size}" '
+        f'role="img" aria-label="{count(total, "document")} by readiness band: '
+        + ", ".join(f"{name} {bands.get(key, 0)}" for key, name, _ in BAND_SERIES if bands.get(key))
+        + '">'
+    ]
+
+    # Drawn as one circle per band with a dash pattern, rotated into place.
+    # Arc paths would need the large-arc flag handled for a band over half the
+    # ring, and a dash offset does the same job with no special cases.
+    offset = 0.0
+    for key, _name, colour in BAND_SERIES:
+        value = bands.get(key, 0)
+        if not value:
+            continue
+        length = circumference * value / total
+        parts.append(
+            f'<circle cx="{centre}" cy="{centre}" r="{middle:.2f}" fill="none" '
+            f'stroke="{colour}" stroke-width="{thickness}" '
+            f'stroke-dasharray="{length:.2f} {circumference - length:.2f}" '
+            f'stroke-dashoffset="{-offset:.2f}" '
+            f'transform="rotate(-90 {centre} {centre})"><title>'
+            f"{count(value, 'document')} {key}</title></circle>"
+        )
+        offset += length
+
+    if score is not None:
+        parts.append(
+            f'<text x="{centre}" y="{centre - 2}" text-anchor="middle" '
+            f'font-size="30" font-weight="600" fill="var(--ink)">{round(score)}</text>'
+        )
+        parts.append(
+            f'<text x="{centre}" y="{centre + 16}" text-anchor="middle" '
+            f'font-size="10" fill="var(--muted)">{escape(label)}</text>'
+        )
     parts.append("</svg>")
     return "".join(parts)

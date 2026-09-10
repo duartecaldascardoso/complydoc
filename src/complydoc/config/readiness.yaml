@@ -19,6 +19,26 @@
 
 schema_version: 1
 
+# Global readiness combines three factors. AI readiness (content) asks whether
+# the text can be got off the page; this asks whether the folder can be put
+# through a pipeline at all — legible, affordable, and safe to send.
+#
+# A factor the run did not measure is dropped and the rest are renormalised, so
+# `complydoc readiness` on its own still produces a score, and the report says
+# it was built from one factor rather than three.
+overall:
+  enabled: true
+  content_weight: 0.5
+  cost_weight: 0.25
+  exposure_weight: 0.25
+  # A page whose text had to be recognised, out of 100. OCR reaches the cheap
+  # path at the model, which is the expensive half, but it costs time here and
+  # what it returns is a reading rather than the text itself.
+  recognised_page_score: 60
+  # Points off per unit of exposure. One unit is a low-severity finding backed
+  # by a checksum; a confirmed high-severity finding is three units.
+  points_per_exposure: 4
+
 scoring:
   enabled: true
   method: weighted_sum

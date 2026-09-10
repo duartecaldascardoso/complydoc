@@ -57,9 +57,20 @@ complydoc sensitive ./invoices --print-json | jq '{
 - `run.components_run` — which components actually ran.
 - `run.offline_guard` — `armed` means nothing could have left the machine.
 - `aggregate.sensitive_by_category` / `sensitive_by_severity` — folder totals.
+- `overall.score` — global readiness, 0-100: content, cost path and exposure
+  combined. `overall.factors[]` says what went into it and what weight each
+  carried; a factor with a null score was not measured and was left out rather
+  than counted as nought. `overall.bands` counts documents per band, which is
+  what the mean hides.
+- `quick_wins[]` — what to do next, most documents first. Each names its
+  `documents`, and `actor` says whether complydoc can do it or a person must.
 - `documents[].readiness.score` — 0-100, higher is better; check `low_confidence`.
+  This is content only — whether the text can be got off the page.
 - `documents[].sensitive.matches[]` — `category`, `region`, `page`, `line`, `masked`,
-  `severity`.
+  `severity`, and `evidence`: `confirmed` (a checksum passed), `corroborated` (a
+  label sits next to it), `pattern` (shape only), `model` (a statistical guess,
+  the weakest). `confidence` is null where the detector produces no score —
+  never treat that as certainty.
 - `documents[].cost.models[]` — token counts and USD per model, with `last_verified`
   and `is_stale` on the price.
 - `aggregate.seconds_per_document` / `hours_per_1000_documents` — measured local

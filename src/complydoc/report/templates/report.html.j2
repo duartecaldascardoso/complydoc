@@ -16,6 +16,7 @@
     --good: #6b7280; --fair: #55606d; --poor: #a4402f;
     --na: #8b939c; --na-bg: #f1f1ef;
     --add-bg: #dff0e2; --gone-bg: #f3e2de;
+    --warn-mid: #b0740f;
     --series-1: #2a78d6; --series-2: #4a3aa7; --series-3: #e87ba4;
     --pv-page: #fff; --pv-edge: #bbb; --pv-text: #dcdcdc;
     --pv-image: #f4dfae; --pv-gutter: #f4f4f2;
@@ -33,6 +34,7 @@
       --good: #8b939c; --fair: #a7b0b8; --poor: #e08a72;
       --na: #7d858d; --na-bg: #23272b;
       --add-bg: #1e3a2a; --gone-bg: #3a2622;
+      --warn-mid: #d9a441;
       --series-1: #3987e5; --series-2: #d55181; --series-3: #c98500;
       --pv-page: #24282c; --pv-edge: #4a5058; --pv-text: #4d545c;
       --pv-image: #6d5a2f; --pv-gutter: #1f2225;
@@ -47,6 +49,7 @@
     --good: #8b939c; --fair: #a7b0b8; --poor: #e08a72;
     --na: #7d858d; --na-bg: #23272b;
     --add-bg: #1e3a2a; --gone-bg: #3a2622;
+    --warn-mid: #d9a441;
     --series-1: #3987e5; --series-2: #d55181; --series-3: #c98500;
     --pv-page: #24282c; --pv-edge: #4a5058; --pv-text: #4d545c;
     --pv-image: #6d5a2f; --pv-gutter: #1f2225;
@@ -213,6 +216,13 @@
             background: var(--panel); border: 1px solid var(--line-2); border-radius: 4px;
             font-size: 0.75rem; line-height: 1.4; color: var(--ink);
             pointer-events: none; }
+  /* The tier is a word, not a colour: four colours here would compete with the
+     severity badges beside them, which are the thing to scan for. Only the
+     weakest is marked, because it is the one that changes what you do. */
+  .ev { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.04em;
+        color: var(--muted); }
+  .ev-confirmed { color: var(--ink); font-weight: 600; }
+  .ev-model { color: var(--faint); font-style: italic; }
   .pv-tip b { display: block; font-weight: 600; }
   .pv-tip .found { display: block; margin: 0.1875rem 0 0.25rem;
                    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -376,6 +386,56 @@
   .legend span { display: inline-flex; align-items: center; gap: 0.375rem; }
   .legend i { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
   .legend .why { font-size: 0.6875rem; color: var(--faint); }
+
+  /* Global readiness: the ring and what it is made of, side by side. The ring
+     is the composition; the list beside it is the arithmetic, because a score
+     whose weights are not shown is what this tool refuses to emit. */
+  .global { display: flex; gap: 1.75rem; align-items: flex-start; flex-wrap: wrap;
+            margin: 0 0 1.5rem; padding: 1.125rem 1.25rem; background: var(--panel);
+            border: 1px solid var(--line); border-radius: 6px; }
+  .global .ring { flex: 0 0 auto; }
+  .global .gtext { flex: 1 1 20rem; min-width: 0; }
+  .global h3 { margin: 0 0 0.25rem; }
+  .global .lede { margin: 0 0 0.75rem; font-size: 0.8125rem; color: var(--muted); }
+  .donut { display: block; }
+  .factors { list-style: none; margin: 0 0 0.875rem; padding: 0; }
+  .factors li { display: grid; grid-template-columns: 7.5rem 3rem 5rem 1fr; gap: 0.5rem;
+                align-items: baseline; padding: 0.3125rem 0; font-size: 0.8125rem;
+                border-top: 1px solid var(--line); }
+  .factors li.na { color: var(--faint); }
+  .factors .fname { font-weight: 600; }
+  .factors .fscore { font-variant-numeric: tabular-nums; font-size: 0.9375rem; }
+  .factors li.na .fscore { font-size: 0.75rem; color: var(--faint); }
+  .factors .fweight { font-size: 0.6875rem; color: var(--faint); }
+  .factors .why { font-size: 0.75rem; }
+  .bandkey { display: flex; flex-wrap: wrap; gap: 0.875rem; font-size: 0.75rem;
+             color: var(--muted); }
+  .bandkey span { display: inline-flex; align-items: center; gap: 0.375rem; }
+  .bandkey i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .bandkey b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* Quick wins. Closed by default: the row is the decision, and the paragraph
+     under it is for the one row somebody chooses to act on. */
+  .wins { margin: 0 0 1.5rem; border: 1px solid var(--line); border-radius: 6px;
+          overflow: hidden; }
+  .win + .win { border-top: 1px solid var(--line); }
+  .win > summary { display: flex; align-items: baseline; gap: 0.75rem; cursor: pointer;
+                   padding: 0.625rem 0.875rem; background: var(--panel);
+                   font-size: 0.875rem; }
+  .win > summary::-webkit-details-marker { display: none; }
+  .win > summary::marker { content: ""; }
+  .win[open] > summary { border-bottom: 1px solid var(--line); }
+  .wact { flex: 0 0 auto; font-size: 0.625rem; text-transform: uppercase;
+          letter-spacing: 0.05em; padding: 0.125rem 0.375rem; border-radius: 3px;
+          border: 1px solid var(--line-2); color: var(--muted); }
+  .wact-complydoc { border-color: var(--accent); color: var(--accent); }
+  .wtitle { flex: 1 1 auto; min-width: 0; }
+  .wcount, .wsave { flex: 0 0 auto; font-size: 0.75rem; color: var(--muted);
+                    font-variant-numeric: tabular-nums; }
+  .wsave { color: var(--accent); }
+  .wdetail, .weffect, .wfiles { margin: 0.5rem 0.875rem; font-size: 0.8125rem; }
+  .weffect { color: var(--ink-2); }
+  .wfiles { font-size: 0.6875rem; color: var(--faint); word-break: break-word; }
   .chart { display: block; max-width: 100%; margin: 0.25rem 0 1rem; }
   .chart .grp { transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1),
                              opacity 0.16s ease; }
@@ -413,6 +473,9 @@
     {% if show_doc %}<th data-sort="text">Document</th>{% endif %}
     <th class="n" data-sort="num">Page</th><th class="n" data-sort="num">Line</th>
     <th data-sort="text">Category</th><th data-sort="num" data-sort-default="desc">Severity</th>
+    <th data-sort="num" title="How strong the case for this finding is. A passed
+      checksum is near-certain; a model naming a person is the best available
+      evidence for a category no checksum can confirm, and the weakest here.">Evidence</th>
     <th>Value</th>{% if report.run.reveal_used %}<th>Revealed</th>{% endif %}<th>Matched because</th>
   </tr></thead>
   <tbody>
@@ -422,6 +485,8 @@
       <td class="n">{{ m.page }}</td><td class="n">{{ m.line }}</td>
       <td>{{ m.label }}</td>
       <td data-value="{{ severity_rank(m.severity) }}">{{ severity_badge(m.severity) | safe }}</td>
+      <td data-value="{{ evidence_rank(m.evidence) }}"><span
+        class="ev ev-{{ m.evidence }}">{{ m.evidence }}</span></td>
       <td class="mono">{{ m.masked }}</td>
       {% if report.run.reveal_used %}<td class="mono">{{ m.revealed if m.revealed else "—" }}</td>{% endif %}
       <td class="why">
@@ -476,6 +541,65 @@
 <section data-page id="summary">
 <h2>What this folder looks like</h2>
 
+{% if readiness_donut %}
+{# The lead. Not a pie of one number — that is the number with a circle round
+   it — but what the folder is made of. A mean of 71 reads as fine and can be
+   hiding two documents nothing can be read from. #}
+<div class="global">
+  <div class="ring">{{ readiness_donut | safe }}</div>
+  <div class="gtext">
+    <h3>Global readiness</h3>
+    <p class="lede">{{ count(overall.scored_documents, "document") }} scored on
+      {{ overall.measured_factors | length }} of {{ overall.factors | length }} factors.
+      {%- if overall.partial %} The rest were not part of this run, so they are left out
+      of the score rather than counted as nought.{% endif %}</p>
+    <ul class="factors">
+      {% for f in overall.factors %}
+      <li{% if not f.measured %} class="na"{% endif %}>
+        <span class="fname">{{ f.name }}</span>
+        <span class="fscore">{% if f.measured %}{{ f.score | round | int }}{% else %}not
+          measured{% endif %}</span>
+        <span class="fweight">weight {{ "%.0f"|format(f.weight * 100) }}%</span>
+        <span class="why">{{ f.why }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="bandkey">
+      {% for key, name, colour in band_series %}
+        {% if overall.bands.get(key) %}
+        <span><i style="background:{{ colour }}"></i>{{ name }}
+          <b>{{ overall.bands.get(key) }}</b></span>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if quick_wins %}
+{# Ranked by how much of the folder each touches, and split by who has to act:
+   a list that mixes "we can do this" with "you must rescan these" is a list
+   nobody works through. #}
+<h3>Quick wins</h3>
+<div class="wins">
+  {% for w in quick_wins %}
+  <details class="win">
+    <summary>
+      <span class="wact wact-{{ w.actor }}">{{ "complydoc" if w.actor == "complydoc"
+        else "you" }}</span>
+      <span class="wtitle">{{ w.title }}</span>
+      <span class="wcount">{{ count(w.affected, "document") }}</span>
+      {% if w.saving_usd_per_1000 %}<span class="wsave">~{{ money(w.saving_usd_per_1000)
+        }} / 1,000</span>{% endif %}
+    </summary>
+    <p class="wdetail">{{ w.detail }}</p>
+    {% if w.effect %}<p class="weffect">{{ w.effect }}</p>{% endif %}
+    <p class="wfiles mono">{{ w.documents | join(" · ") }}</p>
+  </details>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% set cheapest = comparisons | map(attribute="architectures") | map("first") | list %}
 <div class="tiles">
   <div class="tile">
@@ -500,7 +624,7 @@
       <div class="s">
         {% set bands = agg.readiness_bands %}
         {{ bands.get("ready", 0) + bands.get("workable", 0) }} of
-        {{ agg.documents_audited }} workable or better</div>
+        {{ agg.documents_audited }} workable or better · content only</div>
     {% else %}<div class="v">—</div><div class="s">readiness was not part of this run</div>{% endif %}
   </div>
 

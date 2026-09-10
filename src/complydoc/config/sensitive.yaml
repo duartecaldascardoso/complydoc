@@ -203,7 +203,6 @@ categories:
     region: international
     detector: ner
     severity: medium
-    min_confidence: 0.5
     model:
       name: en_core_web_sm
       entity_labels: [PERSON]
@@ -217,7 +216,6 @@ categories:
     region: international
     detector: ner
     severity: low
-    min_confidence: 0.5
     model:
       name: en_core_web_sm
       entity_labels: [ORG]

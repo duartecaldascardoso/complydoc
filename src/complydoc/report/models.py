@@ -37,7 +37,7 @@ __all__ = [
     "RunMetadata",
 ]
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -262,6 +262,14 @@ class AuditReport:
     """Printed in the report whenever a score is shown, never hidden."""
     config_masking: MaskingConfig | None = None
     """Echoed so a reader can see exactly how much of a value was ever shown."""
+    overall: Any = None
+    """Global readiness: content, cost and exposure combined. See `complydoc.overall`.
+
+    Untyped here to keep this module free of an import cycle — it is built from
+    a finished report, so it cannot be built while the report is being defined.
+    """
+    quick_wins: list[Any] = field(default_factory=list)
+    """What to do next, ranked. See `complydoc.quickwins`."""
 
 
 def build_aggregate(

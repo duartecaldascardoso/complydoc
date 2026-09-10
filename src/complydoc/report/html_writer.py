@@ -15,15 +15,20 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import escape
 
 from complydoc.config.schema import Config
+from complydoc.overall import overall_readiness
+from complydoc.quickwins import quick_wins
 from complydoc.report.charts import (
+    BAND_SERIES,
     SERIES,
     build_comparison,
     grouped_bars_svg,
     headline_comparison,
+    readiness_donut_svg,
 )
 from complydoc.report.diffing import ReadingDiff, compare_readings
 from complydoc.report.models import AuditReport, DocumentReport
 from complydoc.report.preview import PagePreview
+from complydoc.sensitive.base import EVIDENCE_ORDER
 from complydoc.text import count, duration
 
 __all__ = [
@@ -43,12 +48,18 @@ def severity_rank(severity: str) -> int:
     return _SEVERITY_RANK.get(severity, 0)
 
 
+def evidence_rank(evidence: str) -> int:
+    """Sort weight, strongest first. Alphabetical would put a model guess top."""
+    return len(EVIDENCE_ORDER) - EVIDENCE_ORDER.index(evidence) if evidence in EVIDENCE_ORDER else 0
+
+
 def sensitive_rows(report: AuditReport) -> list[tuple[DocumentReport, Any]]:
     """Every match in the folder, most serious first.
 
     On a security page the question is almost always what the worst of it is,
     not what came first in the folder, so the table arrives ordered by severity
-    and ties break by document and position rather than arbitrarily.
+    and ties break by evidence — a confirmed card number above a guessed name
+    of the same severity — and then by document and position.
     """
     rows = [
         (document, match)
@@ -59,6 +70,7 @@ def sensitive_rows(report: AuditReport) -> list[tuple[DocumentReport, Any]]:
     rows.sort(
         key=lambda row: (
             -severity_rank(row[1].severity),
+            -evidence_rank(row[1].evidence),
             row[0].relative_path,
             row[1].page,
             row[1].line,
@@ -305,6 +317,9 @@ def render_html(report: AuditReport, config: Config) -> str:
             return "r-fair"
         return "r-poor"
 
+    # Computed with the report, not here: the JSON carries them too.
+    overall = report.overall or overall_readiness(report, config.readiness.overall)
+    wins = report.quick_wins or quick_wins(report)
     comparisons = build_comparison(report)
     headline = headline_comparison(comparisons, config.pricing.compare.headline_model)
     run = report.run
@@ -332,6 +347,9 @@ def render_html(report: AuditReport, config: Config) -> str:
     return template.render(
         comparisons=comparisons,
         headline=headline,
+        overall=overall,
+        quick_wins=wins,
+        readiness_donut=readiness_donut_svg(overall.bands, overall.score, overall.label),
         run_options=" ".join(options),
         series=SERIES,
         folder_chart=grouped_bars_svg(
@@ -354,9 +372,12 @@ def render_html(report: AuditReport, config: Config) -> str:
         money=lambda v: _money(v, currency),
         category_meta=category_meta,
         duration=duration,
+        count=count,
+        band_series=BAND_SERIES,
         severity_class=severity_class,
         severity_badge=severity_badge,
         severity_rank=severity_rank,
+        evidence_rank=evidence_rank,
         hard_drivers=lambda d, n=3: _drivers(d, "poor", n),
         easy_drivers=lambda d, n=3: _drivers(d, "good", n),
         score_band=score_band,

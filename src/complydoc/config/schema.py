@@ -304,9 +304,42 @@ class ScoringConfig(_Base):
         return self
 
 
+class OverallConfig(_Base):
+    """How the three factors combine into one global readiness score.
+
+    Content is weighted heaviest because it is the question the others depend
+    on: a page nothing can be read from has no cost path and no exposure worth
+    measuring. The weights do not have to sum to one; they are renormalised
+    over whichever factors the run actually measured.
+    """
+
+    enabled: bool = True
+    content_weight: float = 0.5
+    cost_weight: float = 0.25
+    exposure_weight: float = 0.25
+    recognised_page_score: float = 60.0
+    """What a page worth, out of 100, when its text had to be recognised.
+
+    Not nought: OCR gets the document onto the cheap path at the model, which
+    is the expensive half. Not full marks either: it costs machine time here,
+    and what OCR reads is a reading rather than the text itself.
+    """
+    points_per_exposure: float = 4.0
+    """Points off per unit of exposure, where one unit is a low-severity
+    finding that passed a checksum. A confirmed high-severity finding is three
+    units, so twelve points."""
+
+    @model_validator(mode="after")
+    def _some_weight_somewhere(self) -> OverallConfig:
+        if self.enabled and self.content_weight + self.cost_weight + self.exposure_weight <= 0:
+            raise ValueError("overall.enabled needs at least one factor with a weight above zero")
+        return self
+
+
 class ReadinessConfig(_Base):
     schema_version: int
     scoring: ScoringConfig
+    overall: OverallConfig = OverallConfig()
     signals: dict[str, SignalConfig]
 
     def for_signal(self, signal_id: str) -> SignalConfig | None:

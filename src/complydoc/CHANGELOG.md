@@ -10,6 +10,34 @@ branch on when reading reports programmatically.
 
 ### Added
 
+- `cd.extract_text()` hands back a folder's own words with the identifiers
+  covered over, in chunks, each carrying a token count and how exact that count
+  is. The audit says what documents are like; this is for putting them through
+  something. `max_tokens` splits long pages at paragraph breaks, and
+  `mask=False` returns the text as the page says it.
+- It says what it could not get, and what it cannot promise. A page nothing
+  could be read off, a file that would not open, a category that could not be
+  scanned — and, every time masking runs, that names and organisations are
+  found by a statistical model rather than a rule, so some will have been
+  missed. `chunk.masked_confirmed` separates the masks that passed a checksum
+  from the ones resting on a guess, and nothing in the API claims the text is
+  certified clean.
+- Loaders, extractors and OCR engines can be registered from outside, through
+  `register_loader`, `register_extractor` and `register_engine`. The types a
+  loader is written in — `Document`, `Page`, `Rect`, `IngestOptions` and the
+  rest — are exported too, because a plug-in point you cannot write against is
+  not one. `DocumentFormat.OTHER` exists for a format complydoc does not know.
+
+### Fixed
+
+- An overlapping weaker finding could expose a confirmed one. The detectors are
+  independent, so a card number that passed a checksum and a name a model
+  thought it saw can claim the same characters: on a line reading
+  `Card 4111 1111 1111 1111` the model calls `Card 4111` an organisation, and
+  masking them in turn wrote the weaker over the stronger and left four digits
+  of the card number in the clear. Masking now works a character at a time,
+  best evidence first, and never writes where something is already masked.
+
 - A Python API. `import complydoc as cd` then `cd.full_audit`,
   `cd.security_audit`, `cd.cost_audit` or `cd.readiness_audit`, each taking a
   path and returning the same report the command line writes, plus

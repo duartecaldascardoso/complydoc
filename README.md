@@ -212,6 +212,68 @@ whether its own run was guarded.
 should not get a surprise process pool. Pass `jobs=0` to let it read the folder and decide,
 as the CLI does.
 
+### Text you can send on
+
+The other direction: not what the folder is like, but the folder's own words with every
+identifier covered over, chunked, and counted in tokens.
+
+```python
+result = cd.extract_text("~/contracts")
+
+for chunk in result.chunks:
+    send_to_model(chunk.text)       # identifiers replaced with mask characters
+    budget += chunk.tokens          # and chunk.token_fidelity says how exact that is
+
+if not result.complete:
+    ...                             # something could not be read; result.warnings says what
+```
+
+`max_tokens=2000` splits pages that exceed it, at paragraph breaks. `mask=False` returns
+the text as the page says it, with no scan run at all.
+
+**Read the warnings.** They are the point of the design, not decoration:
+
+| Warning | What it means |
+| --- | --- |
+| `masking_best_effort` | Raised every time masking runs. Names and organisations have no checksum to pass, so a model finds them and models miss |
+| `masking_incomplete` | A category could not be scanned at all, so none of that kind were covered |
+| `unreadable_page` | Nothing could be read off a page — usually a scan with `ocr=False` |
+| `unreadable_document` | A file would not open. None of its content is in the result |
+| `estimated_tokens` | No local encoding, so counts are a character estimate |
+
+Masked text is much safer than the original and is **not** certified clean. On the sample
+document that ships with the tool, the model finds `John Smith` and misses `Jane Doe` on
+the line above. `chunk.masked_confirmed` is how many of a chunk's masks passed a checksum;
+the difference from `chunk.masked` is the part resting on a model's judgement.
+
+This does not read text back off a report, because a report truncates long pages for the
+person reading it. Dropping the end of a contract silently would be indefensible here.
+
+### Bringing your own reader
+
+The registries are public. Teach it a format it does not handle:
+
+```python
+class MarkdownLoader:
+    extensions = (".md",)
+    format = cd.DocumentFormat.OTHER
+
+    def load(self, path, options):
+        document = cd.Document(path=path, sha256=cd.sha256_of(path), format=self.format)
+        page = cd.Page(number=1, width_pt=595.0, height_pt=842.0)
+        page.text = path.read_text()
+        page.text_source = "native"
+        document.pages.append(page)
+        return document
+
+cd.register_loader(MarkdownLoader())
+```
+
+Everything downstream then treats it as a document complydoc always knew about — the scan,
+the masking, the signals, the report. `register_extractor` does the same for a library that
+reads a PDF's text layer and `register_engine` for an OCR engine, and `cd.all_extractors()`
+lists what is registered.
+
 Everything in `complydoc.__all__` is the public API and the report objects are part of it.
 Anything else in the package is internal and may be renamed, so treat an import from
 `complydoc.something` as a private call. A report's shape is versioned:

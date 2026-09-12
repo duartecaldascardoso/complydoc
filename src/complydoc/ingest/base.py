@@ -39,6 +39,15 @@ class DocumentFormat(StrEnum):
     IMAGE = "image"
     DOCX = "docx"
     XLSX = "xlsx"
+    OTHER = "other"
+    """For a loader somebody else wrote, of a format this does not know about.
+
+    The registry is public, so a third party can teach complydoc a format
+    without changing it. They need a name for what they are loading, and
+    inventing enum members for formats we have never seen is not possible —
+    so there is one to share. The reports group by this, so a folder of them
+    appears together as "other".
+    """
 
 
 TextSource = Literal["native", "ocr", "none"]

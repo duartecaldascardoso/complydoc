@@ -33,20 +33,55 @@ SAMPLE = FIXTURES / "sensitive_sample.pdf"
 
 def test_the_public_surface_is_exactly_what_was_promised():
     """A name that appears here by accident is a name we cannot take back."""
-    assert set(cd.__all__) == {
-        "AuditOptions",
-        "ConfigError",
-        "NetworkAccessError",
-        "UnknownModelError",
-        "__version__",
-        "cost_audit",
+    import complydoc.api
+
+    assert set(cd.__all__) == {"__version__", *complydoc.api.__all__}
+    expected = {
+        # audits
         "full_audit",
-        "load_config",
-        "readiness_audit",
         "security_audit",
+        "cost_audit",
+        "readiness_audit",
+        # text out, with the identifiers covered over
+        "extract_text",
+        "Chunk",
+        "TextResult",
+        "ExtractionWarning",
+        # writing a report somewhere
         "write_html",
         "write_json",
+        # configuration, and the errors a caller has to catch by name
+        "load_config",
+        "ConfigError",
+        "UnknownModelError",
+        "NetworkAccessError",
+        # bringing your own reader
+        "register_loader",
+        "register_extractor",
+        "register_engine",
+        "all_extractors",
+        "all_engines",
+        "supported_extensions",
+        "Loader",
+        "LoaderError",
+        "Extractor",
+        "Extraction",
+        "PageSource",
+        "Engine",
+        "Recognised",
+        # the vocabulary a loader is written in
+        "Document",
+        "Page",
+        "DocumentFormat",
+        "IngestOptions",
+        "Rect",
+        "TextBlock",
+        "sha256_of",
+        # options and version
+        "AuditOptions",
+        "__version__",
     }
+    assert set(cd.__all__) == expected
     for name in cd.__all__:
         assert hasattr(cd, name), name
 

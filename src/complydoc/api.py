@@ -7,7 +7,33 @@
         for match in document.sensitive.matches:
             print(document.relative_path, match.label, match.evidence, match.masked)
 
-Four entry points, one per way of asking. `full_audit` runs everything;
+`extract_text` is the other direction: not what the folder is like, but the
+folder's own words with every identifier covered over, chunked, counted in
+tokens, and carrying a list of what could not be read.
+
+Readers are pluggable, and the registration hooks are public. `register_extractor`
+takes a class satisfying `Extractor` and complydoc will use it like its own;
+`register_engine` does the same for OCR, and `register_loader` teaches it a
+whole file format nothing here handles yet:
+
+    class MarkdownLoader:
+        extensions = (".md",)
+        format = cd.DocumentFormat.OTHER
+
+        def load(self, path, options):
+            document = cd.Document(path=path, sha256=cd.sha256_of(path), format=self.format)
+            page = cd.Page(number=1, width_pt=595.0, height_pt=842.0)
+            page.text = path.read_text()
+            page.text_source = "native"
+            document.pages.append(page)
+            return document
+
+    cd.register_loader(MarkdownLoader())
+
+Which is why `Document`, `Page`, `Rect` and the rest of the loader's vocabulary
+are exported too: a plug-in point you cannot write against is not one.
+
+Four audit entry points, one per way of asking. `full_audit` runs everything;
 the other three run one component each, which is the point of them — asking
 only for the identifier scan loads no tokenizer and prices nothing, and is
 several times quicker for it.
@@ -48,6 +74,26 @@ from complydoc import offline
 from complydoc.audit import COMPONENTS, run_audit
 from complydoc.config.loader import ConfigError, load_config
 from complydoc.cost.estimator import UnknownModelError
+from complydoc.extract import Chunk, ExtractionWarning, TextResult, extract_text
+from complydoc.ingest.base import (
+    Document,
+    DocumentFormat,
+    IngestOptions,
+    Loader,
+    LoaderError,
+    Page,
+    Rect,
+    TextBlock,
+    sha256_of,
+)
+from complydoc.ingest.engines.base import Engine, Recognised
+from complydoc.ingest.engines.registry import all_engines
+from complydoc.ingest.engines.registry import register as register_engine
+from complydoc.ingest.extractors.base import Extraction, Extractor, PageSource
+from complydoc.ingest.extractors.registry import all_extractors
+from complydoc.ingest.extractors.registry import register as register_extractor
+from complydoc.ingest.registry import register as register_loader
+from complydoc.ingest.registry import supported_extensions
 from complydoc.offline import NetworkAccessError
 from complydoc.report.html_writer import write_html as _write_html
 from complydoc.report.json_writer import write_json as _write_json
@@ -58,14 +104,38 @@ if TYPE_CHECKING:
 
 __all__ = [
     "AuditOptions",
+    "Chunk",
     "ConfigError",
+    "Document",
+    "DocumentFormat",
+    "Engine",
+    "Extraction",
+    "ExtractionWarning",
+    "Extractor",
+    "IngestOptions",
+    "Loader",
+    "LoaderError",
     "NetworkAccessError",
+    "Page",
+    "PageSource",
+    "Recognised",
+    "Rect",
+    "TextBlock",
+    "TextResult",
     "UnknownModelError",
+    "all_engines",
+    "all_extractors",
     "cost_audit",
+    "extract_text",
     "full_audit",
     "load_config",
     "readiness_audit",
+    "register_engine",
+    "register_extractor",
+    "register_loader",
     "security_audit",
+    "sha256_of",
+    "supported_extensions",
     "write_html",
     "write_json",
 ]

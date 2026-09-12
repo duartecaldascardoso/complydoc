@@ -35,31 +35,11 @@ from __future__ import annotations
 # Before the import below, which reaches code that reads it back off this module.
 __version__ = "0.3.0"
 
-from complydoc.api import (
-    AuditOptions,
-    ConfigError,
-    NetworkAccessError,
-    UnknownModelError,
-    cost_audit,
-    full_audit,
-    load_config,
-    readiness_audit,
-    security_audit,
-    write_html,
-    write_json,
-)
+from complydoc import api as _api
+from complydoc.api import *  # noqa: F403
 
-__all__ = [
-    "AuditOptions",
-    "ConfigError",
-    "NetworkAccessError",
-    "UnknownModelError",
-    "__version__",
-    "cost_audit",
-    "full_audit",
-    "load_config",
-    "readiness_audit",
-    "security_audit",
-    "write_html",
-    "write_json",
-]
+__all__ = ["__version__", *_api.__all__]
+"""The public surface: everything `complydoc.api` exports, plus the version.
+
+One list rather than two, because two would drift and a name that appears here
+by accident is a name we cannot take back."""

@@ -8,6 +8,32 @@ branch on when reading reports programmatically.
 
 ## [Unreleased]
 
+### Added
+
+- A Python API. `import complydoc as cd` then `cd.full_audit`,
+  `cd.security_audit`, `cd.cost_audit` or `cd.readiness_audit`, each taking a
+  path and returning the same report the command line writes, plus
+  `cd.write_html` and `cd.write_json` to put it somewhere. The command line was
+  the only way in, which left the tool unusable from an ingestion pipeline, a
+  notebook or CI.
+- What is public is now a decision rather than an accident. `complydoc.__all__`
+  names the surface, the report objects are part of it, and everything else in
+  the package is internal and may be renamed. `ConfigError`,
+  `UnknownModelError` and `NetworkAccessError` are exported because a caller
+  has to be able to catch them by name.
+
+### Changed
+
+- The network guard can be scoped. `offline.guarded()` arms it for a block and
+  restores the socket module exactly as it found it, which is what the library
+  entry points use. Arming permanently is right for a command that owns its
+  process and would be sabotage inside somebody else's application, where every
+  unrelated call would start failing with a message about documents.
+- A library call on a path that does not exist raises `FileNotFoundError`
+  instead of returning an empty report. "Nothing was found in these documents"
+  and "that folder is not there" are different answers, and only one of them is
+  about the documents.
+
 ### Documentation
 
 - The README installs from PyPI. `uv tool install complydoc` replaces the git

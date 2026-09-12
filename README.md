@@ -160,6 +160,63 @@ the same documents, so their reports compare.
 > it masks elsewhere. Treat it as you would treat the documents. `--no-extracted-text` and
 > `--no-page-images` produce a report with no document content in it.
 
+## From Python
+
+The command line is one way in. Everything it does is available as a library, which is
+the point if you want this inside an ingestion pipeline, a notebook or CI rather than in
+front of a person:
+
+```python
+import complydoc as cd
+
+report = cd.security_audit("~/contracts")
+for document in report.documents:
+    for match in document.sensitive.matches:
+        print(document.relative_path, match.label, match.severity, match.evidence, match.masked)
+```
+
+Four entry points. `full_audit` runs everything; the other three run one component each,
+which is why they exist — asking only for the identifier scan loads no tokenizer and
+prices nothing:
+
+```python
+cd.full_audit("~/contracts", ocr=True)          # all three components
+cd.security_audit("~/contracts")                # identifiers only
+cd.cost_audit("~/contracts", monthly_volume=5_000)
+cd.readiness_audit("~/contracts")
+```
+
+What comes back is the same report the CLI writes, and you can write it out:
+
+```python
+report = cd.full_audit("~/contracts")
+
+report.overall.score            # 82.4
+report.overall.bands            # {"ready": 4, "workable": 2}
+report.quick_wins               # ranked; each has .documents and .actor
+report.aggregate.sensitive_total
+
+cd.write_html(report, "audit.html")
+cd.write_json(report, "audit.json")
+```
+
+Two things differ from the command line, deliberately.
+
+**The network guard is scoped.** The CLI arms it for the life of the process, which is
+right when it owns the process. Called as a library it is armed for the audit and the
+socket module is put back exactly as it was found — a library that permanently broke its
+host's networking would be indefensible, whatever its reasons. Each report still records
+whether its own run was guarded.
+
+**It starts no processes unless asked.** `jobs` is 1, because a notebook or a web worker
+should not get a surprise process pool. Pass `jobs=0` to let it read the folder and decide,
+as the CLI does.
+
+Everything in `complydoc.__all__` is the public API and the report objects are part of it.
+Anything else in the package is internal and may be renamed, so treat an import from
+`complydoc.something` as a private call. A report's shape is versioned:
+`report.run.schema_version` moves when it changes, which is the field to branch on.
+
 ## Reading the same page twice
 
 Three libraries can read a PDF's text layer, and they do not always agree. All three

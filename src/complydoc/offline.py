@@ -11,14 +11,22 @@ The guard is armed by the CLI before any document is opened, and
 place. Local ``AF_UNIX`` sockets are permitted because they cannot leave the
 machine; every ``AF_INET``/``AF_INET6`` connection and every DNS lookup is
 refused.
+
+``arm`` changes the whole process, which is right for a command that owns its
+process and wrong for a library inside somebody else's. Code called as a
+library uses ``guarded()``, which puts the socket module back exactly as it
+found it — so complydoc can promise its own audit reached no network without
+breaking the network its caller depends on.
 """
 
 from __future__ import annotations
 
+import contextlib
 import socket
+from collections.abc import Iterator
 from typing import Any, Final
 
-__all__ = ["NetworkAccessError", "arm", "guard_status", "is_armed"]
+__all__ = ["NetworkAccessError", "arm", "guard_status", "guarded", "is_armed"]
 
 _ORIGINAL_CONNECT: Final = socket.socket.connect
 _ORIGINAL_CONNECT_EX: Final = socket.socket.connect_ex
@@ -79,13 +87,41 @@ def arm() -> None:
 
 
 def disarm() -> None:
-    """Restore the original socket entry points. Exists for test teardown only."""
+    """Restore the original socket entry points.
+
+    Used by test teardown and by `guarded()` on its way out. Not something a
+    document-reading path should ever call.
+    """
     global _armed
     socket.socket.connect = _ORIGINAL_CONNECT  # type: ignore[method-assign]
     socket.socket.connect_ex = _ORIGINAL_CONNECT_EX  # type: ignore[method-assign]
     socket.create_connection = _ORIGINAL_CREATE_CONNECTION
     socket.getaddrinfo = _ORIGINAL_GETADDRINFO
     _armed = False
+
+
+@contextlib.contextmanager
+def guarded(active: bool = True) -> Iterator[None]:
+    """Arm the guard for this block, then leave the process as it was found.
+
+    The library entry points run inside this. Arming permanently would be
+    sabotage in a host application: every unrelated HTTP call in the process
+    would start failing, with a message about documents that makes no sense
+    where it appeared.
+
+    Restores on the way out whatever happens, and does nothing at all if the
+    caller has already armed the guard for themselves — in which case it is
+    theirs to disarm, not ours.
+    """
+    if not active or _armed:
+        yield
+        return
+
+    arm()
+    try:
+        yield
+    finally:
+        disarm()
 
 
 def is_armed() -> bool:
